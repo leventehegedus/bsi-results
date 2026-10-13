@@ -28,6 +28,7 @@ import { cleanTime } from '@/lib/results'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchResults, loadRace, setFilters } from './resultsSlice'
+import { RunnerLink } from '@/features/runner/RunnerLink'
 
 const ANY = '__any__'
 const FALLBACK_COLUMNS = ['hely', 'nev', 'kategoria', 'kat_hely', 'netto', 'brutto', 'varos', 'egyesulet', 'rajtszam']
@@ -230,7 +231,17 @@ export function ResultsPanel() {
                     <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
                       {columns.map((c) => (
                         <TableCell key={c.key} className={isNumericCol(c.key) ? 'tabular-nums' : ''}>
-                          {display(row, c.key)}
+                          {c.key === 'nev' ? (
+                            <RunnerLink
+                              name={display(row, 'nev')}
+                              raceId={r.raceId!}
+                              raceName={r.meta?.nev}
+                              place={typeof row.hely === 'number' ? row.hely : null}
+                              bib={row.rajtszam ?? null}
+                            />
+                          ) : (
+                            display(row, c.key)
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
