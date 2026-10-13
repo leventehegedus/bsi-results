@@ -26,6 +26,7 @@ import {
 import { downloadCsv, slug, toCsv } from '@/lib/csv'
 import { runnerKey, type RunnerBest, type ScanRow } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { RunnerLink } from '@/features/runner/RunnerLink'
 import {
   parseTowns,
   runTownScan,
@@ -260,7 +261,9 @@ function FinishTable({ rows }: { rows: ScanRow[] }) {
             <TableCell className="max-w-72 truncate" title={r.raceName}>
               {r.raceName}
             </TableCell>
-            <TableCell className="font-medium">{r.name}</TableCell>
+            <TableCell>
+              <RunnerLink name={r.name} raceId={r.raceId} raceName={r.raceName} place={r.place} bib={r.bib} />
+            </TableCell>
             <TableCell>{r.town}</TableCell>
             <TableCell>{r.category}</TableCell>
             <TableCell className="text-right tabular-nums">{r.place}</TableCell>
@@ -293,7 +296,9 @@ function BestTable({ rows }: { rows: RunnerBest[] }) {
         {rows.map((r, i) => (
           <TableRow key={`${r.name}-${i}`}>
             <TableCell className="text-muted-foreground tabular-nums">{i + 1}</TableCell>
-            <TableCell className="font-medium">{r.name}</TableCell>
+            <TableCell>
+              <RunnerLink name={r.name} raceId={r.raceId} raceName={r.raceName} place={r.place} bib={r.bib} />
+            </TableCell>
             <TableCell>{r.town}</TableCell>
             <TableCell className="tabular-nums">{r.time}</TableCell>
             <TableCell className="tabular-nums">{r.date}</TableCell>
