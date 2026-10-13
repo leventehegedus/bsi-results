@@ -13,7 +13,7 @@ type Opts = { signal?: AbortSignal }
 
 /** Full race list (current + past), deduplicated by id, newest first. */
 export async function getRaceList({ signal }: Opts = {}): Promise<RaceListItem[]> {
-  const { data } = await api.get<RaceListResponse>('/raceList/', { signal })
+  const { data } = await api.get<RaceListResponse>('/raceList', { signal })
   const all = [...(data.current ?? []), ...(data.past ?? []), ...(data.future ?? [])]
   const seen = new Set<string>()
   return all
