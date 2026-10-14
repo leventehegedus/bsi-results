@@ -1,3 +1,4 @@
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { useAppDispatch } from '@/store/hooks'
 import { openRunnerFromResult } from './runnerActions'
@@ -14,11 +15,12 @@ export function RunnerLink(props: {
   className?: string
 }) {
   const dispatch = useAppDispatch()
+  const t = useT()
   if (!props.name) return null
   return (
     <button
       type="button"
-      title="Open runner profile"
+      title={t.common.openRunner}
       onClick={() =>
         openRunnerFromResult(dispatch, {
           name: props.name,

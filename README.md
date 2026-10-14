@@ -7,6 +7,9 @@ collecting every finisher from a given town across many races.
 **Stack:** Vite · React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (new-york, neutral) on Radix ·
 Redux Toolkit · axios · oxlint · Vercel
 
+The UI is in Hungarian and English (switch in the header; the choice is saved, otherwise the
+browser language decides).
+
 ## Features
 
 - **Race browser**: ~2 800 result lists since 1984, grouped by year (the current year opens by
@@ -80,6 +83,7 @@ name/club/country. Races from before 2020 that are not in `/raceList/` are liste
 src/
   api/            axios client, typed endpoints, legacy race codes
   components/ui/  shadcn/ui components (Radix primitives)
+  i18n/           UI texts: en.ts (the shape), hu.ts, useT() hook; language in the ui slice
   features/
     races/        race list slice + browser
     results/      single-race results slice + panel

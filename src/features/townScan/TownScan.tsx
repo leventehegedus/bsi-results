@@ -20,6 +20,7 @@ import { downloadCsv, slug, toCsv } from '@/lib/csv'
 import { DISTANCE_CATEGORIES } from '@/lib/distance'
 import { runnerKey, type RunnerBest, type ScanRow } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useT, type Messages } from '@/i18n'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import {
   parseTowns,
@@ -35,6 +36,7 @@ import {
 
 export function TownScan() {
   const dispatch = useAppDispatch()
+  const t = useT()
   const scan = useAppSelector((s) => s.townScan)
   const finishes = useAppSelector(selectFinishes)
   const best = useAppSelector(selectBestPerRunner)
@@ -56,11 +58,11 @@ export function TownScan() {
     const name = `${towns.map(slug).join('_') || 'towns'}_${scan.bestOnly ? 'best' : 'finishes'}.csv`
     const csv = scan.bestOnly
       ? toCsv(
-          ['Name', 'Town', 'Best time', 'Date', 'Race', 'Place', 'Cat. place', 'Finishes'],
+          [t.col.name, t.col.town, t.col.bestTime, t.col.date, t.col.race, t.col.place, t.col.catPlace, t.col.finishes],
           best.map((r) => [r.name, r.town, r.time, r.date, r.raceName, r.place, r.categoryPlace, r.finishes]),
         )
       : toCsv(
-          ['Date', 'Race', 'Name', 'Town', 'Category', 'Place', 'Cat. place', 'Net time', 'Club', 'Race code'],
+          [t.col.date, t.col.race, t.col.name, t.col.town, t.col.category, t.col.place, t.col.catPlace, t.col.netTime, t.col.club, t.col.raceCode],
           finishes.map((r) => [r.date, r.raceName, r.name, r.town, r.category, r.place, r.categoryPlace, r.time, r.club, r.raceId]),
         )
     downloadCsv(name, csv)
@@ -70,16 +72,13 @@ export function TownScan() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Find finishers by town</CardTitle>
-          <CardDescription>
-            Scans race lists and collects every finisher whose registered town matches exactly
-            (e.g. “Székesfehérvár”, not “szekesfehervar”). Town data exists from 1996; earlier lists don't record it.
-          </CardDescription>
+          <CardTitle>{t.town.title}</CardTitle>
+          <CardDescription>{t.town.description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-[1fr_auto]">
             <div className="grid gap-1.5">
-              <Label htmlFor="towns">Towns (comma-separated)</Label>
+              <Label htmlFor="towns">{t.town.townsLabel}</Label>
               <Input
                 id="towns"
                 value={scan.townsInput}
@@ -91,7 +90,7 @@ export function TownScan() {
             <div className="flex items-end">
               {running ? (
                 <Button key="stop" variant="outline" onClick={stop} className="w-full md:w-auto">
-                  <Square /> Stop
+                  <Square /> {t.common.stop}
                 </Button>
               ) : (
                 <Button
@@ -100,31 +99,27 @@ export function TownScan() {
                   disabled={!towns.length || !scan.categories.length}
                   className="w-full md:w-auto"
                 >
-                  <Play /> Run scan
+                  <Play /> {t.town.run}
                 </Button>
               )}
             </div>
           </div>
 
           <fieldset className="grid gap-2">
-            <legend className="mb-2 text-sm font-medium">Races to scan</legend>
+            <legend className="mb-2 text-sm font-medium">{t.town.racesToScan}</legend>
             <div className="flex flex-wrap gap-x-6 gap-y-3">
               {DISTANCE_CATEGORIES.map((c) => (
                 <Toggle
-                  key={c.value}
-                  id={`cat-${c.value}`}
-                  checked={scan.categories.includes(c.value)}
+                  key={c}
+                  id={`cat-${c}`}
+                  checked={scan.categories.includes(c)}
                   disabled={running}
-                  onChange={() => dispatch(toggleCategory(c.value))}
-                  label={c.label}
+                  onChange={() => dispatch(toggleCategory(c))}
+                  label={t.distance[c]}
                 />
               ))}
             </div>
-            <p className="text-muted-foreground text-xs">
-              All races since 1984, including older ones missing from the race list. “Other” covers
-              swims, relays, pairs, stage races and other distances. The first scan reads every race's
-              distance once (cached afterwards).
-            </p>
+            <p className="text-muted-foreground text-xs">{t.town.racesHint}</p>
           </fieldset>
 
           <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -132,19 +127,19 @@ export function TownScan() {
               id="virtual"
               checked={scan.excludeVirtual}
               onChange={(v) => dispatch(setExcludeVirtual(v))}
-              label="Exclude virtual races"
+              label={t.town.excludeVirtual}
             />
             <Toggle
               id="merge"
               checked={scan.mergeSubLists}
               onChange={(v) => dispatch(setMergeSubLists(v))}
-              label="Count a run once (merge amateur-cup / championship sub-lists)"
+              label={t.town.mergeSubLists}
             />
             <Toggle
               id="best"
               checked={scan.bestOnly}
               onChange={(v) => dispatch(setBestOnly(v))}
-              label="One row per runner (best time)"
+              label={t.town.bestOnly}
             />
           </div>
 
@@ -153,17 +148,17 @@ export function TownScan() {
               <Progress value={running ? pct : 100} />
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 {running && <Loader2 className="size-3.5 animate-spin" />}
-                {running && scan.phase === 'resolving' && `Reading race distances… ${scan.done}/${scan.total || '?'}`}
-                {running && scan.phase === 'scanning' && `Scanning race lists… ${scan.done}/${scan.total}`}
-                {scan.status === 'done' && `Done — scanned ${scan.racesScanned} races.`}
-                {scan.status === 'cancelled' && 'Stopped. Showing what was found so far.'}
+                {running && scan.phase === 'resolving' && t.town.readingDistances(scan.done, scan.total || '?')}
+                {running && scan.phase === 'scanning' && t.town.scanning(scan.done, scan.total)}
+                {scan.status === 'done' && t.town.done(scan.racesScanned)}
+                {scan.status === 'cancelled' && t.common.stopped}
               </div>
             </div>
           )}
 
           {scan.status === 'failed' && (
             <Alert variant="destructive">
-              <AlertTitle>Scan failed</AlertTitle>
+              <AlertTitle>{t.town.failed}</AlertTitle>
               <AlertDescription>{scan.error}</AlertDescription>
             </Alert>
           )}
@@ -174,23 +169,20 @@ export function TownScan() {
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2">
-              Results
-              <Badge variant="secondary">{finishes.length} finishes</Badge>
-              <Badge variant="secondary">{runners} runners</Badge>
+              {t.town.results}
+              <Badge variant="secondary">{t.town.finishes(finishes.length)}</Badge>
+              <Badge variant="secondary">{t.town.runners(runners)}</Badge>
             </CardTitle>
-            <CardDescription>
-              Names are matched loosely (case, accents, “dr.”) when counting runners; “ifj.” is kept
-              apart.
-            </CardDescription>
+            <CardDescription>{t.town.matchingNote}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div>
               <Button variant="outline" size="sm" onClick={exportCsv} disabled={!finishes.length}>
-                <Download /> Download CSV
+                <Download /> {t.common.downloadCsv}
               </Button>
             </div>
             <div className="rounded-md border">
-              {scan.bestOnly ? <BestTable rows={best} /> : <FinishTable rows={finishes} />}
+              {scan.bestOnly ? <BestTable rows={best} t={t} /> : <FinishTable rows={finishes} t={t} />}
             </div>
           </CardContent>
         </Card>
@@ -221,19 +213,19 @@ function Toggle(props: {
   )
 }
 
-function FinishTable({ rows }: { rows: ScanRow[] }) {
+function FinishTable({ rows, t }: { rows: ScanRow[]; t: Messages }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Race</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Town</TableHead>
-          <TableHead>Cat.</TableHead>
-          <TableHead className="text-right">Place</TableHead>
-          <TableHead>Cat. place</TableHead>
-          <TableHead>Net time</TableHead>
+          <TableHead>{t.col.date}</TableHead>
+          <TableHead>{t.col.race}</TableHead>
+          <TableHead>{t.col.name}</TableHead>
+          <TableHead>{t.col.town}</TableHead>
+          <TableHead>{t.col.cat}</TableHead>
+          <TableHead className="text-right">{t.col.place}</TableHead>
+          <TableHead>{t.col.catPlace}</TableHead>
+          <TableHead>{t.col.netTime}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -253,25 +245,25 @@ function FinishTable({ rows }: { rows: ScanRow[] }) {
             <TableCell className="tabular-nums">{r.time}</TableCell>
           </TableRow>
         ))}
-        <EmptyRow show={!rows.length} cols={8} />
+        <EmptyRow show={!rows.length} cols={8} text={t.town.none} />
       </TableBody>
     </Table>
   )
 }
 
-function BestTable({ rows }: { rows: RunnerBest[] }) {
+function BestTable({ rows, t }: { rows: RunnerBest[]; t: Messages }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-10">#</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Town</TableHead>
-          <TableHead>Best time</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Race</TableHead>
-          <TableHead className="text-right">Place</TableHead>
-          <TableHead className="text-right">Finishes</TableHead>
+          <TableHead>{t.col.name}</TableHead>
+          <TableHead>{t.col.town}</TableHead>
+          <TableHead>{t.col.bestTime}</TableHead>
+          <TableHead>{t.col.date}</TableHead>
+          <TableHead>{t.col.race}</TableHead>
+          <TableHead className="text-right">{t.col.place}</TableHead>
+          <TableHead className="text-right">{t.col.finishes}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -291,18 +283,18 @@ function BestTable({ rows }: { rows: RunnerBest[] }) {
             <TableCell className="text-right tabular-nums">{r.finishes}</TableCell>
           </TableRow>
         ))}
-        <EmptyRow show={!rows.length} cols={8} />
+        <EmptyRow show={!rows.length} cols={8} text={t.town.none} />
       </TableBody>
     </Table>
   )
 }
 
-function EmptyRow({ show, cols }: { show: boolean; cols: number }) {
+function EmptyRow({ show, cols, text }: { show: boolean; cols: number; text: string }) {
   if (!show) return null
   return (
     <TableRow>
       <TableCell colSpan={cols} className="text-muted-foreground py-10 text-center">
-        No finishers found.
+        {text}
       </TableCell>
     </TableRow>
   )

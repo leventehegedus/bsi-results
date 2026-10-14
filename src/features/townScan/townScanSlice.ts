@@ -40,7 +40,7 @@ interface TownScanState {
 const initialState: TownScanState = {
   townsInput: 'Budapest',
   // every distance by default; untick the ones you don't need
-  categories: DISTANCE_CATEGORIES.map((c) => c.value),
+  categories: [...DISTANCE_CATEGORIES],
   excludeVirtual: true,
   mergeSubLists: true,
   bestOnly: false,

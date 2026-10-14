@@ -20,6 +20,7 @@ import { downloadCsv, slug, toCsv } from '@/lib/csv'
 import { distanceLabel, topValues } from '@/lib/runner'
 import { MARATHON_METRES, runnerKey } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useT, type Messages } from '@/i18n'
 import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import { cancelRunner, searchRunner, writeHash } from './runnerActions'
@@ -39,6 +40,7 @@ import {
 
 export function RunnerProfile() {
   const dispatch = useAppDispatch()
+  const t = useT()
   const r = useAppSelector((s) => s.runner)
   const all = useAppSelector(selectAllRunnerResults)
   const results = useAppSelector(selectRunnerResults)
@@ -77,11 +79,11 @@ export function RunnerProfile() {
 
   const exportCsv = () => {
     const csv = toCsv(
-      ['Date', 'Race', 'Distance', 'Name', 'Birth year', 'Net time', 'Place', 'Category', 'Cat. place', 'Town', 'Club', 'Race code'],
+      [t.col.date, t.col.race, t.col.distance, t.col.name, t.col.birthYear, t.col.netTime, t.col.place, t.col.category, t.col.catPlace, t.col.town, t.col.club, t.col.raceCode],
       results.map((x) => [
         x.date,
         x.raceName,
-        distanceLabel(x.distance),
+        distanceLabel(x.distance, t.distance),
         x.name,
         x.yob,
         x.time,
@@ -110,11 +112,8 @@ export function RunnerProfile() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Runner profile</CardTitle>
-          <CardDescription>
-            Click any runner's name in a results table, or search here by part of a name (at least{' '}
-            {MIN_QUERY_LENGTH} characters). A birth year keeps people who share a name apart.
-          </CardDescription>
+          <CardTitle>{t.runner.title}</CardTitle>
+          <CardDescription>{t.runner.description(MIN_QUERY_LENGTH)}</CardDescription>
         </CardHeader>
         <CardContent>
           <SearchForm
@@ -131,18 +130,16 @@ export function RunnerProfile() {
         (r.query ? (
           <Card className="items-center justify-center gap-3 py-12 text-center text-sm">
             <UserRound className="text-muted-foreground size-8 opacity-50" />
-            <p className="text-muted-foreground max-w-sm">
-              Searching every race takes a little while, so it only starts when you ask.
-            </p>
+            <p className="text-muted-foreground max-w-sm">{t.runner.linkIntro}</p>
             <Button onClick={runDraft} disabled={!draftQuery}>
               <Search />
               {draftQuery
-                ? `Search all races for “${draftQuery.name}”${queryDetails(draftQuery)}`
-                : `Type at least ${MIN_QUERY_LENGTH} characters of a name`}
+                ? t.runner.searchAll(draftQuery.name, queryDetails(draftQuery, t))
+                : t.runner.typeAtLeastName(MIN_QUERY_LENGTH)}
             </Button>
           </Card>
         ) : (
-          <EmptyState />
+          <EmptyState text={t.runner.empty} />
         ))}
 
       {r.status !== 'idle' && r.query && (
@@ -155,26 +152,26 @@ export function RunnerProfile() {
                 </div>
                 <div className="flex min-w-0 flex-col gap-2">
                   <CardTitle className="text-xl">
-                    {r.query.exact ? r.query.name : `Results for “${r.query.name}”`}
+                    {r.query.exact ? r.query.name : t.runner.resultsFor(r.query.name)}
                   </CardTitle>
                   <div className="flex flex-wrap gap-2">
                     {r.query.town && (
                       <Badge variant="secondary">
-                        <MapPin /> Only {r.query.town}
+                        <MapPin /> {t.runner.onlyTown(r.query.town)}
                       </Badge>
                     )}
                     {r.status === 'resolving' ? (
                       <Badge variant="outline">
-                        <Loader2 className="animate-spin" /> Looking up birth year…
+                        <Loader2 className="animate-spin" /> {t.runner.lookingUp}
                       </Badge>
                     ) : people > 1 ? (
-                      <Badge variant="secondary">{people} people</Badge>
+                      <Badge variant="secondary">{t.runner.people(people)}</Badge>
                     ) : singleYob ? (
-                      <Badge variant="secondary">Born {singleYob}</Badge>
+                      <Badge variant="secondary">{t.runner.born(singleYob)}</Badge>
                     ) : r.query.yob ? (
-                      <Badge variant="secondary">Born {r.query.yob}</Badge>
+                      <Badge variant="secondary">{t.runner.born(r.query.yob)}</Badge>
                     ) : (
-                      <Badge variant="outline">Birth year unknown</Badge>
+                      <Badge variant="outline">{t.runner.yobUnknown}</Badge>
                     )}
                     {people === 1 &&
                       towns.map((t) => (
@@ -190,7 +187,7 @@ export function RunnerProfile() {
                       ))}
                   </div>
                   {r.source && r.status === 'resolving' && (
-                    <CardDescription>from {r.source}</CardDescription>
+                    <CardDescription>{t.runner.fromSource(r.source)}</CardDescription>
                   )}
                 </div>
               </div>
@@ -202,35 +199,31 @@ export function RunnerProfile() {
                   <div className="text-muted-foreground flex items-center gap-2 text-xs">
                     <Loader2 className="size-3.5 animate-spin" />
                     {r.status === 'resolving'
-                      ? 'Working out the birth year from the result you clicked…'
-                      : `Searching all races… ${r.done.toLocaleString('hu-HU')}/${r.total.toLocaleString('hu-HU')}`}
+                      ? t.runner.workingOut
+                      : t.runner.searching(r.done.toLocaleString('hu-HU'), r.total.toLocaleString('hu-HU'))}
                   </div>
                 </div>
               )}
 
               {r.status === 'failed' && (
                 <Alert variant="destructive">
-                  <AlertTitle>Search failed</AlertTitle>
+                  <AlertTitle>{t.runner.failed}</AlertTitle>
                   <AlertDescription>{r.error}</AlertDescription>
                 </Alert>
               )}
               {r.failedRaces.length > 0 && !busy && (
                 <Alert>
                   <Info />
-                  <AlertTitle>
-                    {r.failedRaces.length === 1
-                      ? "1 race couldn't be searched"
-                      : `${r.failedRaces.length} races couldn't be searched`}
-                  </AlertTitle>
+                  <AlertTitle>{t.runner.racesFailed(r.failedRaces.length)}</AlertTitle>
                   <AlertDescription className="gap-2">
                     <p>
-                      results.futanet.hu returned errors even after retrying:{' '}
-                      {r.failedRaces
-                        .slice(0, 3)
-                        .map((x) => `${x.name} (${x.date.slice(0, 4)})`)
-                        .join(', ')}
-                      {r.failedRaces.length > 3 && ` and ${r.failedRaces.length - 3} more`}. The results below may
-                      be incomplete.
+                      {t.runner.racesFailedText(
+                        r.failedRaces
+                          .slice(0, 3)
+                          .map((x) => `${x.name} (${x.date.slice(0, 4)})`)
+                          .join(', '),
+                        r.failedRaces.length - 3,
+                      )}
                     </p>
                     <Button
                       variant="outline"
@@ -238,34 +231,31 @@ export function RunnerProfile() {
                       className="text-foreground w-fit"
                       onClick={() => r.query && searchRunner(dispatch, r.query, r.failedRaces)}
                     >
-                      Retry {r.failedRaces.length === 1 ? 'it' : `these ${r.failedRaces.length}`}
+                      {t.runner.retry(r.failedRaces.length)}
                     </Button>
                   </AlertDescription>
                 </Alert>
               )}
               {r.status === 'cancelled' && (
-                <p className="text-muted-foreground text-sm">Stopped. Showing what was found so far.</p>
+                <p className="text-muted-foreground text-sm">{t.common.stopped}</p>
               )}
               {people > 1 && !busy && (
                 <Alert>
                   <Info />
-                  <AlertTitle>Several people match</AlertTitle>
+                  <AlertTitle>{t.runner.severalTitle}</AlertTitle>
                   <AlertDescription className="gap-2">
-                    <p>
-                      Pick a birth year or town to narrow the results (also clickable in the table), or a
-                      name to open that person's profile.
-                    </p>
+                    <p>{t.runner.severalText}</p>
                     {yobOptions.length > 1 && (
                       <QuickFilters
-                        label="Birth year"
-                        options={yobOptions.map(([v, n]) => ({ key: v, label: v === 'unknown' ? 'unknown' : v, count: n }))}
+                        label={t.col.birthYear}
+                        options={yobOptions.map(([v, n]) => ({ key: v, label: v === 'unknown' ? t.runner.unknown : v, count: n }))}
                         onPick={(v) => dispatch(setFilterYob(v === 'unknown' ? 'unknown' : Number(v)))}
                       />
                     )}
                     {townOptions.length > 1 && (
                       <QuickFilters
-                        label="Town"
-                        options={townOptions.map(([v, n]) => ({ key: v, label: v || 'no town', count: n }))}
+                        label={t.col.town}
+                        options={townOptions.map(([v, n]) => ({ key: v, label: v || t.runner.noTown, count: n }))}
                         onPick={(v) => dispatch(setFilterTown(v))}
                       />
                     )}
@@ -274,10 +264,10 @@ export function RunnerProfile() {
               )}
 
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Finishes" value={results.length} />
-                <Stat label="Marathons" value={marathons} />
-                <Stat label="First race" value={yearsRun[0] ?? '–'} />
-                <Stat label="Latest race" value={yearsRun.at(-1) ?? '–'} />
+                <Stat label={t.runner.statFinishes} value={results.length} />
+                <Stat label={t.runner.statMarathons} value={marathons} />
+                <Stat label={t.runner.statFirst} value={yearsRun[0] ?? '–'} />
+                <Stat label={t.runner.statLatest} value={yearsRun.at(-1) ?? '–'} />
               </dl>
 
               <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -285,13 +275,13 @@ export function RunnerProfile() {
                   id="r-merge"
                   checked={r.mergeSubLists}
                   onChange={(v) => dispatch(setMergeSubLists(v))}
-                  label="Count a run once (merge sub-lists)"
+                  label={t.runner.mergeSubLists}
                 />
                 <Toggle
                   id="r-virtual"
                   checked={r.includeVirtual}
                   onChange={(v) => dispatch(setIncludeVirtual(v))}
-                  label="Include virtual races"
+                  label={t.runner.includeVirtual}
                 />
               </div>
             </CardContent>
@@ -300,30 +290,30 @@ export function RunnerProfile() {
           {pbs.length > 0 && (
             <Card className="min-w-0">
               <CardHeader>
-                <CardTitle>Personal bests</CardTitle>
-                <CardDescription>Fastest net time per distance (virtual races excluded).</CardDescription>
+                <CardTitle>{t.runner.pbTitle}</CardTitle>
+                <CardDescription>{t.runner.pbDescription}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Distance</TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Race</TableHead>
-                        <TableHead className="text-right">Place</TableHead>
-                        <TableHead className="text-right">Runs</TableHead>
+                        <TableHead>{t.col.distance}</TableHead>
+                        <TableHead>{t.col.time}</TableHead>
+                        <TableHead>{t.col.date}</TableHead>
+                        <TableHead>{t.col.race}</TableHead>
+                        <TableHead className="text-right">{t.col.place}</TableHead>
+                        <TableHead className="text-right">{t.col.runs}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {pbs.map((pb) => (
                         <TableRow key={pb.label}>
-                          <TableCell className="font-medium">{pb.label}</TableCell>
+                          <TableCell className="font-medium">{distanceLabel(pb.distance, t.distance)}</TableCell>
                           <TableCell className="font-semibold tabular-nums">{pb.best.time}</TableCell>
                           <TableCell className="tabular-nums">{pb.best.date}</TableCell>
                           <TableCell className="max-w-72 truncate" title={pb.best.raceName}>
-                            <LinkButton onClick={() => openRace(pb.best.raceId)}>{pb.best.raceName}</LinkButton>
+                            <LinkButton title={t.common.openRace} onClick={() => openRace(pb.best.raceId)}>{pb.best.raceName}</LinkButton>
                           </TableCell>
                           <TableCell className="text-right tabular-nums">{pb.best.place}</TableCell>
                           <TableCell className="text-right tabular-nums">{pb.count}</TableCell>
@@ -339,39 +329,38 @@ export function RunnerProfile() {
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
-                Results <Badge variant="secondary">{results.length}</Badge>
+                {t.runner.results} <Badge variant="secondary">{results.length}</Badge>
               </CardTitle>
               {r.status === 'done' && r.similarNames > 0 && (
-                <CardDescription>
-                  {r.similarNames} result{r.similarNames > 1 ? 's' : ''} for longer names containing “
-                  {r.query.name}” were left out.
-                </CardDescription>
+                <CardDescription>{t.runner.similarLeftOut(r.similarNames, r.query.name)}</CardDescription>
               )}
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={exportCsv} disabled={!results.length}>
-                  <Download /> Download CSV
+                  <Download /> {t.common.downloadCsv}
                 </Button>
                 {r.query.town && (
                   <FilterChip
                     onClear={() => r.query && searchRunner(dispatch, { ...r.query, town: null })}
-                    clearLabel="Search again without the town filter"
+                    clearLabel={t.runner.searchWithoutTown}
                   >
-                    <MapPin /> Town: {r.query.town}
+                    <MapPin /> {t.runner.townChip(r.query.town)}
                   </FilterChip>
                 )}
                 {r.filterYob !== null && (
-                  <FilterChip onClear={() => dispatch(setFilterYob(null))}>
-                    Born {r.filterYob === 'unknown' ? 'unknown' : r.filterYob}
+                  <FilterChip onClear={() => dispatch(setFilterYob(null))} clearLabel={t.common.removeFilter}>
+                    {t.runner.born(r.filterYob === 'unknown' ? t.runner.unknown : r.filterYob)}
                   </FilterChip>
                 )}
                 {r.filterTown !== null && (
-                  <FilterChip onClear={() => dispatch(setFilterTown(null))}>{r.filterTown || 'No town'}</FilterChip>
+                  <FilterChip onClear={() => dispatch(setFilterTown(null))} clearLabel={t.common.removeFilter}>
+                    {r.filterTown || t.runner.noTownChip}
+                  </FilterChip>
                 )}
                 {filtered && (
                   <span className="text-muted-foreground text-xs">
-                    {results.length} of {all.length} shown
+                    {t.runner.shown(results.length, all.length)}
                   </span>
                 )}
               </div>
@@ -379,16 +368,16 @@ export function RunnerProfile() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Race</TableHead>
-                      <TableHead>Distance</TableHead>
-                      {showName && <TableHead>Name</TableHead>}
-                      {showYob && <TableHead>Born</TableHead>}
-                      <TableHead>Net time</TableHead>
-                      <TableHead className="text-right">Place</TableHead>
-                      <TableHead>Cat. place</TableHead>
-                      <TableHead>Town</TableHead>
-                      <TableHead>Club</TableHead>
+                      <TableHead>{t.col.date}</TableHead>
+                      <TableHead>{t.col.race}</TableHead>
+                      <TableHead>{t.col.distance}</TableHead>
+                      {showName && <TableHead>{t.col.name}</TableHead>}
+                      {showYob && <TableHead>{t.col.born}</TableHead>}
+                      <TableHead>{t.col.netTime}</TableHead>
+                      <TableHead className="text-right">{t.col.place}</TableHead>
+                      <TableHead>{t.col.catPlace}</TableHead>
+                      <TableHead>{t.col.town}</TableHead>
+                      <TableHead>{t.col.club}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -396,14 +385,14 @@ export function RunnerProfile() {
                       <TableRow key={`${x.raceId}-${i}`}>
                         <TableCell className="tabular-nums">{x.date}</TableCell>
                         <TableCell className="max-w-72 truncate" title={x.raceName}>
-                          <LinkButton onClick={() => openRace(x.raceId)}>{x.raceName}</LinkButton>
+                          <LinkButton title={t.common.openRace} onClick={() => openRace(x.raceId)}>{x.raceName}</LinkButton>
                           {x.virtual && (
                             <Badge variant="outline" className="ml-2">
-                              virtual
+                              {t.runner.virtual}
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>{distanceLabel(x.distance)}</TableCell>
+                        <TableCell>{distanceLabel(x.distance, t.distance)}</TableCell>
                         {showName && (
                           <TableCell>
                             <RunnerLink
@@ -421,7 +410,7 @@ export function RunnerProfile() {
                             <FilterButton
                               active={r.filterYob === (x.yob ?? 'unknown')}
                               onClick={() => dispatch(setFilterYob(x.yob ?? 'unknown'))}
-                              title="Show only this birth year"
+                              title={t.runner.showOnlyYob}
                             >
                               {x.yob ?? '?'}
                             </FilterButton>
@@ -435,7 +424,7 @@ export function RunnerProfile() {
                             <FilterButton
                               active={r.filterTown === x.town}
                               onClick={() => dispatch(setFilterTown(x.town))}
-                              title="Show only this town"
+                              title={t.common.showOnlyTown}
                             >
                               {x.town}
                             </FilterButton>
@@ -451,7 +440,7 @@ export function RunnerProfile() {
                     {!results.length && (
                       <TableRow>
                         <TableCell colSpan={10} className="text-muted-foreground py-10 text-center">
-                          {busy ? 'Searching…' : 'No results found.'}
+                          {busy ? t.runner.searchingShort : t.runner.noneFound}
                         </TableCell>
                       </TableRow>
                     )}
@@ -501,6 +490,7 @@ function SearchForm(props: {
   busy: boolean
 }) {
   const { name, yob, town } = props.draft
+  const t = useT()
   const tooShort = !props.canSubmit
 
   const submit = (e: FormEvent) => {
@@ -511,41 +501,41 @@ function SearchForm(props: {
   return (
     <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_9rem_11rem_auto]">
       <div className="grid gap-1.5">
-        <Label htmlFor="runner-name">Name</Label>
+        <Label htmlFor="runner-name">{t.col.name}</Label>
         <Input
           id="runner-name"
           value={name}
-          placeholder="e.g. Hegedüs Levente, or just “Hegedüs”"
+          placeholder={t.runner.namePlaceholder}
           aria-describedby="runner-name-hint"
           onChange={(e) => props.onChange({ name: e.target.value })}
         />
         <p id="runner-name-hint" className="text-muted-foreground text-xs">
           {name.trim() && tooShort
-            ? `Type at least ${MIN_QUERY_LENGTH} characters.`
-            : 'Matches any name containing this text (accents ignored).'}
+            ? t.runner.typeAtLeast(MIN_QUERY_LENGTH)
+            : t.runner.nameHint}
         </p>
       </div>
       <div className="grid content-start gap-1.5">
-        <Label htmlFor="runner-yob">Birth year</Label>
+        <Label htmlFor="runner-yob">{t.col.birthYear}</Label>
         <Input
           id="runner-yob"
           inputMode="numeric"
-          placeholder="optional"
+          placeholder={t.runner.optional}
           value={yob}
           onChange={(e) => props.onChange({ yob: e.target.value.replace(/\D/g, '').slice(0, 4) })}
         />
       </div>
       <div className="grid content-start gap-1.5">
-        <Label htmlFor="runner-town">Town</Label>
+        <Label htmlFor="runner-town">{t.col.town}</Label>
         <Input
           id="runner-town"
-          placeholder="optional, e.g. Budapest"
+          placeholder={t.runner.townPlaceholder}
           aria-describedby="runner-town-hint"
           value={town}
           onChange={(e) => props.onChange({ town: e.target.value })}
         />
         <p id="runner-town-hint" className="text-muted-foreground text-xs">
-          Whole town name.
+          {t.runner.townHint}
         </p>
       </div>
       <div className="flex items-start sm:pt-[1.375rem]">
@@ -563,11 +553,11 @@ function SearchForm(props: {
               cancelRunner()
             }}
           >
-            <Square /> Stop
+            <Square /> {t.common.stop}
           </Button>
         ) : (
           <Button key="submit" type="submit" className="w-full sm:w-auto" disabled={tooShort}>
-            <Search /> Find results
+            <Search /> {t.runner.find}
           </Button>
         )}
       </div>
@@ -575,13 +565,11 @@ function SearchForm(props: {
   )
 }
 
-function EmptyState() {
+function EmptyState({ text }: { text: string }) {
   return (
     <Card className="text-muted-foreground items-center justify-center py-20 text-center text-sm">
       <UserRound className="size-8 opacity-50" />
-      <p className="max-w-sm">
-        Open a profile by clicking a runner's name in the Race browser or Town search results.
-      </p>
+      <p className="max-w-sm">{text}</p>
     </Card>
   )
 }
@@ -595,12 +583,12 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-function LinkButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function LinkButton({ children, onClick, title }: { children: React.ReactNode; onClick: () => void; title: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      title="Open race results"
+      title={title}
       className="cursor-pointer underline-offset-4 hover:underline"
     >
       {children}
@@ -626,8 +614,8 @@ function FilterButton(props: { children: React.ReactNode; onClick: () => void; a
 const MAX_TOWN_OPTIONS = 8
 
 /** " (born 1992, Zsombó)" for the optional parts of a query, or "". */
-function queryDetails(q: { yob: number | null; town?: string | null }) {
-  const parts = [q.yob ? `born ${q.yob}` : null, q.town || null].filter(Boolean)
+function queryDetails(q: { yob: number | null; town?: string | null }, t: Messages) {
+  const parts = [q.yob ? t.runner.bornDetail(q.yob) : null, q.town || null].filter(Boolean)
   return parts.length ? ` (${parts.join(', ')})` : ''
 }
 
@@ -659,11 +647,11 @@ function QuickFilters(props: {
 function FilterChip({
   children,
   onClear,
-  clearLabel = 'Remove filter',
+  clearLabel,
 }: {
   children: React.ReactNode
   onClear: () => void
-  clearLabel?: string
+  clearLabel: string
 }) {
   return (
     <Badge variant="secondary" className="gap-1 pr-1">
