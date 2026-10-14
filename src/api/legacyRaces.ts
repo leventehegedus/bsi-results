@@ -1,16 +1,18 @@
-/**
- * Budapest Marathon editions that exist in the API but are NOT returned by
- * /raceList/. Codes were discovered by probing /race/{code}; 1994–95 the race
- * was not held and no code was found for 2009.
- */
-export const LEGACY_BUDAPEST_MARATHON_CODES: string[] = [
-  ...range(1984, 1992).map((y) => `${y}_ibusz`),
-  '1993_mars',
-  ...range(1996, 2003).map((y) => `${y}_kaiser`),
-  ...range(2004, 2008).map((y) => `${y}_plus`),
-  ...range(2010, 2017).map((y) => `${y}_spar_e`),
-]
+import legacy from './legacyRaces.json'
 
-function range(from: number, to: number) {
-  return Array.from({ length: to - from + 1 }, (_, i) => from + i)
+export interface LegacyRace {
+  id: string
+  name: string
+  date: string
+  /** distance in metres as reported by the API (0 = unknown) */
+  tav: number
 }
+
+/**
+ * 390 races from 1984–2017 that exist in the API but are not returned by
+ * /raceList. Found by probing /race/{code} with every code suffix used in
+ * 2018–2020 (e.g. "_spar_e", "_nike_e", "_balaton_f_e") for each earlier year,
+ * plus the Budapest Marathon sponsor names (ibusz, mars, kaiser, plus).
+ * Lists marked empty ("ures") are left out. No 2009 Budapest Marathon was found.
+ */
+export const LEGACY_RACES: LegacyRace[] = legacy as LegacyRace[]

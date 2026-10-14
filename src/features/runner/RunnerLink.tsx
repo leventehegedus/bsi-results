@@ -9,6 +9,8 @@ export function RunnerLink(props: {
   raceName?: string
   place?: number | null
   bib?: string | null
+  /** known birth year: skips the lookup */
+  yob?: number | null
   className?: string
 }) {
   const dispatch = useAppDispatch()
@@ -24,6 +26,7 @@ export function RunnerLink(props: {
           raceName: props.raceName,
           place: props.place,
           bib: props.bib,
+          yob: props.yob,
         })
       }
       className={cn(

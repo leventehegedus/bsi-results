@@ -1,10 +1,11 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { getAllResults, getRace, getRaceList } from '@/api/futanet'
+import { getAllResults } from '@/api/futanet'
+import { getRaceFacts } from '@/api/raceIndex'
+import { getRaceCatalogue } from '@/api/runner'
 import type { RaceListItem } from '@/api/types'
-import { LEGACY_BUDAPEST_MARATHON_CODES } from '@/api/legacyRaces'
+import { categorize, type DistanceCategory } from '@/lib/distance'
 import { runPool } from '@/lib/pool'
 import {
-  MARATHON_METRES,
   bestPerRunner,
   mergeSubLists,
   sortByDateDesc,
@@ -14,26 +15,16 @@ import {
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
 
-/**
- * - marathon:  every race of exactly 42 195 m (sub-lists like amateur cups included,
- *              relays/half/split-stage formats excluded)
- * - budapest:  only the main SPAR/Budapest Marathon list of each year
- * - all:       every race in the list (≈2 200 races — slow)
- */
-export type ScanScope = 'marathon' | 'budapest' | 'all'
-
 export interface ScanOptions {
   towns: string[]
-  scope: ScanScope
-  includeLegacy: boolean
+  categories: DistanceCategory[]
 }
 
 type Status = 'idle' | 'running' | 'done' | 'cancelled' | 'failed'
 
 interface TownScanState {
   townsInput: string
-  scope: ScanScope
-  includeLegacy: boolean
+  categories: DistanceCategory[]
   excludeVirtual: boolean
   mergeSubLists: boolean
   bestOnly: boolean
@@ -48,8 +39,7 @@ interface TownScanState {
 
 const initialState: TownScanState = {
   townsInput: 'Makó',
-  scope: 'marathon',
-  includeLegacy: true,
+  categories: ['marathon'],
   excludeVirtual: true,
   mergeSubLists: true,
   bestOnly: false,
@@ -62,72 +52,31 @@ const initialState: TownScanState = {
   error: null,
 }
 
-const NON_MARATHON_RE =
-  /f[eé]lmaraton|negyed|hatod|harmad|nyolcad|stafét|váltó|valto|páros|paros|párban|parban|részlet|részben|minimaraton|mini maraton|relay|ekiden|túra|kerékpár|bringa|úszás|evez/i
-const MARATHON_NAME_RE = /maraton|marathon/i
-const BUDAPEST_MAIN_RE = /^\d{4}_spar_(42|e)$/
-
 const CONCURRENCY = 6
 
 export const parseTowns = (input: string) =>
   [...new Set(input.split(/[,;\n]/).map((t) => t.trim()).filter(Boolean))]
 
-/** Resolve which race codes to scan for the chosen scope. */
+/** Races (listed + older unlisted ones) whose distance falls in the chosen categories. */
 async function resolveRaces(
-  scope: ScanScope,
-  includeLegacy: boolean,
+  categories: DistanceCategory[],
   signal: AbortSignal,
   onProgress: (done: number, total: number) => void,
 ): Promise<RaceListItem[]> {
-  const list = await getRaceList({ signal })
-  let races: RaceListItem[]
-
-  if (scope === 'all') {
-    races = list
-  } else if (scope === 'budapest') {
-    races = list.filter((r) => BUDAPEST_MAIN_RE.test(r.id))
-  } else {
-    // Name heuristics first, then confirm the distance from race metadata.
-    const candidates = list.filter((r) => MARATHON_NAME_RE.test(r.name) && !NON_MARATHON_RE.test(r.name))
-    let done = 0
-    const metas = await runPool(
-      candidates,
-      CONCURRENCY,
-      async (r) => {
-        const m = await getRace(r.id, { signal }).catch(() => null)
-        onProgress(++done, candidates.length)
-        return m
-      },
-      signal,
-    )
-    races = candidates.filter((_, i) => {
-      const m = metas[i]
-      return m && (m.tav === MARATHON_METRES || (m.tav === 0 && MARATHON_NAME_RE.test(m.nev)))
-    })
-  }
-
-  if (includeLegacy && scope !== 'all') {
-    const have = new Set(races.map((r) => r.id))
-    const missing = LEGACY_BUDAPEST_MARATHON_CODES.filter((c) => !have.has(c))
-    const metas = await runPool(missing, CONCURRENCY, (c) => getRace(c, { signal }).catch(() => null), signal)
-    metas.forEach((m, i) => {
-      if (m) {
-        races.push({
-          id: missing[i],
-          name: m.nev.replace(/^[\d. ]+-\s*/, '').trim(),
-          date: m.datum.slice(0, 10),
-        })
-      }
-    })
-  }
-  return races
+  const races = await getRaceCatalogue({ signal })
+  const facts = await getRaceFacts(races, { signal, onProgress })
+  const wanted = new Set(categories)
+  return races.filter((r) => {
+    const f = facts.get(r.id)
+    return f && !f.empty && wanted.has(categorize(r.name, f.tav))
+  })
 }
 
 export const runTownScan = createAppAsyncThunk(
   'townScan/run',
   async (opts: ScanOptions, { dispatch, signal, rejectWithValue }) => {
     try {
-      const races = await resolveRaces(opts.scope, opts.includeLegacy, signal, (done, total) =>
+      const races = await resolveRaces(opts.categories, signal, (done, total) =>
         dispatch(progress({ phase: 'resolving', done, total })),
       )
       const jobs = races.flatMap((race) => opts.towns.map((town) => ({ race, town })))
@@ -160,11 +109,10 @@ const townScanSlice = createSlice({
     setTownsInput(s, a: PayloadAction<string>) {
       s.townsInput = a.payload
     },
-    setScope(s, a: PayloadAction<ScanScope>) {
-      s.scope = a.payload
-    },
-    setIncludeLegacy(s, a: PayloadAction<boolean>) {
-      s.includeLegacy = a.payload
+    toggleCategory(s, a: PayloadAction<DistanceCategory>) {
+      s.categories = s.categories.includes(a.payload)
+        ? s.categories.filter((c) => c !== a.payload)
+        : [...s.categories, a.payload]
     },
     setExcludeVirtual(s, a: PayloadAction<boolean>) {
       s.excludeVirtual = a.payload
@@ -213,8 +161,7 @@ const townScanSlice = createSlice({
 
 export const {
   setTownsInput,
-  setScope,
-  setIncludeLegacy,
+  toggleCategory,
   setExcludeVirtual,
   setMergeSubLists,
   setBestOnly,

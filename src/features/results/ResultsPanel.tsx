@@ -63,7 +63,7 @@ export function ResultsPanel() {
 
   if (!r.raceId) {
     return (
-      <Card className="text-muted-foreground items-center justify-center py-24 text-sm">
+      <Card className="text-muted-foreground min-w-0 items-center justify-center px-6 py-24 text-center text-sm">
         Pick a race on the left to see its results.
       </Card>
     )
@@ -79,6 +79,12 @@ export function ResultsPanel() {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     dispatch(setFilters(form))
+    dispatch(fetchResults(1))
+  }
+  const filterTown = (town: string) => {
+    const next = { ...form, town }
+    setForm(next)
+    dispatch(setFilters(next))
     dispatch(fetchResults(1))
   }
   const clear = () => {
@@ -231,7 +237,16 @@ export function ResultsPanel() {
                     <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
                       {columns.map((c) => (
                         <TableCell key={c.key} className={isNumericCol(c.key) ? 'tabular-nums' : ''}>
-                          {c.key === 'nev' ? (
+                          {c.key === 'varos' && row.varos ? (
+                            <button
+                              type="button"
+                              title="Show only this town"
+                              className="hover:bg-accent -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted underline-offset-4"
+                              onClick={() => filterTown(String(row.varos))}
+                            >
+                              {display(row, 'varos')}
+                            </button>
+                          ) : c.key === 'nev' ? (
                             <RunnerLink
                               name={display(row, 'nev')}
                               raceId={r.raceId!}

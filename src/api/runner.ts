@@ -1,7 +1,6 @@
-import { getRace, getRaceList, getResultPage } from './futanet'
-import { LEGACY_BUDAPEST_MARATHON_CODES } from './legacyRaces'
-import type { RaceListItem, RaceMeta, ResultFilters } from './types'
-import { runPool } from '@/lib/pool'
+import { getAllResults, getRace, getRaceList, getResultPage } from './futanet'
+import { LEGACY_RACES } from './legacyRaces'
+import type { RaceListItem, RaceMeta, ResultFilters, ResultRow } from './types'
 
 type Opts = { signal?: AbortSignal }
 
@@ -44,6 +43,41 @@ export async function findBirthYear(
   return lo
 }
 
+/** Identifies a row within one race list. */
+export const rowKey = (r: ResultRow) => `${r.hely ?? ''}|${r.nev ?? ''}|${r.rajtszam ?? ''}`
+
+/**
+ * Birth year for every row matching `filters` in one race, by recursively
+ * halving the year range and counting matches (~7 requests per distinct birth
+ * year). Rows the API has no birth year for stay absent from the map.
+ */
+export async function annotateBirthYears(
+  raceId: string,
+  filters: ResultFilters,
+  { signal }: Opts = {},
+): Promise<Map<string, number>> {
+  const years = new Map<string, number>()
+  const count = async (lo: number, hi: number) =>
+    (await getResultPage(raceId, 1, { ...filters, minYob: String(lo), maxYob: String(hi) }, { signal })).meta
+      .total
+
+  const walk = async (lo: number, hi: number, n: number): Promise<void> => {
+    if (lo === hi) {
+      const rows = await getAllResults(raceId, { ...filters, minYob: String(lo), maxYob: String(lo) }, { signal })
+      for (const r of rows) years.set(rowKey(r), lo)
+      return
+    }
+    const mid = Math.floor((lo + hi) / 2)
+    const left = await count(lo, mid)
+    if (left > 0) await walk(lo, mid, left)
+    if (n - left > 0) await walk(mid + 1, hi, n - left)
+  }
+
+  const total = await count(MIN_YEAR, MAX_YEAR)
+  if (total > 0) await walk(MIN_YEAR, MAX_YEAR, total)
+  return years
+}
+
 const metaCache = new Map<string, RaceMeta | null>()
 
 /** Race metadata with an in-memory cache (distance, name, date rarely change). */
@@ -57,25 +91,17 @@ export async function getRaceCached(code: string, opts: Opts = {}): Promise<Race
 let catalogue: Promise<RaceListItem[]> | null = null
 
 /**
- * Every race we know about: /raceList plus the older Budapest Marathon editions
- * that exist in the API but aren't listed. Cached for the session.
+ * Every race we know about: /raceList plus the older races that exist in the API
+ * but aren't listed (see legacyRaces.ts). Cached for the session.
  */
 export function getRaceCatalogue({ signal }: Opts = {}): Promise<RaceListItem[]> {
   catalogue ??= (async () => {
     const list = await getRaceList({ signal })
     const have = new Set(list.map((r) => r.id))
-    const missing = LEGACY_BUDAPEST_MARATHON_CODES.filter((c) => !have.has(c))
-    const metas = await runPool(missing, 6, (c) => getRaceCached(c, { signal }))
-    metas.forEach((m, i) => {
-      if (m) {
-        list.push({
-          id: missing[i],
-          name: m.nev.replace(/^[\d. ]+-\s*/, '').trim(),
-          date: m.datum.slice(0, 10),
-        })
-      }
-    })
-    return list
+    for (const r of LEGACY_RACES) {
+      if (!have.has(r.id)) list.push({ id: r.id, name: r.name, date: r.date })
+    }
+    return list.sort((a, b) => b.date.localeCompare(a.date))
   })().catch((e) => {
     catalogue = null
     throw e

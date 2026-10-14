@@ -1,0 +1,2342 @@
+[
+{
+"id": "2017pbalaton_sfe",
+"name": "K&H mozdulj! Balaton félmaraton párban - szombat",
+"date": "2017-11-25",
+"tav": 21097
+},
+{
+"id": "2017pbalaton_m_e",
+"name": "14. K&H mozdulj! Balaton maraton párban 2 nap, 3 szakasz",
+"date": "2017-11-25",
+"tav": 42195
+},
+{
+"id": "2017pbalaton_f_e",
+"name": "K&H mozdulj! Balaton félmaraton párban - vasárnap",
+"date": "2017-11-25",
+"tav": 21097
+},
+{
+"id": "2017pbalaton_3_e",
+"name": "K&H mozdulj! Balaton harmadmaraton párban",
+"date": "2017-11-25",
+"tav": 14065
+},
+{
+"id": "2017_balaton_sfe",
+"name": "K&H mozdulj! Balaton félmaraton - szombat",
+"date": "2017-11-25",
+"tav": 21097
+},
+{
+"id": "2017_balaton_m_e",
+"name": "14. K&H mozdulj! Balaton maraton - 2 nap, 3 szakasz",
+"date": "2017-11-25",
+"tav": 42195
+},
+{
+"id": "2017_balaton_f_e",
+"name": "K&H mozdulj! Balaton félmaraton - vasárnap",
+"date": "2017-11-25",
+"tav": 21097
+},
+{
+"id": "2017_balaton_6_e",
+"name": "K&H mozdulj! Balaton hatodmaraton",
+"date": "2017-11-25",
+"tav": 7032
+},
+{
+"id": "2017_balaton_3_e",
+"name": "K&H mozdulj! Balaton harmadmaraton",
+"date": "2017-11-25",
+"tav": 14065
+},
+{
+"id": "2017_balaton_2e",
+"name": "K&H mozdulj! Balaton félmaraton 2 részben",
+"date": "2017-11-25",
+"tav": 21097
+},
+{
+"id": "2017_balaton3m_e",
+"name": "K&H mozdulj! Balaton maraton - 1 nap, 3 szakasz",
+"date": "2017-11-25",
+"tav": 42195
+},
+{
+"id": "2017_balaton2m_e",
+"name": "K&H mozdulj! Balaton maraton - 2 nap, 2 szakasz",
+"date": "2017-11-25",
+"tav": 42195
+},
+{
+"id": "2017_rovid_e",
+"name": "10. Intersport Túranap, rövidtáv",
+"date": "2017-11-04",
+"tav": 9000
+},
+{
+"id": "2017_pilis_fk_e",
+"name": "Intersport Terepfélmaraton",
+"date": "2017-11-04",
+"tav": 21000
+},
+{
+"id": "2017_pilis_fh_e",
+"name": "Intersport Terepfutás, hosszútáv",
+"date": "2017-11-04",
+"tav": 31000
+},
+{
+"id": "2017_kozep_e",
+"name": "10. Intersport Túranap, középtáv",
+"date": "2017-11-04",
+"tav": 21200
+},
+{
+"id": "2017_hosszu_e",
+"name": "10. Intersport Túranap, hosszútáv",
+"date": "2017-11-04",
+"tav": 31200
+},
+{
+"id": "2017_v4_e",
+"name": "V4 Váltó",
+"date": "2017-10-15",
+"tav": 8000
+},
+{
+"id": "2017_staf_e",
+"name": "Flora Maratonstaféta",
+"date": "2017-10-15",
+"tav": 42195
+},
+{
+"id": "2017_spar_p_e",
+"name": "SPAR Budapest Maraton párban",
+"date": "2017-10-15",
+"tav": 42195
+},
+{
+"id": "2017_spar_g_e",
+"name": "32. SPAR Budapest Maraton HB és WC",
+"date": "2017-10-15",
+"tav": 42195
+},
+{
+"id": "2017_spar_e",
+"name": "32. SPAR Budapest Maraton",
+"date": "2017-10-15",
+"tav": 42195
+},
+{
+"id": "2017_spar_15_e",
+"name": "SPAR 5+10 km",
+"date": "2017-10-15",
+"tav": 15000
+},
+{
+"id": "2017_spar30_e",
+"name": "Theodora 30 km",
+"date": "2017-10-15",
+"tav": 30000
+},
+{
+"id": "2017_spar10_e",
+"name": "Actimel 10 km",
+"date": "2017-10-15",
+"tav": 10000
+},
+{
+"id": "2017_mini_g_e",
+"name": "Riska Minimaraton 5 km HB és WC",
+"date": "2017-10-15",
+"tav": 5000
+},
+{
+"id": "2017_mini_e",
+"name": "Riska Minimaraton 5 km",
+"date": "2017-10-15",
+"tav": 5000
+},
+{
+"id": "2017_nike_pceg_e",
+"name": "Wizz Air Budapest Félmaraton párban - Fut a cég",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_nike_p_e",
+"name": "Wizz Air Budapest Félmaraton párban",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_nike_g_e",
+"name": "32. Wizz Air Budapest Félmaraton, WC és HB",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_nike_e",
+"name": "32. Wizz Air Budapest Félmaraton",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_fbt_pap_e",
+"name": "Wizz Air Budapest Félmaraton Trió - Papageno Varázsfuvola Kupa",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_fbt_e",
+"name": "Wizz Air Budapest Félmaraton Trió",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_fbt_ceg_e",
+"name": "Wizz Air Budapest Félmaraton Trió - Fut a cég",
+"date": "2017-09-10",
+"tav": 21097
+},
+{
+"id": "2017_brutf_e",
+"name": "Brutálfutás 6.0 előfutamok összesítve",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf6_e",
+"name": "Brutálfutás 6.0 14 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf5_e",
+"name": "Brutálfutás 6.0 13 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf4_e",
+"name": "Brutálfutás 6.0 12 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf3_e",
+"name": "Brutálfutás 6.0 11 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf2_e",
+"name": "Brutálfutás 6.0 10 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_brutf1_e",
+"name": "Brutálfutás 6.0 9 órás futam",
+"date": "2017-06-18",
+"tav": 7000
+},
+{
+"id": "2017_felm_e",
+"name": "K&H mozdulj! félmaraton egyéni",
+"date": "2017-06-11",
+"tav": 21097
+},
+{
+"id": "2017_kekes_e",
+"name": "20. KPMG Kékes Csúcsfutás",
+"date": "2017-05-27",
+"tav": 11600
+},
+{
+"id": "2017_noi_v3_e",
+"name": "22. Női Futógála, 3 fős váltó",
+"date": "2017-05-21",
+"tav": 4500
+},
+{
+"id": "2017_noi_v3_c_e",
+"name": "22. Női Futógála, 3 fős váltó - Fut a cég",
+"date": "2017-05-21",
+"tav": 4500
+},
+{
+"id": "2017_noi_v2_e",
+"name": "22. Női Futógála, 10 km párban",
+"date": "2017-05-21",
+"tav": 10000
+},
+{
+"id": "2017_noi_v2_c_e",
+"name": "22. Női Futógála, 10 km párban - Fut a cég",
+"date": "2017-05-21",
+"tav": 10000
+},
+{
+"id": "2017_noi_t_e",
+"name": "22. Női Futógála, 10+5+2 km",
+"date": "2017-05-21",
+"tav": 17100
+},
+{
+"id": "2017_noi_rov_e",
+"name": "22. Női Futógála, 5 km",
+"date": "2017-05-21",
+"tav": 5000
+},
+{
+"id": "2017_noi_e",
+"name": "22. Női Futógála, 10 km",
+"date": "2017-05-21",
+"tav": 10000
+},
+{
+"id": "2017_noi_d_e",
+"name": "22. Női Futógála, 10+5 km",
+"date": "2017-05-21",
+"tav": 15000
+},
+{
+"id": "2017_szb_pl_4_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+ 4. nap",
+"date": "2017-03-26",
+"tav": 45200
+},
+{
+"id": "2017_szb_pl_3_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+ 3. nap",
+"date": "2017-03-25",
+"tav": 49700
+},
+{
+"id": "2017_szb_f_p_e",
+"name": "SPURI FélBalaton Szupermaraton párban",
+"date": "2017-03-25",
+"tav": 94900
+},
+{
+"id": "2017_szb_f_e",
+"name": "SPURI FélBalaton Szupermaraton",
+"date": "2017-03-25",
+"tav": 94900
+},
+{
+"id": "2017_szb_f_cs_e",
+"name": "SPURI FélBalaton Szupermaraton váltó",
+"date": "2017-03-25",
+"tav": 94900
+},
+{
+"id": "2017_marfured_e",
+"name": "SPURI MaratonFüred",
+"date": "2017-03-25",
+"tav": 42195
+},
+{
+"id": "2017_szb_pl_2_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+ 2. nap",
+"date": "2017-03-24",
+"tav": 52900
+},
+{
+"id": "2017_szb_obol_e",
+"name": "Spuri Öböl Félmaraton",
+"date": "2017-03-24",
+"tav": 21200
+},
+{
+"id": "2017_szb_pl_1_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+ 1. nap",
+"date": "2017-03-23",
+"tav": 48200
+},
+{
+"id": "2017_szb_p_e",
+"name": "SPURI Balaton Szupermaraton párban",
+"date": "2017-03-23",
+"tav": 196000
+},
+{
+"id": "2017_szb_e",
+"name": "SPURI Balaton Szupermaraton",
+"date": "2017-03-23",
+"tav": 196000
+},
+{
+"id": "2017_szb_cs_e",
+"name": "SPURI Balaton Szupermaraton váltó",
+"date": "2017-03-23",
+"tav": 196000
+},
+{
+"id": "2017_zima_e",
+"name": "2. Zúzmara Félmaraton",
+"date": "2017-01-14",
+"tav": 21097
+},
+{
+"id": "2017_zima_5k_e",
+"name": "Zúzmara Futófesztivál 5 km",
+"date": "2017-01-14",
+"tav": 5000
+},
+{
+"id": "2017_zima_10k_e",
+"name": "Zúzmara Futófesztivál 10 km",
+"date": "2017-01-14",
+"tav": 10000
+},
+{
+"id": "2016pbalaton_sfe",
+"name": "K&H mozdulj! Balaton félmaraton párban - szombat",
+"date": "2016-11-19",
+"tav": 21097
+},
+{
+"id": "2016pbalaton_m_e",
+"name": "13. K&H mozdulj! Balaton maraton párban",
+"date": "2016-11-19",
+"tav": 42195
+},
+{
+"id": "2016pbalaton_f_e",
+"name": "K&H mozdulj! Balaton félmaraton párban - vasárnap",
+"date": "2016-11-19",
+"tav": 21097
+},
+{
+"id": "2016pbalaton_3_e",
+"name": "K&H mozdulj! Balaton harmadmaraton párban",
+"date": "2016-11-19",
+"tav": 14065
+},
+{
+"id": "2016_balaton_sfe",
+"name": "K&H mozdulj! Balaton félmaraton - szombat",
+"date": "2016-11-19",
+"tav": 21097
+},
+{
+"id": "2016_balaton_m_e",
+"name": "13. K&H mozdulj! Balaton maraton",
+"date": "2016-11-19",
+"tav": 42195
+},
+{
+"id": "2016_balaton_f_e",
+"name": "K&H mozdulj! Balaton félmaraton - vasárnap",
+"date": "2016-11-19",
+"tav": 21097
+},
+{
+"id": "2016_balaton_6_e",
+"name": "K&H mozdulj! Balaton hatodmaraton",
+"date": "2016-11-19",
+"tav": 7032
+},
+{
+"id": "2016_balaton_3_e",
+"name": "K&H mozdulj! Balaton harmadmaraton",
+"date": "2016-11-19",
+"tav": 14065
+},
+{
+"id": "2016_balaton_2e",
+"name": "K&H mozdulj! Balaton félmaraton 2 részletben",
+"date": "2016-11-19",
+"tav": 21097
+},
+{
+"id": "2016_rovid_e",
+"name": "9. Intersport Túranap, rövidtáv",
+"date": "2016-11-05",
+"tav": 10100
+},
+{
+"id": "2016_pilis_fk_e",
+"name": "Intersport Terepfutás, középtáv",
+"date": "2016-11-05",
+"tav": 21400
+},
+{
+"id": "2016_pilis_fh_e",
+"name": "Intersport Terepfutás, hosszútáv",
+"date": "2016-11-05",
+"tav": 32700
+},
+{
+"id": "2016_kozep_e",
+"name": "9. Intersport Túranap, középtáv",
+"date": "2016-11-05",
+"tav": 21400
+},
+{
+"id": "2016_hosszu_e",
+"name": "9. Intersport Túranap, hosszútáv",
+"date": "2016-11-05",
+"tav": 32700
+},
+{
+"id": "2016_staf_e",
+"name": "Flora Maratonstaféta",
+"date": "2016-10-09",
+"tav": 42195
+},
+{
+"id": "2016_spar_g_e",
+"name": "31. SPAR Budapest Maraton HB és WC",
+"date": "2016-10-09",
+"tav": 42195
+},
+{
+"id": "2016_spar_e",
+"name": "31. SPAR Budapest Maraton",
+"date": "2016-10-09",
+"tav": 42195
+},
+{
+"id": "2016_spar30_e",
+"name": "Coca-Cola Testébresztő 30 km",
+"date": "2016-10-09",
+"tav": 30000
+},
+{
+"id": "2016_spar10_e",
+"name": "Actimel 10 km",
+"date": "2016-10-09",
+"tav": 10000
+},
+{
+"id": "2016_spar_15_e",
+"name": "SPAR 5+10 km",
+"date": "2016-10-08",
+"tav": 15000
+},
+{
+"id": "2016_mini_g_e",
+"name": "Riska Minimaraton HB és WC",
+"date": "2016-10-08",
+"tav": 5000
+},
+{
+"id": "2016_mini_e",
+"name": "Riska Minimaraton",
+"date": "2016-10-08",
+"tav": 5000
+},
+{
+"id": "2016_nike_pceg_e",
+"name": "Wizz Air Budapest Félmaraton párban - Fut a cég",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_nike_p_e",
+"name": "Wizz Air Budapest Félmaraton Párban",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_nike_g_e",
+"name": "31. Wizz Air Budapest Félmaraton WC és HB",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_nike_e",
+"name": "31. Wizz Air Budapest Félmaraton",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_fbt_e",
+"name": "Wizz Air Budapest Félmaraton Trió",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_fbt_ceg_e",
+"name": "Wizz Air Budapest Félmaraton Trió - Fut a cég",
+"date": "2016-09-11",
+"tav": 21097
+},
+{
+"id": "2016_brutf_e",
+"name": "BURGER KING Brutálfutás 5.0 előfutamok összesítve",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf6_e",
+"name": "BURGER KING Brutálfutás 5.0 14 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf5_e",
+"name": "BURGER KING Brutálfutás 5.0 13 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf4_e",
+"name": "BURGER KING Brutálfutás 5.0 12 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf3_e",
+"name": "BURGER KING Brutálfutás 5.0 11 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf2_e",
+"name": "BURGER KING Brutálfutás 5.0 10 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_brutf1_e",
+"name": "BURGER KING Brutálfutás 5.0 9 órás futam",
+"date": "2016-06-18",
+"tav": 7000
+},
+{
+"id": "2016_felm_e",
+"name": "K&H mozdulj! félmaraton egyéni",
+"date": "2016-06-12",
+"tav": 21097
+},
+{
+"id": "2016_kekes_e",
+"name": "19. KPMG Kékes Csúcsfutás",
+"date": "2016-06-04",
+"tav": 11600
+},
+{
+"id": "2016_noi_v3_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 3 fős váltó",
+"date": "2016-05-22",
+"tav": 4500
+},
+{
+"id": "2016_noi_v3_c_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 3 fős váltó - Fut a cég",
+"date": "2016-05-22",
+"tav": 4500
+},
+{
+"id": "2016_noi_v2_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 10 km párban",
+"date": "2016-05-22",
+"tav": 10000
+},
+{
+"id": "2016_noi_v2_c_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 10 km párban - Fut a cég",
+"date": "2016-05-22",
+"tav": 10000
+},
+{
+"id": "2016_noi_t_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 10+5+2 km",
+"date": "2016-05-22",
+"tav": 17100
+},
+{
+"id": "2016_noi_rov_g_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 5 km HB és WC",
+"date": "2016-05-22",
+"tav": 5000
+},
+{
+"id": "2016_noi_rov_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 5 km",
+"date": "2016-05-22",
+"tav": 5000
+},
+{
+"id": "2016_noi_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 10 km",
+"date": "2016-05-22",
+"tav": 10000
+},
+{
+"id": "2016_noi_d_e",
+"name": "21. Coca-Cola Testébresztő Női Futógála, 10+5 km",
+"date": "2016-05-22",
+"tav": 15000
+},
+{
+"id": "2016_szb_pl_4_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2016-03-20",
+"tav": 0
+},
+{
+"id": "2016_szb_pl_3_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2016-03-19",
+"tav": 0
+},
+{
+"id": "2016_szb_f_p_e",
+"name": "SPURI FélBalaton Szupermaraton Párban",
+"date": "2016-03-19",
+"tav": 0
+},
+{
+"id": "2016_szb_f_e",
+"name": "SPURI FélBalaton Szupermaraton",
+"date": "2016-03-19",
+"tav": 0
+},
+{
+"id": "2016_szb_f_cs_e",
+"name": "SPURI FélBalaton Szupermaraton Váltó",
+"date": "2016-03-19",
+"tav": 0
+},
+{
+"id": "2016_marfured_e",
+"name": "SPURI MaratonFüred",
+"date": "2016-03-19",
+"tav": 42195
+},
+{
+"id": "2016_szb_pl_2_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2016-03-18",
+"tav": 0
+},
+{
+"id": "2016_szb_obol_e",
+"name": "Spuri Öböl Félmaraton",
+"date": "2016-03-18",
+"tav": 21200
+},
+{
+"id": "2016_szb_pl_1_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2016-03-17",
+"tav": 0
+},
+{
+"id": "2016_szb_p_e",
+"name": "SPURI Balaton Szupermaraton Párban",
+"date": "2016-03-17",
+"tav": 0
+},
+{
+"id": "2016_szb_e",
+"name": "SPURI Balaton Szupermaraton",
+"date": "2016-03-17",
+"tav": 0
+},
+{
+"id": "2016_szb_cs_e",
+"name": "SPURI Balaton Szupermaraton Váltó",
+"date": "2016-03-17",
+"tav": 0
+},
+{
+"id": "2016_zima_e",
+"name": "Zúzmara Félmaraton",
+"date": "2016-01-17",
+"tav": 21097
+},
+{
+"id": "2015pbalaton_sfe",
+"name": "K&H mozdulj! Balaton Félmaraton párban - szombat",
+"date": "2015-11-14",
+"tav": 21097
+},
+{
+"id": "2015pbalaton_m_e",
+"name": "12. K&H mozdulj! Balaton Maraton párban",
+"date": "2015-11-14",
+"tav": 42195
+},
+{
+"id": "2015pbalaton_f_e",
+"name": "12. K&H mozdulj! Balaton félmaraton párban - vasárnap",
+"date": "2015-11-14",
+"tav": 21097
+},
+{
+"id": "2015pbalaton_3_e",
+"name": "K&H mozdulj! Balaton Harmadmaraton párban",
+"date": "2015-11-14",
+"tav": 14065
+},
+{
+"id": "2015_balaton_sfe",
+"name": "K&H mozdulj! Balaton Félmaraton - szombat",
+"date": "2015-11-14",
+"tav": 21097
+},
+{
+"id": "2015_balaton_m_e",
+"name": "12. K&H mozdulj! Balaton Maraton",
+"date": "2015-11-14",
+"tav": 42195
+},
+{
+"id": "2015_balaton_f_e",
+"name": "12. K&H mozdulj! Balaton Félmaraton - vasárnap",
+"date": "2015-11-14",
+"tav": 21097
+},
+{
+"id": "2015_balaton_6_e",
+"name": "K&H mozdulj! Balaton Hatodmaraton",
+"date": "2015-11-14",
+"tav": 7032
+},
+{
+"id": "2015_balaton_3_e",
+"name": "K&H mozdulj! Balaton Harmadmaraton",
+"date": "2015-11-14",
+"tav": 14065
+},
+{
+"id": "2015_balaton_2e",
+"name": "K&H mozdulj! Balaton Félmaraton 2 részletben",
+"date": "2015-11-14",
+"tav": 21097
+},
+{
+"id": "2015_pilis_fk_e",
+"name": "Intersport Terepfutás, középtáv",
+"date": "2015-11-07",
+"tav": 18330
+},
+{
+"id": "2015_pilis_fh_e",
+"name": "Intersport Terepfutás, hosszútáv",
+"date": "2015-11-07",
+"tav": 29360
+},
+{
+"id": "2015_staf_e",
+"name": "Flora Maratonstaféta",
+"date": "2015-10-11",
+"tav": 42195
+},
+{
+"id": "2015_spar_g_e",
+"name": "30. SPAR Budapest Maraton HB és WC",
+"date": "2015-10-11",
+"tav": 42195
+},
+{
+"id": "2015_spar_e",
+"name": "30. SPAR Budapest Maraton",
+"date": "2015-10-11",
+"tav": 42195
+},
+{
+"id": "2015_spar30_g_e",
+"name": "Coca-Cola Testébresztő 30 km HB és WC",
+"date": "2015-10-11",
+"tav": 30000
+},
+{
+"id": "2015_spar30_e",
+"name": "Coca-Cola Testébresztő 30 km",
+"date": "2015-10-11",
+"tav": 30000
+},
+{
+"id": "2015_spar10_e",
+"name": "SPAR Budapest Maraton 10 km",
+"date": "2015-10-11",
+"tav": 10000
+},
+{
+"id": "2015_nike_pceg_e",
+"name": "Wizz Air Budapest Félmaraton párban - Fut a cég",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_nike_p_e",
+"name": "Wizz Air Budapest Félmaraton Párban",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_nike_g_e",
+"name": "30. Wizz Air Budapest Félmaraton WC és HB",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_nike_e",
+"name": "30. Wizz Air Budapest Félmaraton",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_fbt_e",
+"name": "Wizz Air Budapest Félmaraton Trió",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_fbt_ceg_e",
+"name": "Wizz Air Budapest Félmaraton Trió - Fut a cég",
+"date": "2015-09-13",
+"tav": 21097
+},
+{
+"id": "2015_brutf_e",
+"name": "BURGER KING Brutálfutás 4.0 előfutamok összesítve",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf6_e",
+"name": "BURGER KING Brutálfutás 4.0 14 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf5_e",
+"name": "BURGER KING Brutálfutás 4.0 13 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf4_e",
+"name": "BURGER KING Brutálfutás 4.0 12 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf3_e",
+"name": "BURGER KING Brutálfutás 4.0 11 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf2_e",
+"name": "BURGER KING Brutálfutás 4.0 10 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_brutf1_e",
+"name": "BURGER KING Brutálfutás 4.0 9 órás futam",
+"date": "2015-06-20",
+"tav": 7000
+},
+{
+"id": "2015_felm_e",
+"name": "K&H mozdulj! félmaraton egyéni",
+"date": "2015-06-14",
+"tav": 21097
+},
+{
+"id": "2015_kekes_e",
+"name": "18. KPMG Kékes Csúcsfutás",
+"date": "2015-06-06",
+"tav": 11600
+},
+{
+"id": "2015_noi_v3_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 3×1,5 km",
+"date": "2015-05-17",
+"tav": 4500
+},
+{
+"id": "2015_noi_v3_c_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 3×1,5 km - Fut a cég",
+"date": "2015-05-17",
+"tav": 4500
+},
+{
+"id": "2015_noi_v2_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 10 km pár",
+"date": "2015-05-17",
+"tav": 10000
+},
+{
+"id": "2015_noi_v2_c_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 10 km pár - Fut a cég",
+"date": "2015-05-17",
+"tav": 10000
+},
+{
+"id": "2015_noi_t_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 10+5+2 km",
+"date": "2015-05-17",
+"tav": 17100
+},
+{
+"id": "2015_noi_rov_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 5 km",
+"date": "2015-05-17",
+"tav": 5000
+},
+{
+"id": "2015_noi_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 10 km",
+"date": "2015-05-17",
+"tav": 10000
+},
+{
+"id": "2015_noi_d_e",
+"name": "20. Coca-Cola Testébresztő Női Futógála, 10+5 km",
+"date": "2015-05-17",
+"tav": 15000
+},
+{
+"id": "2015_szb_pl_4_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2015-03-22",
+"tav": 50700
+},
+{
+"id": "2015_szb_pl_3_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2015-03-21",
+"tav": 43600
+},
+{
+"id": "2015_szb_f_p_e",
+"name": "SPURI FélBalaton Szupermaraton Párban",
+"date": "2015-03-21",
+"tav": 94300
+},
+{
+"id": "2015_szb_f_e",
+"name": "SPURI FélBalaton Szupermaraton",
+"date": "2015-03-21",
+"tav": 94300
+},
+{
+"id": "2015_szb_f_cs_e",
+"name": "SPURI FélBalaton Szupermaraton Váltó",
+"date": "2015-03-21",
+"tav": 94300
+},
+{
+"id": "2015_marfured_e",
+"name": "SPURI MaratonFüred",
+"date": "2015-03-21",
+"tav": 42195
+},
+{
+"id": "2015_szb_pl_2_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2015-03-20",
+"tav": 52900
+},
+{
+"id": "2015_szb_obol_e",
+"name": "Spuri Öböl Félmaraton",
+"date": "2015-03-20",
+"tav": 21097
+},
+{
+"id": "2015_szb_pl_1_e",
+"name": "SPURI Balaton Szupermaraton, Maraton+",
+"date": "2015-03-19",
+"tav": 48200
+},
+{
+"id": "2015_szb_p_e",
+"name": "SPURI Balaton Szupermaraton Párban",
+"date": "2015-03-19",
+"tav": 195400
+},
+{
+"id": "2015_szb_e",
+"name": "8. SPURI Balaton Szupermaraton",
+"date": "2015-03-19",
+"tav": 195400
+},
+{
+"id": "2015_szb_cs_e",
+"name": "SPURI Balaton Szupermaraton Váltó",
+"date": "2015-03-19",
+"tav": 195400
+},
+{
+"id": "2014_balaton_f_e",
+"name": "11. Intersport Balaton Félmaraton - vasárnap",
+"date": "2014-11-16",
+"tav": 21097
+},
+{
+"id": "2014pbalaton_sfe",
+"name": "Intersport Balaton Félmaraton párban - szombat",
+"date": "2014-11-15",
+"tav": 21097
+},
+{
+"id": "2014pbalaton_m_e",
+"name": "11. Intersport Balaton Maraton párban",
+"date": "2014-11-15",
+"tav": 42195
+},
+{
+"id": "2014pbalaton_f_e",
+"name": "11. Intersport Balaton Félmaraton párban - vasárnap",
+"date": "2014-11-15",
+"tav": 21097
+},
+{
+"id": "2014pbalaton_3_e",
+"name": "Intersport Balaton Harmadmaraton párban",
+"date": "2014-11-15",
+"tav": 14065
+},
+{
+"id": "2014_balaton_sfe",
+"name": "Intersport Balaton Félmaraton - szombat",
+"date": "2014-11-15",
+"tav": 21097
+},
+{
+"id": "2014_balaton_m_e",
+"name": "11. Intersport Balaton Maraton",
+"date": "2014-11-15",
+"tav": 42195
+},
+{
+"id": "2014_balaton_6_e",
+"name": "Intersport Balaton Hatodmaraton",
+"date": "2014-11-15",
+"tav": 7032
+},
+{
+"id": "2014_balaton_3_e",
+"name": "Intersport Balaton Harmadmaraton",
+"date": "2014-11-15",
+"tav": 14065
+},
+{
+"id": "2014_balaton_2e",
+"name": "Intersport Balaton Félmaraton 2 részletben",
+"date": "2014-11-15",
+"tav": 21097
+},
+{
+"id": "2014_pilis_fk_e",
+"name": "Intersport Terepfutás, középtáv",
+"date": "2014-11-08",
+"tav": 18330
+},
+{
+"id": "2014_pilis_fh_e",
+"name": "Intersport Terepfutás, hosszútáv",
+"date": "2014-11-08",
+"tav": 29360
+},
+{
+"id": "2014_staf_e",
+"name": "Flora Maratonstaféta",
+"date": "2014-10-11",
+"tav": 42195
+},
+{
+"id": "2014_spar_g_e",
+"name": "29. SPAR Budapest Nemzetközi Maraton HB és WC",
+"date": "2014-10-11",
+"tav": 42195
+},
+{
+"id": "2014_spar_e",
+"name": "29. SPAR Budapest Nemzetközi Maraton",
+"date": "2014-10-11",
+"tav": 42195
+},
+{
+"id": "2014_spar30_e",
+"name": "Coca-Cola Testébresztő 30 km",
+"date": "2014-10-11",
+"tav": 30000
+},
+{
+"id": "2014_mini_e",
+"name": "Riska Minimaraton",
+"date": "2014-10-11",
+"tav": 7000
+},
+{
+"id": "2014_nike_pceg_e",
+"name": "Wizz Air Budapest Félmaraton párban - Fut a cég",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_nike_p_e",
+"name": "Wizz Air Budapest Félmaraton Párban",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_nike_g_e",
+"name": "29. Wizz Air Budapest Félmaraton WC és HB",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_nike_e",
+"name": "29. Wizz Air Budapest Félmaraton",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_fbt_e",
+"name": "Wizz Air Budapest Félmaraton Trió",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_fbt_ceg_e",
+"name": "Wizz Air Budapest Félmaraton Trió - Fut a cég",
+"date": "2014-09-14",
+"tav": 21097
+},
+{
+"id": "2014_brutf6_e",
+"name": "Brutálfutás 3. 0 14 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_brutf5_e",
+"name": "Brutálfutás 3. 0 13 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_brutf4_e",
+"name": "Brutálfutás 3. 0 12 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_brutf3_e",
+"name": "Brutálfutás 3. 0 11 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_brutf2_e",
+"name": "Brutálfutás 3. 0 10 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_brutf1_e",
+"name": "Brutálfutás 3. 0 9 órás futam",
+"date": "2014-06-21",
+"tav": 7000
+},
+{
+"id": "2014_felm_e",
+"name": "21. K&H mozdulj! félmaraton egyéni",
+"date": "2014-06-15",
+"tav": 21097
+},
+{
+"id": "2014_kekes_e",
+"name": "17. Kékes Csúcsfutás",
+"date": "2014-05-24",
+"tav": 11600
+},
+{
+"id": "2014_noi_v3_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 3×1,5 km",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_v2_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 10 km pár",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_t_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 10+5+2 km",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_rov_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 5 km",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_g_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 10 km HB és WC",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 10 km",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_noi_d_e",
+"name": "19. Coca-Cola Testébresztő Női Futógála, 10+5 km",
+"date": "2014-05-18",
+"tav": 0
+},
+{
+"id": "2014_szb_pl_4_e",
+"name": "7. SPURI Balaton Szupermaraton, Maraton+",
+"date": "2014-03-24",
+"tav": 50700
+},
+{
+"id": "2014_szb_pl_3_e",
+"name": "7. SPURI Balaton Szupermaraton, Maraton+",
+"date": "2014-03-23",
+"tav": 43600
+},
+{
+"id": "2014_szb_f_p_e",
+"name": "7. SPURI FélBalaton Szupermaraton Párban",
+"date": "2014-03-23",
+"tav": 94300
+},
+{
+"id": "2014_szb_f_e",
+"name": "7. SPURI FélBalaton Szupermaraton",
+"date": "2014-03-23",
+"tav": 94300
+},
+{
+"id": "2014_szb_f_cs_e",
+"name": "7. SPURI FélBalaton Szupermaraton Váltó",
+"date": "2014-03-23",
+"tav": 94300
+},
+{
+"id": "2014_marfured_e",
+"name": "4. SPURI MaratonFüred",
+"date": "2014-03-23",
+"tav": 42195
+},
+{
+"id": "2014_szb_pl_2_e",
+"name": "7. SPURI Balaton Szupermaraton, Maraton+",
+"date": "2014-03-22",
+"tav": 52900
+},
+{
+"id": "2014_szb_pl_1_e",
+"name": "7. SPURI Balaton Szupermaraton, Maraton+",
+"date": "2014-03-21",
+"tav": 48200
+},
+{
+"id": "2014_szb_p_e",
+"name": "7. SPURI Balaton Szupermaraton Párban",
+"date": "2014-03-21",
+"tav": 195400
+},
+{
+"id": "2014_szb_obol_e",
+"name": "Spuri Öböl Félmaraton",
+"date": "2014-03-21",
+"tav": 21097
+},
+{
+"id": "2014_szb_e",
+"name": "7. SPURI Balaton Szupermaraton",
+"date": "2014-03-21",
+"tav": 195400
+},
+{
+"id": "2014_szb_cs_e",
+"name": "7. SPURI Balaton Szupermaraton Váltó",
+"date": "2014-03-21",
+"tav": 195400
+},
+{
+"id": "2013pbalaton_m_e",
+"name": "10. Intersport Balaton Maraton párban",
+"date": "2013-11-16",
+"tav": 42195
+},
+{
+"id": "2013pbalaton_f_e",
+"name": "10. Intersport Balaton Félmaraton párban",
+"date": "2013-11-16",
+"tav": 21097
+},
+{
+"id": "2013pbalaton_3_e",
+"name": "10. Intersport Balaton Harmadmaraton párban",
+"date": "2013-11-16",
+"tav": 14065
+},
+{
+"id": "2013_balaton_m_e",
+"name": "10. Intersport Balaton Maraton",
+"date": "2013-11-16",
+"tav": 42195
+},
+{
+"id": "2013_balaton_f_e",
+"name": "10. Intersport Balaton Félmaraton",
+"date": "2013-11-16",
+"tav": 21097
+},
+{
+"id": "2013_balaton_6_e",
+"name": "10. Intersport Balaton Hatodmaraton",
+"date": "2013-11-16",
+"tav": 7032
+},
+{
+"id": "2013_balaton_3_e",
+"name": "10. Intersport Balaton Harmadmaraton",
+"date": "2013-11-16",
+"tav": 14065
+},
+{
+"id": "2013_balaton_2e",
+"name": "10. Intersport Balaton Félmaraton 2 részletben",
+"date": "2013-11-16",
+"tav": 21097
+},
+{
+"id": "2013_staf_e",
+"name": "Flora Maratonstaféta",
+"date": "2013-10-13",
+"tav": 42195
+},
+{
+"id": "2013_spar_g_e",
+"name": "28. SPAR Budapest Nemzetközi Maraton HB és WC",
+"date": "2013-10-13",
+"tav": 42195
+},
+{
+"id": "2013_spar_e",
+"name": "28. SPAR Budapest Nemzetközi Maraton",
+"date": "2013-10-13",
+"tav": 42195
+},
+{
+"id": "2013_spar30_e",
+"name": "Coca-Cola Testébresztő 30 km",
+"date": "2013-10-13",
+"tav": 30000
+},
+{
+"id": "2013_mini_e",
+"name": "Riska Minimaraton",
+"date": "2013-10-13",
+"tav": 7000
+},
+{
+"id": "2013_nike_pceg_e",
+"name": "Nike Budapest Félmaraton párban - Fut a cég",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_nike_p_e",
+"name": "28. Nike Budapest Félmaraton Párban",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_nike_g_e",
+"name": "28. Nike Budapest Nemzetközi Félmaraton WC és HB",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_nike_e",
+"name": "28. Nike Budapest Nemzetközi Félmaraton",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_fbt_e",
+"name": "Nike Budapest Félmaraton Trió",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_fbt_ceg_e",
+"name": "Nike Budapest Félmaraton Trió - Fut a cég",
+"date": "2013-09-08",
+"tav": 21097
+},
+{
+"id": "2013_kekes_e",
+"name": "16. Kékes Csúcsfutás",
+"date": "2013-06-15",
+"tav": 0
+},
+{
+"id": "2013_felm_e",
+"name": "20. K&H olimpiai félmaraton egyéni",
+"date": "2013-06-09",
+"tav": 0
+},
+{
+"id": "2013_brutf6_e",
+"name": "2. BSI Brutálfutás 6. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_brutf5_e",
+"name": "2. BSI Brutálfutás 5. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_brutf4_e",
+"name": "2. BSI Brutálfutás 4. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_brutf3_e",
+"name": "2. BSI Brutálfutás 3. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_brutf2_e",
+"name": "2. BSI Brutálfutás 2. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_brutf1_e",
+"name": "2. BSI Brutálfutás 1. futam",
+"date": "2013-06-01",
+"tav": 7000
+},
+{
+"id": "2013_noi_v3_e",
+"name": "18. Coca-Cola Testébresztő Női Futógála váltó (3*1,5 km)",
+"date": "2013-05-18",
+"tav": 4500
+},
+{
+"id": "2013_noi_v2_e",
+"name": "18. Coca-Cola Testébresztő Női Futógála Párban",
+"date": "2013-05-18",
+"tav": 6000
+},
+{
+"id": "2013_noi_e",
+"name": "18. Coca-Cola Testébresztő Női Futógála",
+"date": "2013-05-18",
+"tav": 6000
+},
+{
+"id": "2013_noi_d_e",
+"name": "18. Coca-Cola Testébresztő Női Futógála 3+6 km",
+"date": "2013-05-18",
+"tav": 9000
+},
+{
+"id": "2013_szb_pl_4_e",
+"name": "6. BSI Balaton Szupermaraton Maraton+",
+"date": "2013-03-24",
+"tav": 50700
+},
+{
+"id": "2013_szb_pl_3_e",
+"name": "6. BSI Balaton Szupermaraton Maraton+",
+"date": "2013-03-23",
+"tav": 43600
+},
+{
+"id": "2013_szb_f_p_e",
+"name": "6. BSI FélBalaton Szupermaraton Páros",
+"date": "2013-03-23",
+"tav": 94300
+},
+{
+"id": "2013_szb_f_e",
+"name": "6. BSI FélBalaton Szupermaraton",
+"date": "2013-03-23",
+"tav": 94300
+},
+{
+"id": "2013_szb_f_cs_e",
+"name": "6. BSI FélBalaton Szupermaraton Váltó",
+"date": "2013-03-23",
+"tav": 94300
+},
+{
+"id": "2013_marfured_e",
+"name": "3. BSI MaratonFüred",
+"date": "2013-03-23",
+"tav": 42195
+},
+{
+"id": "2013_szb_pl_2_e",
+"name": "6. BSI Balaton Szupermaraton Maraton+",
+"date": "2013-03-22",
+"tav": 52900
+},
+{
+"id": "2013_szb_pl_1_e",
+"name": "6. BSI Balaton Szupermaraton Maraton+",
+"date": "2013-03-21",
+"tav": 48200
+},
+{
+"id": "2013_szb_p_e",
+"name": "6. BSI Balaton Szupermaraton Páros",
+"date": "2013-03-21",
+"tav": 195400
+},
+{
+"id": "2013_szb_e",
+"name": "6. BSI Balaton Szupermaraton",
+"date": "2013-03-21",
+"tav": 195400
+},
+{
+"id": "2013_szb_cs_e",
+"name": "6. BSI Balaton Szupermaraton Váltó",
+"date": "2013-03-21",
+"tav": 195400
+},
+{
+"id": "2012pbalaton_f_e",
+"name": "9. Intersport Balaton Félmaraton Párban",
+"date": "2012-11-18",
+"tav": 0
+},
+{
+"id": "2012pbalaton_m_e",
+"name": "9. Intersport Balaton Maraton Párban",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012pbalaton_3_e",
+"name": "9. Intersport Balaton Harmad Maraton Párban",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_balaton_m_e",
+"name": "9. Intersport Balaton Maraton",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_balaton_f_e",
+"name": "9. Intersport Balaton Félmaraton",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_balaton_6_e",
+"name": "9. Intersport Balaton Hatod Maraton",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_balaton_3_e",
+"name": "9. Intersport Balaton Harmadmaraton",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_balaton_2e",
+"name": "9. Intersport Balaton Félmaraton két részletben",
+"date": "2012-11-17",
+"tav": 0
+},
+{
+"id": "2012_staf_e",
+"name": "27. SPAR Budapest Nemzetközi Maraton - Staféta",
+"date": "2012-10-07",
+"tav": 42195
+},
+{
+"id": "2012_spar_e",
+"name": "27. SPAR Budapest Nemzetközi Maraton",
+"date": "2012-10-07",
+"tav": 42195
+},
+{
+"id": "2012_mini_e",
+"name": "27. SPAR Budapest Nemzetközi Maraton Minimaraton",
+"date": "2012-10-07",
+"tav": 7000
+},
+{
+"id": "2012_nike_pceg_e",
+"name": "27. Nike Budapest Nemzetközi Félmaraton Párban - Fut a cég",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_nike_p_e",
+"name": "27. Nike Budapest Nemzetközi Félmaraton Párban",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_nike_g_e",
+"name": "27. Nike Budapest Nemzetközi Félmaraton WC és HB",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_nike_e",
+"name": "27. Nike Budapest Nemzetközi Félmaraton",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_fbt_e",
+"name": "Nike Budapest Félmaraton Trió",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_fbt_ceg_e",
+"name": "Nike Budapest Félmaraton Trió - Fut a cég",
+"date": "2012-09-09",
+"tav": 21097
+},
+{
+"id": "2012_brutf_e",
+"name": "1. BSI Brutálfutás futamok",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_brutf5_e",
+"name": "1. BSI Brutálfutás 5.futam",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_brutf4_e",
+"name": "1. BSI Brutálfutás 4.futam",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_brutf3_e",
+"name": "1. BSI Brutálfutás 3.futam",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_brutf2_e",
+"name": "1. BSI Brutálfutás 2.futam",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_brutf1_e",
+"name": "1. BSI Brutálfutás 1.futam",
+"date": "2012-06-16",
+"tav": 7000
+},
+{
+"id": "2012_felm_e",
+"name": "19. K&H olimpiai félmaraton egyéni",
+"date": "2012-06-10",
+"tav": 21097
+},
+{
+"id": "2012_kekes_e",
+"name": "15. SMART Kékes Csúcsfutás",
+"date": "2012-06-02",
+"tav": 0
+},
+{
+"id": "2012_noi_e",
+"name": "17. Coca-Cola Testébresztő Női Futógála",
+"date": "2012-05-20",
+"tav": 7500
+},
+{
+"id": "2012_noi_d_e",
+"name": "17. Coca-Cola Testébresztő Női Futógála 7,5 + 3,5",
+"date": "2012-05-20",
+"tav": 7500
+},
+{
+"id": "2012_szb_pl_4_e",
+"name": "5. BSI Balaton Szupermaraton Maraton+",
+"date": "2012-03-18",
+"tav": 0
+},
+{
+"id": "2012_szb_pl_3_e",
+"name": "5. BSI Balaton Szupermaraton Maraton+",
+"date": "2012-03-17",
+"tav": 0
+},
+{
+"id": "2012_szb_f_p_e",
+"name": "3. BSI FélBalaton Szupermaraton Páros",
+"date": "2012-03-17",
+"tav": 0
+},
+{
+"id": "2012_szb_f_e",
+"name": "3. BSI FélBalaton Szupermaraton",
+"date": "2012-03-17",
+"tav": 0
+},
+{
+"id": "2012_szb_f_cs_e",
+"name": "3. BSI FélBalaton Szupermaraton Váltó",
+"date": "2012-03-17",
+"tav": 0
+},
+{
+"id": "2012_marfured_e",
+"name": "2. BSI MaratonFüred",
+"date": "2012-03-17",
+"tav": 42195
+},
+{
+"id": "2012_szb_pl_2_e",
+"name": "5. BSI Balaton Szupermaraton Maraton+",
+"date": "2012-03-16",
+"tav": 0
+},
+{
+"id": "2012_szb_pl_1_e",
+"name": "5. BSI Balaton Szupermaraton Maraton+",
+"date": "2012-03-15",
+"tav": 0
+},
+{
+"id": "2012_szb_p_e",
+"name": "5. BSI Balaton Szupermaraton Páros",
+"date": "2012-03-15",
+"tav": 0
+},
+{
+"id": "2012_szb_e",
+"name": "5. BSI Balaton Szupermaraton",
+"date": "2012-03-15",
+"tav": 195400
+},
+{
+"id": "2012_szb_cs_e",
+"name": "5. BSI Balaton Szupermaraton Váltó",
+"date": "2012-03-15",
+"tav": 195400
+},
+{
+"id": "2011_balaton_f_e",
+"name": "8. Intersport Balaton Félmaraton",
+"date": "2011-11-21",
+"tav": 0
+},
+{
+"id": "2011pbalaton_f_e",
+"name": "8. Intersport Balaton Félmaraton Párban",
+"date": "2011-11-20",
+"tav": 0
+},
+{
+"id": "2011_balaton_2e",
+"name": "8. Intersport Balaton Félmaraton két részletben",
+"date": "2011-11-20",
+"tav": 0
+},
+{
+"id": "2011pbalaton_m_e",
+"name": "8. Intersport Balaton Maraton Párban",
+"date": "2011-11-19",
+"tav": 0
+},
+{
+"id": "2011pbalaton_3_e",
+"name": "8. Intersport Balaton Harmad Maraton Párban",
+"date": "2011-11-19",
+"tav": 0
+},
+{
+"id": "2011_balaton_m_e",
+"name": "8. Intersport Balaton Maraton",
+"date": "2011-11-19",
+"tav": 0
+},
+{
+"id": "2011_balaton_6_e",
+"name": "8. Intersport Balaton Hatod Maraton",
+"date": "2011-11-19",
+"tav": 0
+},
+{
+"id": "2011_balaton_3_e",
+"name": "8. Intersport Balaton Harmadmaraton",
+"date": "2011-11-19",
+"tav": 0
+},
+{
+"id": "2011_staf_e",
+"name": "26. SPAR Budapest Nemzetközi Maraton - Staféta",
+"date": "2011-10-02",
+"tav": 42195
+},
+{
+"id": "2011_spar_e",
+"name": "26. SPAR Budapest Nemzetközi Maraton",
+"date": "2011-10-02",
+"tav": 42195
+},
+{
+"id": "2011_mini_e",
+"name": "26. SPAR Budapest Nemzetközi Maraton Minimaraton",
+"date": "2011-10-02",
+"tav": 7000
+},
+{
+"id": "2011_nike_p_e",
+"name": "26. Nike Budapest Nemzetközi Félmaraton Párban",
+"date": "2011-09-04",
+"tav": 21000
+},
+{
+"id": "2011_nike_g_e",
+"name": "26. Nike Budapest Nemzetközi Félmaraton WC és HB",
+"date": "2011-09-04",
+"tav": 21000
+},
+{
+"id": "2011_nike_e",
+"name": "26. Nike Budapest Nemzetközi Félmaraton",
+"date": "2011-09-04",
+"tav": 21097
+},
+{
+"id": "2011_fbt_e",
+"name": "Fuss Budapest Trió",
+"date": "2011-09-04",
+"tav": 21000
+},
+{
+"id": "2011_noi_e",
+"name": "16. Coca-Cola Testébresztő Női Futógála",
+"date": "2011-06-05",
+"tav": 7500
+},
+{
+"id": "2011_noi_d_e",
+"name": "16. Coca-Cola Testébresztő Női Futógála 7.5 + 3,5",
+"date": "2011-06-05",
+"tav": 11000
+},
+{
+"id": "2011_kekes_e",
+"name": "14. Kékes Csúcsfutás",
+"date": "2011-05-28",
+"tav": 0
+},
+{
+"id": "2011_felm_e",
+"name": "18. K&H olimpiai félmaraton egyéni",
+"date": "2011-05-15",
+"tav": 0
+},
+{
+"id": "2011_szb_pl_4_e",
+"name": "4. BSI Balaton Szupermaraton Maraton+",
+"date": "2011-03-20",
+"tav": 0
+},
+{
+"id": "2011_szb_pl_3_e",
+"name": "4. BSI Balaton Szupermaraton Maraton+",
+"date": "2011-03-19",
+"tav": 0
+},
+{
+"id": "2011_szb_f_p_e",
+"name": "2. BSI FélBalaton Szupermaraton Páros",
+"date": "2011-03-19",
+"tav": 0
+},
+{
+"id": "2011_szb_f_e",
+"name": "2. BSI FélBalaton Szupermaraton",
+"date": "2011-03-19",
+"tav": 0
+},
+{
+"id": "2011_szb_f_cs_e",
+"name": "2. BSI FélBalaton Szupermaraton Váltó",
+"date": "2011-03-19",
+"tav": 0
+},
+{
+"id": "2011_marfured_e",
+"name": "1. BSI MaratonFüred",
+"date": "2011-03-19",
+"tav": 42195
+},
+{
+"id": "2011_szb_pl_2_e",
+"name": "4. BSI Balaton Szupermaraton Maraton+",
+"date": "2011-03-18",
+"tav": 0
+},
+{
+"id": "2011_szb_pl_1_e",
+"name": "4. BSI Balaton Szupermaraton Maraton+",
+"date": "2011-03-17",
+"tav": 0
+},
+{
+"id": "2011_szb_p_e",
+"name": "4. BSI Balaton Szupermaraton Páros",
+"date": "2011-03-17",
+"tav": 0
+},
+{
+"id": "2011_szb_e",
+"name": "4. BSI Balaton Szupermaraton",
+"date": "2011-03-17",
+"tav": 195400
+},
+{
+"id": "2011_szb_cs_e",
+"name": "4. BSI Balaton Szupermaraton Váltó",
+"date": "2011-03-17",
+"tav": 195400
+},
+{
+"id": "2010pbalaton_f_e",
+"name": "7. Intersport Balaton Félmaraton Párban",
+"date": "2010-11-21",
+"tav": 0
+},
+{
+"id": "2010_balaton_f_e",
+"name": "7. Intersport Balaton Félmaraton",
+"date": "2010-11-21",
+"tav": 0
+},
+{
+"id": "2010_balaton_2e",
+"name": "7. Intersport Balaton Félmaraton két részletben",
+"date": "2010-11-21",
+"tav": 0
+},
+{
+"id": "2010pbalaton_m_e",
+"name": "7. Intersport Balaton Maraton Párban",
+"date": "2010-11-20",
+"tav": 0
+},
+{
+"id": "2010pbalaton_3_e",
+"name": "7. Intersport Balaton Harmad Maraton Párban",
+"date": "2010-11-20",
+"tav": 0
+},
+{
+"id": "2010_balaton_m_e",
+"name": "7. Intersport Balaton Maraton",
+"date": "2010-11-20",
+"tav": 0
+},
+{
+"id": "2010_balaton_6_e",
+"name": "7. Intersport Balaton Hatod Maraton",
+"date": "2010-11-20",
+"tav": 0
+},
+{
+"id": "2010_balaton_3_e",
+"name": "7. Intersport Balaton Harmadmaraton",
+"date": "2010-11-20",
+"tav": 0
+},
+{
+"id": "2010_noi_e",
+"name": "15. Coca-Cola Testébresztő Női Futógála",
+"date": "2010-10-17",
+"tav": 10000
+},
+{
+"id": "2010_noi_d_e",
+"name": "15. Coca-Cola Testébresztő Női Futógála 10 + 3,1",
+"date": "2010-10-17",
+"tav": 10000
+},
+{
+"id": "2010_spar_e",
+"name": "25. SPAR Budapest Nemzetközi Maraton",
+"date": "2010-09-26",
+"tav": 0
+},
+{
+"id": "2010_nike_p_e",
+"name": "25. Nike Budapest Nemzetközi Félmaraton Párban",
+"date": "2010-09-05",
+"tav": 21097
+},
+{
+"id": "2010_nike_e",
+"name": "25. Nike Budapest Nemzetközi Félmaraton",
+"date": "2010-09-05",
+"tav": 21097
+},
+{
+"id": "2010_kekes_e",
+"name": "13. Kékes Csúcsfutás",
+"date": "2010-06-12",
+"tav": 0
+},
+{
+"id": "2010_szb_e",
+"name": "3. BSI Balaton Szupermaraton",
+"date": "2010-02-10",
+"tav": 195400
+},
+{
+"id": "2009_nike_p_e",
+"name": "24. Nike Budapest Nemzetközi Félmaraton Párban",
+"date": "2009-09-06",
+"tav": 21097
+},
+{
+"id": "2009_szb_pl_4_e",
+"name": "2. BSI Balaton Szupermaraton Maraton+",
+"date": "2009-03-30",
+"tav": 195400
+},
+{
+"id": "2009_szb_p_e",
+"name": "2. BSI Balaton Szupermaraton Páros",
+"date": "2009-03-27",
+"tav": 195400
+},
+{
+"id": "2009_szb_e",
+"name": "2. BSI Balaton Szupermaraton",
+"date": "2009-03-19",
+"tav": 195400
+},
+{
+"id": "2009_szb_cs_e",
+"name": "2. BSI Balaton Szupermaraton Váltó",
+"date": "2009-03-19",
+"tav": 195400
+},
+{
+"id": "2008pbalaton_m_e",
+"name": "5. Intersport Balaton Maraton Párban",
+"date": "2008-11-16",
+"tav": 0
+},
+{
+"id": "2008pbalaton_f_e",
+"name": "5. Intersport Balaton Félmaraton Párban",
+"date": "2008-11-16",
+"tav": 0
+},
+{
+"id": "2008_balaton_2e",
+"name": "5. Intersport Balaton Félmaraton két részletben",
+"date": "2008-11-16",
+"tav": 0
+},
+{
+"id": "2008_balaton_3_e",
+"name": "5. Intersport Balaton Harmadmaraton",
+"date": "2008-11-15",
+"tav": 0
+},
+{
+"id": "2008_plus",
+"name": "23. Plus Budapest Nemzetközi Maraton",
+"date": "2008-10-05",
+"tav": 42195
+},
+{
+"id": "2008_nike_p_e",
+"name": "23. Nike Budapest Nemzetközi Félmaraton Párban",
+"date": "2008-09-07",
+"tav": 21097
+},
+{
+"id": "2008_szb_e",
+"name": "1. BSI Balaton Szupermaraton",
+"date": "2008-03-27",
+"tav": 0
+},
+{
+"id": "2008_szb_cs_e",
+"name": "1. BSI Balaton Szupermaraton Váltó",
+"date": "2008-03-27",
+"tav": 195400
+},
+{
+"id": "2007_plus",
+"name": "22. Plus Budapest Nemzetközi Maraton",
+"date": "2007-09-30",
+"tav": 0
+},
+{
+"id": "2007_nike_p_e",
+"name": "22. Nike Budapest Félmaraton Párban",
+"date": "2007-09-02",
+"tav": 21097
+},
+{
+"id": "2006_plus",
+"name": "21. Plus Budapest Maraton",
+"date": "2006-10-15",
+"tav": 42195
+},
+{
+"id": "2005_plus",
+"name": "20. Plus Budapest Maraton",
+"date": "2005-10-02",
+"tav": 42195
+},
+{
+"id": "2004_plus",
+"name": "19. Plus Budapest Maraton",
+"date": "2004-10-03",
+"tav": 42195
+},
+{
+"id": "2003_kaiser",
+"name": "18. Kaiser's Plus Budapest Maraton",
+"date": "2003-09-28",
+"tav": 42195
+},
+{
+"id": "2002_kaiser",
+"name": "17. Kaiser's Plus Budapest Maraton",
+"date": "2002-09-29",
+"tav": 42195
+},
+{
+"id": "2001_kaiser",
+"name": "16. Kaiser's Plus Budapest Maraton",
+"date": "2001-09-30",
+"tav": 42195
+},
+{
+"id": "2000_kaiser",
+"name": "15. Kaiser's Plus Budapest Maraton",
+"date": "2000-10-01",
+"tav": 42195
+},
+{
+"id": "1999_kaiser",
+"name": "14. Kaiser's Plus Budapest Maraton",
+"date": "1999-10-03",
+"tav": 42195
+},
+{
+"id": "1998_kaiser",
+"name": "13. Kaiser's Plus Budapest Maraton",
+"date": "1998-10-04",
+"tav": 42195
+},
+{
+"id": "1997_kaiser",
+"name": "12. Kaiser's Plus Budapest Maraton",
+"date": "1997-10-05",
+"tav": 42195
+},
+{
+"id": "1996_kaiser",
+"name": "11. Kaiser's Plus Budapest Maraton",
+"date": "1996-10-06",
+"tav": 42195
+},
+{
+"id": "1993_mars",
+"name": "10. Mars Budapest Maraton",
+"date": "1993-05-09",
+"tav": 42195
+},
+{
+"id": "1992_ibusz",
+"name": "9. IBUSZ Budapest Maraton",
+"date": "1992-05-10",
+"tav": 42195
+},
+{
+"id": "1991_ibusz",
+"name": "8. IBUSZ Budapest Maraton",
+"date": "1991-05-12",
+"tav": 42195
+},
+{
+"id": "1990_ibusz",
+"name": "7. IBUSZ Budapest Maraton",
+"date": "1990-05-13",
+"tav": 42195
+},
+{
+"id": "1989_ibusz",
+"name": "6. IBUSZ Budapest Maraton",
+"date": "1989-04-23",
+"tav": 42195
+},
+{
+"id": "1988_ibusz",
+"name": "5. IBUSZ Budapest Maraton",
+"date": "1988-04-24",
+"tav": 42195
+},
+{
+"id": "1987_ibusz",
+"name": "4. IBUSZ Budapest Maraton",
+"date": "1987-04-26",
+"tav": 42195
+},
+{
+"id": "1986_ibusz",
+"name": "3. IBUSZ Budapest Maraton",
+"date": "1986-04-20",
+"tav": 42195
+},
+{
+"id": "1985_ibusz",
+"name": "2. IBUSZ Budapest Maraton",
+"date": "1985-05-11",
+"tav": 42195
+},
+{
+"id": "1984_ibusz",
+"name": "1. IBUSZ Budapest Maraton",
+"date": "1984-04-14",
+"tav": 42195
+}
+]
