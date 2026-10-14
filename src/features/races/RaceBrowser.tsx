@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronRight, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -11,18 +11,20 @@ import { cn } from '@/lib/utils'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 import { selectRace } from '@/features/results/resultsSlice'
-import { fetchRaces, selectEventsByYear, setQuery, type VisibleEvent, type YearGroup } from './racesSlice'
-import { getRaceCached } from '@/api/runner'
-import type { RaceListItem, RaceMeta } from '@/api/types'
-import { runPool } from '@/lib/pool'
+import { selectEventsByYear, setQuery, type VisibleEvent, type YearGroup } from './racesSlice'
+import { useRaceCatalogueQuery, useRaceQuery } from '@/api/futanetApi'
+import type { RaceListItem } from '@/api/types'
 
 const MAX_VISIBLE = 150
+const CURRENT_YEAR = String(new Date().getFullYear())
 const CODE_RE = /^\d{4}[a-z0-9_]+$/i
 
 export function RaceBrowser() {
   const dispatch = useAppDispatch()
   const t = useT()
-  const { status, error, query } = useAppSelector((s) => s.races)
+  const query = useAppSelector((s) => s.races.query)
+  const catalogue = useRaceCatalogueQuery()
+  const status = catalogue.isError ? 'failed' : catalogue.isSuccess ? 'succeeded' : 'loading'
   const years = useAppSelector(selectEventsByYear)
   const selectedId = useAppSelector((s) => s.results.raceId)
   // explicit open/closed choices; otherwise groups open when searching or holding the selected race
@@ -30,13 +32,9 @@ export function RaceBrowser() {
   const searching = query.trim() !== ''
   const eventCount = years.reduce((n, y) => n + y.events.length, 0)
   const raceCount = years.reduce((n, y) => n + y.raceCount, 0)
-  const currentYear = String(new Date().getFullYear())
   // while searching, only years with matches are listed
   const shownYears = searching ? years.filter((y) => y.events.length) : years
 
-  useEffect(() => {
-    if (status === 'idle') dispatch(fetchRaces())
-  }, [dispatch, status])
 
   return (
     <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
@@ -58,7 +56,9 @@ export function RaceBrowser() {
           {status === 'failed' && (
             <Alert variant="destructive">
               <AlertTitle>{t.races.loadFailed}</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              {catalogue.error && 'message' in catalogue.error && (
+                <AlertDescription>{catalogue.error.message}</AlertDescription>
+              )}
             </Alert>
           )}
 
@@ -84,7 +84,7 @@ export function RaceBrowser() {
                     open={
                       openState[key] ??
                       (searching ||
-                        y.year === currentYear ||
+                        y.year === CURRENT_YEAR ||
                         y.events.some((e) => e.races.some((r) => r.id === selectedId)))
                     }
                     onOpenChange={(o) => setOpenState((m) => ({ ...m, [key]: o }))}
@@ -188,7 +188,7 @@ function EventGroup(props: {
   onSelect: (id: string) => void
 }) {
   const { event: ev } = props
-  const metas = useDuplicateMetas(ev.races, props.open)
+  const duplicates = useMemo(() => duplicateNames(ev.races), [ev.races])
   const dates = ev.from === ev.to ? ev.from : `${ev.from} – ${ev.to.slice(5)}`
   return (
     <li>
@@ -217,7 +217,7 @@ function EventGroup(props: {
               <li key={r.id}>
                 <RaceItem
                   race={r}
-                  meta={metas[r.id]}
+                  needsFullName={duplicates.has(r.name)}
                   selected={props.selectedId === r.id}
                   onSelect={props.onSelect}
                 />
@@ -230,45 +230,28 @@ function EventGroup(props: {
   )
 }
 
-/**
- * Several lists of an event often share a short name ("5 km", "Fut a cég"); their full
- * names ("LED's Run - 5 km - 20:00") only come with the race metadata. Loads it for
- * those lists once the event is opened.
- */
-function useDuplicateMetas(races: RaceListItem[], open: boolean) {
-  const [metas, setMetas] = useState<Record<string, RaceMeta>>({})
-  const ids = useMemo(() => {
-    const count = new Map<string, number>()
-    for (const r of races) count.set(r.name, (count.get(r.name) ?? 0) + 1)
-    return races.filter((r) => count.get(r.name)! > 1).map((r) => r.id)
-  }, [races])
-
-  useEffect(() => {
-    if (!open || !ids.length) return
-    let live = true
-    // no abort signal: getRaceCached would cache the aborted request as "not found"
-    void runPool(ids, 6, async (id) => {
-      const meta = await getRaceCached(id)
-      if (live && meta) setMetas((m) => ({ ...m, [id]: meta }))
-    })
-    return () => {
-      live = false
-    }
-  }, [open, ids])
-
-  return metas
+/** Short names used by more than one list of an event ("5 km", "Fut a cég"). */
+function duplicateNames(races: RaceListItem[]) {
+  const count = new Map<string, number>()
+  for (const r of races) count.set(r.name, (count.get(r.name) ?? 0) + 1)
+  return new Set([...count].filter(([, n]) => n > 1).map(([name]) => name))
 }
 
 function RaceItem(props: {
   race: RaceListItem
-  /** set when the short name isn't unique within the event */
-  meta?: RaceMeta
+  /**
+   * The short name isn't unique within the event: show the full name ("LED's Run -
+   * 5 km - 20:00"), which only comes with the race metadata. Items are only
+   * rendered while their event is open, so it's fetched (and cached) on demand.
+   */
+  needsFullName?: boolean
   selected: boolean
   onSelect: (id: string) => void
 }) {
   const r = props.race
   const t = useT()
-  const name = props.meta?.nev || r.name
+  const { data: meta } = useRaceQuery(r.id, { skip: !props.needsFullName })
+  const name = meta?.nev || r.name
   return (
     <button
       type="button"
@@ -281,7 +264,7 @@ function RaceItem(props: {
       <div className="text-sm font-medium break-words">{name}</div>
       <div className="text-muted-foreground font-mono text-xs">
         {r.date}
-        {props.meta?.meret === 0 && ` · ${t.races.noResults}`}
+        {meta?.meret === 0 && ` · ${t.races.noResults}`}
       </div>
     </button>
   )

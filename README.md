@@ -5,7 +5,7 @@ from the unofficial JSON API behind [results.futanet.hu](https://results.futanet
 collecting every finisher from a given town across many races.
 
 **Stack:** Vite · React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui (new-york, neutral) on Radix ·
-Redux Toolkit · axios · oxlint · Vercel
+Redux Toolkit (RTK Query) · axios · oxlint · Vercel
 
 The UI is in Hungarian and English (switch in the header; the choice is saved, otherwise the
 browser language decides).
@@ -81,12 +81,12 @@ name/club/country. Races from before 2020 that are not in `/raceList/` are liste
 
 ```
 src/
-  api/            axios client, typed endpoints, legacy race codes
+  api/            axios client, typed endpoints, RTK Query cache (futanetApi), legacy race codes
   components/ui/  shadcn/ui components (Radix primitives)
   i18n/           UI texts: en.ts (the shape), hu.ts, useT() hook; language in the ui slice
   features/
-    races/        race list slice + browser
-    results/      single-race results slice + panel
+    races/        race search slice + browser
+    results/      selected race / filters / page slice + results panel
     townScan/     multi-race town scan slice (thunk with progress/cancel) + UI
     runner/       runner profile: birth-year lookup, all-race scan, PBs, RunnerLink
     ui/           active tab

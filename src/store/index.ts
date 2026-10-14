@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
+import { futanetApi } from '@/api/futanetApi'
 import { racesReducer } from '@/features/races/racesSlice'
 import { resultsReducer } from '@/features/results/resultsSlice'
 import { townScanReducer } from '@/features/townScan/townScanSlice'
@@ -12,7 +13,9 @@ export const store = configureStore({
     townScan: townScanReducer,
     runner: runnerReducer,
     ui: uiReducer,
+    [futanetApi.reducerPath]: futanetApi.reducer,
   },
+  middleware: (getDefault) => getDefault().concat(futanetApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

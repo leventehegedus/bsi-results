@@ -1,6 +1,6 @@
-import { getAllResults, getRace, getRaceList, getResultPage } from './futanet'
+import { getAllResults, getRaceList, getResultPage } from './futanet'
 import { LEGACY_RACES } from './legacyRaces'
-import type { RaceListItem, RaceMeta, ResultFilters, ResultRow } from './types'
+import type { RaceListItem, ResultFilters, ResultRow } from './types'
 
 type Opts = { signal?: AbortSignal }
 
@@ -78,33 +78,16 @@ export async function annotateBirthYears(
   return years
 }
 
-const metaCache = new Map<string, RaceMeta | null>()
-
-/** Race metadata with an in-memory cache (distance, name, date rarely change). */
-export async function getRaceCached(code: string, opts: Opts = {}): Promise<RaceMeta | null> {
-  if (metaCache.has(code)) return metaCache.get(code)!
-  const meta = await getRace(code, opts).catch(() => null)
-  metaCache.set(code, meta)
-  return meta
-}
-
-let catalogue: Promise<RaceListItem[]> | null = null
-
 /**
  * Every race we know about: /raceList plus the older races that exist in the API
- * but aren't listed (see legacyRaces.ts). Cached for the session.
+ * but aren't listed (see legacyRaces.ts). Uncached: go through futanetApi
+ * (raceCatalogue) to share the cached copy.
  */
-export function getRaceCatalogue({ signal }: Opts = {}): Promise<RaceListItem[]> {
-  catalogue ??= (async () => {
-    const list = await getRaceList({ signal })
-    const have = new Set(list.map((r) => r.id))
-    for (const r of LEGACY_RACES) {
-      if (!have.has(r.id)) list.push({ id: r.id, name: r.name, date: r.date })
-    }
-    return list.sort((a, b) => b.date.localeCompare(a.date))
-  })().catch((e) => {
-    catalogue = null
-    throw e
-  })
-  return catalogue
+export async function loadRaceCatalogue({ signal }: Opts = {}): Promise<RaceListItem[]> {
+  const list = await getRaceList({ signal })
+  const have = new Set(list.map((r) => r.id))
+  for (const r of LEGACY_RACES) {
+    if (!have.has(r.id)) list.push({ id: r.id, name: r.name, date: r.date })
+  }
+  return list.sort((a, b) => b.date.localeCompare(a.date))
 }

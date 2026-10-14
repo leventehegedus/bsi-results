@@ -1,7 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { getAllResults } from '@/api/futanet'
 import { getRaceFacts } from '@/api/raceIndex'
-import { getRaceCatalogue } from '@/api/runner'
+import { fetchRaceCatalogue, fetchRaceMeta } from '@/api/futanetApi'
 import type { RaceListItem } from '@/api/types'
 import { categorize, DISTANCE_CATEGORIES, type DistanceCategory } from '@/lib/distance'
 import { runPool } from '@/lib/pool'
@@ -13,7 +13,7 @@ import {
   type ScanRow,
 } from '@/lib/results'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
-import type { RootState } from '@/store'
+import type { AppDispatch, RootState } from '@/store'
 
 export interface ScanOptions {
   towns: string[]
@@ -60,12 +60,13 @@ export const parseTowns = (input: string) =>
 
 /** Races (listed + older unlisted ones) whose distance falls in the chosen categories. */
 async function resolveRaces(
+  dispatch: AppDispatch,
   categories: DistanceCategory[],
   signal: AbortSignal,
   onProgress: (done: number, total: number) => void,
 ): Promise<RaceListItem[]> {
-  const races = await getRaceCatalogue({ signal })
-  const facts = await getRaceFacts(races, { signal, onProgress })
+  const races = await fetchRaceCatalogue(dispatch)
+  const facts = await getRaceFacts(races, { fetchMeta: (id) => fetchRaceMeta(dispatch, id), signal, onProgress })
   const wanted = new Set(categories)
   return races.filter((r) => {
     const f = facts.get(r.id)
@@ -77,7 +78,7 @@ export const runTownScan = createAppAsyncThunk(
   'townScan/run',
   async (opts: ScanOptions, { dispatch, signal, rejectWithValue }) => {
     try {
-      const races = await resolveRaces(opts.categories, signal, (done, total) =>
+      const races = await resolveRaces(dispatch, opts.categories, signal, (done, total) =>
         dispatch(progress({ phase: 'resolving', done, total })),
       )
       const jobs = races.flatMap((race) => opts.towns.map((town) => ({ race, town })))

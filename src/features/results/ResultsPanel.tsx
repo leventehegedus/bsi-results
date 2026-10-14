@@ -27,7 +27,9 @@ import {
 import { cleanTime } from '@/lib/results'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { fetchResults, loadRace, setFilters } from './resultsSlice'
+import { setFilters, setPage } from './resultsSlice'
+import { skipToken } from '@reduxjs/toolkit/query'
+import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import { useLang, useT, type Messages } from '@/i18n'
 
@@ -53,24 +55,35 @@ export function ResultsPanel() {
   const dispatch = useAppDispatch()
   const t = useT()
   const lang = useLang()
-  const r = useAppSelector((s) => s.results)
+  const { raceId, filters, page } = useAppSelector((s) => s.results)
+  // Cached per race / per (race, page, filters): going back to a race or page is instant,
+  // and a newer filter simply switches to another cache entry.
+  const metaQuery = useRaceQuery(raceId ?? skipToken)
+  const detailsQuery = useRaceDetailsQuery(raceId ?? skipToken)
+  const pageQuery = useResultPageQuery(raceId ? { raceId, page, filters } : skipToken)
+  // the panel is keyed by race, so the form starts empty for every race
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
-  /** the in-flight results request, aborted when a newer filter replaces it */
-  const pending = useRef<{ abort: () => void } | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
-  useEffect(() => {
-    if (!r.raceId) return
-    setForm({})
-    const a = dispatch(loadRace(r.raceId))
-    pending.current = dispatch(fetchResults(1))
-    return () => {
-      window.clearTimeout(timer.current)
-      a.abort()
-      pending.current?.abort()
-    }
-  }, [dispatch, r.raceId])
+  useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  const r = {
+    raceId,
+    filters,
+    page,
+    meta: metaQuery.data ?? null,
+    metaStatus: metaQuery.isLoading ? 'loading' : metaQuery.isError ? 'failed' : 'succeeded',
+    fields: detailsQuery.data?.fields ?? [],
+    categories: detailsQuery.data?.categories ?? [],
+    countries: detailsQuery.data?.countries ?? [],
+    // while a new page/filter loads, the previous rows stay visible (dimmed)
+    rows: pageQuery.data?.data ?? [],
+    total: pageQuery.data?.meta.total ?? 0,
+    lastPage: pageQuery.data?.meta.last_page ?? 1,
+    status: pageQuery.isError ? 'failed' : pageQuery.isFetching ? 'loading' : pageQuery.isSuccess ? 'succeeded' : 'idle',
+    error: pageQuery.error && 'message' in pageQuery.error ? pageQuery.error.message : null,
+  }
 
   if (!r.raceId) {
     return (
@@ -90,15 +103,11 @@ export function ResultsPanel() {
         label: fallbackHeaders(t)[k] ?? k,
       }))
 
-  /** Update the filters and reload page 1, right away or after `delay` ms. */
+  /** Update the filters (back to page 1), right away or after `delay` ms. */
   const apply = (next: ResultFilters, delay = 0) => {
     setForm(next)
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => {
-      pending.current?.abort()
-      dispatch(setFilters(next))
-      pending.current = dispatch(fetchResults(1))
-    }, delay)
+    timer.current = window.setTimeout(() => dispatch(setFilters(next)), delay)
   }
   const setFilter = (key: keyof ResultFilters, value: string | undefined, delay = 0) =>
     apply({ ...form, [key]: value || undefined }, delay)
@@ -276,7 +285,7 @@ export function ResultsPanel() {
               className="size-8"
               aria-label={t.results.prevPage}
               disabled={r.page <= 1 || r.status === 'loading'}
-              onClick={() => dispatch(fetchResults(r.page - 1))}
+              onClick={() => dispatch(setPage(r.page - 1))}
             >
               <ChevronLeft />
             </Button>
@@ -289,7 +298,7 @@ export function ResultsPanel() {
               className="size-8"
               aria-label={t.results.nextPage}
               disabled={r.page >= r.lastPage || r.status === 'loading'}
-              onClick={() => dispatch(fetchResults(r.page + 1))}
+              onClick={() => dispatch(setPage(r.page + 1))}
             >
               <ChevronRight />
             </Button>

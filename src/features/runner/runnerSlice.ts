@@ -1,6 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { getAllResults } from '@/api/futanet'
-import { annotateBirthYears, findBirthYear, getRaceCached, getRaceCatalogue, rowKey } from '@/api/runner'
+import { fetchRaceCatalogue, fetchRaceMeta } from '@/api/futanetApi'
+import { annotateBirthYears, findBirthYear, rowKey } from '@/api/runner'
 import type { RaceListItem, ResultFilters } from '@/api/types'
 import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
@@ -103,7 +104,7 @@ export const scanRunner = createAppAsyncThunk(
   'runner/scan',
   async ({ races: only, ...query }: RunnerQuery & { races?: RaceListItem[] }, { dispatch, signal, rejectWithValue, requestId }) => {
     try {
-      const races = only ?? (await getRaceCatalogue({ signal }))
+      const races = only ?? (await fetchRaceCatalogue(dispatch))
       dispatch(progress({ requestId, done: 0, total: races.length }))
 
       const filters: ResultFilters = { name: query.name }
@@ -147,7 +148,7 @@ export const scanRunner = createAppAsyncThunk(
             if (!query.yob && kept.length <= MAX_ROWS_TO_ANNOTATE) {
               years = await annotateBirthYears(race.id, filters, { signal }).catch(() => years)
             }
-            const meta = await getRaceCached(race.id, { signal })
+            const meta = await fetchRaceMeta(dispatch, race.id)
             dispatch(
               found({
                 requestId,
