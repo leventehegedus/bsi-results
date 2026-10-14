@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { futanetApi } from '@/api/futanetApi'
 import { weatherApi } from '@/api/weatherApi'
+import { favouritesReducer } from '@/features/favourites/favouritesSlice'
 import { racesReducer } from '@/features/races/racesSlice'
 import { resultsReducer } from '@/features/results/resultsSlice'
 import { townScanReducer } from '@/features/townScan/townScanSlice'
@@ -9,6 +10,7 @@ import { uiReducer } from '@/features/ui/uiSlice'
 
 export const store = configureStore({
   reducer: {
+    favourites: favouritesReducer,
     races: racesReducer,
     results: resultsReducer,
     townScan: townScanReducer,

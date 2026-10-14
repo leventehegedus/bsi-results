@@ -3,7 +3,7 @@ import { Download, Info, Loader2, MapPin, Search, Square, UserRound, Users, X } 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,6 +24,8 @@ import { useT, type Messages } from '@/i18n'
 import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import { cancelRunner, searchRunner, writeHash } from './runnerActions'
+import { FavouriteButton } from '@/features/favourites/FavouriteButton'
+import { sameRunner, toggleRunner } from '@/features/favourites/favouritesSlice'
 import { RunnerLink } from './RunnerLink'
 import { ProgressionChart } from './ProgressionChart'
 import {
@@ -50,6 +52,9 @@ export function RunnerProfile() {
   const pbs = useAppSelector(selectPersonalBests)
   const progress = useAppSelector(selectProgressions)
   const busy = r.status === 'resolving' || r.status === 'scanning'
+  const savedRunners = useAppSelector((s) => s.favourites.runners)
+  const current = r.query ? { name: r.query.name, yob: r.query.yob ?? singleYobOf(all) } : null
+  const savedCurrent = !!current && savedRunners.some((x) => sameRunner(x, current))
 
   // The search fields; they follow the active profile (or a shared link) but stay editable,
   // and both "Find results" and the link's "Search all races" button use them.
@@ -117,8 +122,47 @@ export function RunnerProfile() {
         <CardHeader>
           <CardTitle>{t.runner.title}</CardTitle>
           <CardDescription>{t.runner.description(MIN_QUERY_LENGTH)}</CardDescription>
+          {current && (
+            <CardAction>
+              <FavouriteButton
+                active={savedCurrent}
+                addLabel={t.favourites.addRunner}
+                removeLabel={t.favourites.removeRunner}
+                withText
+                onToggle={() => dispatch(toggleRunner(current))}
+              />
+            </CardAction>
+          )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          {savedRunners.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground text-xs">{t.favourites.runners}</span>
+              {savedRunners.map((x) => (
+                <span key={`${x.name}-${x.yob ?? ''}`} className="bg-muted/60 flex items-center rounded-full border text-xs">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    title={t.favourites.openRunner(x.name)}
+                    className="hover:text-brand py-1 pr-1 pl-2.5 disabled:opacity-50"
+                    onClick={() => searchRunner(dispatch, { name: x.name, yob: x.yob, exact: true })}
+                  >
+                    {x.name}
+                    {x.yob ? <span className="text-muted-foreground"> · {x.yob}</span> : null}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t.favourites.remove}
+                    title={t.favourites.remove}
+                    className="text-muted-foreground hover:text-foreground py-1 pr-2 pl-1"
+                    onClick={() => dispatch(toggleRunner(x))}
+                  >
+                    <X className="size-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           <SearchForm
             draft={draft}
             onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
@@ -654,6 +698,12 @@ function queryDetails(q: { yob: number | null; town?: string | null }, t: Messag
 }
 
 /** [value, count] pairs, most frequent first. */
+/** The one birth year behind the current results, when they're all the same person. */
+function singleYobOf(rows: { yob: number | null }[]): number | null {
+  const years = new Set(rows.map((x) => x.yob))
+  return years.size === 1 ? ([...years][0] ?? null) : null
+}
+
 function countBy<T>(values: T[]): [T, number][] {
   const counts = new Map<T, number>()
   for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)

@@ -1,5 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { getAllResults } from '@/api/futanet'
+import { getCachedTownRows, isFinal, putCachedTownRows } from '@/api/scanCache'
 import { getRaceFacts } from '@/api/raceIndex'
 import { fetchRaceCatalogue, fetchRaceMeta } from '@/api/futanetApi'
 import type { RaceListItem } from '@/api/types'
@@ -34,6 +35,8 @@ interface TownScanState {
   total: number
   rows: ScanRow[]
   racesScanned: number
+  /** race + town lookups answered from the local cache instead of the network */
+  fromCache: number
   error: string | null
 }
 
@@ -50,6 +53,7 @@ const initialState: TownScanState = {
   total: 0,
   rows: [],
   racesScanned: 0,
+  fromCache: 0,
   error: null,
 }
 
@@ -83,21 +87,27 @@ export const runTownScan = createAppAsyncThunk(
       )
       const jobs = races.flatMap((race) => opts.towns.map((town) => ({ race, town })))
       let done = 0
+      let cacheHits = 0
       dispatch(progress({ phase: 'scanning', done, total: jobs.length }))
 
       const chunks = await runPool(
         jobs,
         CONCURRENCY,
         async ({ race, town }) => {
-          const rows = await getAllResults(race.id, { town }, { signal })
-          const mapped = rows.map((r) => toScanRow(r, race, town))
+          // A finished race's result list never changes, so the same race + town
+          // question is answered from IndexedDB on every later scan.
+          const final = isFinal(race.date)
+          const cached = final ? await getCachedTownRows(race.id, town) : null
+          const mapped = cached ?? (await getAllResults(race.id, { town }, { signal })).map((r) => toScanRow(r, race, town))
+          if (cached) cacheHits++
+          else if (final) void putCachedTownRows(race.id, town, mapped)
           dispatch(progress({ phase: 'scanning', done: ++done, total: jobs.length }))
           if (mapped.length) dispatch(rowsFound(mapped))
           return mapped.length
         },
         signal,
       )
-      return { racesScanned: races.length, found: chunks.reduce((a, b) => a + b, 0) }
+      return { racesScanned: races.length, found: chunks.reduce((a, b) => a + b, 0), fromCache: cacheHits }
     } catch (e) {
       return rejectWithValue(errorMessage(e))
     }
@@ -142,12 +152,14 @@ const townScanSlice = createSlice({
       s.total = 0
       s.rows = []
       s.racesScanned = 0
+      s.fromCache = 0
       s.error = null
     })
       .addCase(runTownScan.fulfilled, (s, a) => {
         s.status = 'done'
         s.phase = null
         s.racesScanned = a.payload.racesScanned
+        s.fromCache = a.payload.fromCache
       })
       .addCase(runTownScan.rejected, (s, a) => {
         s.phase = null

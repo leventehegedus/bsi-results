@@ -5,7 +5,7 @@ import type { ResultFilters, ResultRow } from '@/api/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -33,6 +33,8 @@ import { setFilters, setPage } from './resultsSlice'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { FavouriteButton } from '@/features/favourites/FavouriteButton'
+import { toggleRace } from '@/features/favourites/favouritesSlice'
 import { RaceBreakdown } from './RaceBreakdown'
 import { RaceWeather } from '@/features/weather/RaceWeather'
 import { useLang, useT, type Messages } from '@/i18n'
@@ -60,6 +62,7 @@ export function ResultsPanel() {
   const t = useT()
   const lang = useLang()
   const { raceId, filters, page } = useAppSelector((s) => s.results)
+  const favouriteRace = useAppSelector((s) => s.favourites.races.some((r) => r.id === raceId))
   // Cached per race / per (race, page, filters): going back to a race or page is instant,
   // and a newer filter simply switches to another cache entry.
   const metaQuery = useRaceQuery(raceId ?? skipToken)
@@ -238,6 +241,22 @@ export function ResultsPanel() {
         ) : (
           <CardTitle className="text-lg">{r.meta?.nev ?? r.raceId}</CardTitle>
         )}
+        <CardAction>
+          <FavouriteButton
+            active={favouriteRace}
+            addLabel={t.favourites.addRace}
+            removeLabel={t.favourites.removeRace}
+            onToggle={() =>
+              dispatch(
+                toggleRace({
+                  id: r.raceId!,
+                  name: r.meta?.nev ?? r.raceId!,
+                  date: (r.meta?.datum ?? '').slice(0, 10),
+                }),
+              )
+            }
+          />
+        </CardAction>
         <CardDescription className="flex flex-wrap items-center gap-2">
           {r.meta?.datum && <Badge variant="secondary">{r.meta.datum.slice(0, 10)}</Badge>}
           {!!r.meta?.tav && <Badge>{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
