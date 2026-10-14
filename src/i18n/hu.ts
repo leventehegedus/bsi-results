@@ -8,6 +8,8 @@ export const hu: Messages = {
       'Böngéssz a results.futanet.hu versenyeredményei között, keresd meg egy település összes befutóját, és kövess egy futót az összes versenyén.',
     tabs: { races: 'Versenyek', town: 'Települési keresés', runner: 'Futó' },
     language: 'Nyelv',
+    theme: 'Színséma',
+    themes: { light: 'Világos', dark: 'Sötét', system: 'Rendszer' },
   },
   common: {
     stop: 'Leállítás',

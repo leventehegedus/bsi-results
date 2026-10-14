@@ -10,6 +10,10 @@ Redux Toolkit (RTK Query) · axios · oxlint · Vercel
 The UI is in Hungarian and English (switch in the header; the choice is saved, otherwise the
 browser language decides).
 
+Light and dark themes (switch in the header: light / dark / system). Colours are the theme
+variables in `src/index.css`, built from a five-colour palette: ink `#1c1c1a`, navy `#16336f`,
+cream `#f0eedf`, periwinkle `#b1bfe2`, orange `#fe492a`. Every text/background pair meets WCAG AA.
+
 ## Features
 
 - **Race browser**: ~2 800 result lists since 1984, grouped by year (the current year opens by

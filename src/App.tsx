@@ -1,18 +1,20 @@
 import { useEffect } from 'react'
-import { ListOrdered, MapPin, UserRound } from 'lucide-react'
+import { ListOrdered, MapPin, Monitor, Moon, Sun, UserRound, type LucideIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RaceBrowser } from '@/features/races/RaceBrowser'
 import { RunnerProfile } from '@/features/runner/RunnerProfile'
 import { useRunnerFromHash } from '@/features/runner/useRunnerFromHash'
 import { TownScan } from '@/features/townScan/TownScan'
-import { setLang, setTab, type AppTab } from '@/features/ui/uiSlice'
+import { setLang, setTab, setTheme, type AppTab } from '@/features/ui/uiSlice'
 import { LANGS, saveLang, useLang, useT } from '@/i18n'
 import { cn } from '@/lib/utils'
+import { applyTheme, saveTheme, THEME_MODES, watchSystemTheme, type ThemeMode } from '@/theme'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
 export default function App() {
   const dispatch = useAppDispatch()
   const tab = useAppSelector((s) => s.ui.tab)
+  const theme = useAppSelector((s) => s.ui.theme)
   const lang = useLang()
   const t = useT()
   useRunnerFromHash()
@@ -23,6 +25,12 @@ export default function App() {
     saveLang(lang)
   }, [lang, t])
 
+  useEffect(() => {
+    applyTheme(theme)
+    saveTheme(theme)
+    if (theme === 'system') return watchSystemTheme(() => applyTheme('system'))
+  }, [theme])
+
   return (
     <div className="min-h-svh">
       <header className="border-b">
@@ -31,22 +39,29 @@ export default function App() {
             <h1 className="text-xl font-semibold tracking-tight">{t.app.title}</h1>
             <p className="text-muted-foreground text-sm">{t.app.intro}</p>
           </div>
-          <div role="group" aria-label={t.app.language} className="bg-muted flex shrink-0 rounded-md p-0.5 text-xs font-medium">
-            {LANGS.map((l) => (
-              <button
-                key={l}
-                type="button"
-                lang={l}
-                aria-pressed={lang === l}
-                onClick={() => dispatch(setLang(l))}
-                className={cn(
-                  'rounded px-2 py-1 uppercase transition-colors',
-                  lang === l ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {l}
-              </button>
-            ))}
+          <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+            <Segmented label={t.app.theme}>
+              {THEME_MODES.map((m) => {
+                const Icon = THEME_ICONS[m]
+                return (
+                  <SegmentButton
+                    key={m}
+                    active={theme === m}
+                    onClick={() => dispatch(setTheme(m))}
+                    title={t.app.themes[m]}
+                  >
+                    <Icon className="size-3.5" />
+                  </SegmentButton>
+                )
+              })}
+            </Segmented>
+            <Segmented label={t.app.language}>
+              {LANGS.map((l) => (
+                <SegmentButton key={l} active={lang === l} onClick={() => dispatch(setLang(l))} lang={l}>
+                  <span className="uppercase">{l}</span>
+                </SegmentButton>
+              ))}
+            </Segmented>
           </div>
         </div>
       </header>
@@ -76,5 +91,42 @@ export default function App() {
         </Tabs>
       </main>
     </div>
+  )
+}
+
+const THEME_ICONS: Record<ThemeMode, LucideIcon> = { light: Sun, dark: Moon, system: Monitor }
+
+/** A small group of mutually exclusive buttons (theme, language). */
+function Segmented({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div role="group" aria-label={label} className="bg-muted flex rounded-md p-0.5 text-xs font-medium">
+      {children}
+    </div>
+  )
+}
+
+function SegmentButton(props: {
+  active: boolean
+  onClick: () => void
+  /** tooltip and accessible name for icon-only buttons */
+  title?: string
+  lang?: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      lang={props.lang}
+      title={props.title}
+      aria-label={props.title}
+      aria-pressed={props.active}
+      onClick={props.onClick}
+      className={cn(
+        'flex h-6 min-w-7 items-center justify-center rounded px-2 transition-colors',
+        props.active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      {props.children}
+    </button>
   )
 }
