@@ -54,20 +54,45 @@ export function toScanRow(
 }
 
 /**
- * Normalised runner identity: case/diacritic-insensitive, ignores "dr" titles
- * and "Surname, First" ordering, but keeps "ifj."/"id." (they are different people).
+ * The words of a name, as compared between runners: lowercase, no accents, any
+ * hyphen, dot or other non-letter separates words ("Nagy-György" = "Nagy György"),
+ * and the "dr" / "dr." title is dropped. "ifj." / "id." stay: they are different people.
  */
-export function runnerKey(name: string): string {
-  const base = name
+export function nameWords(name: string): string[] {
+  return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/\bdr\b\.?/g, ' ')
-    .replace(/[^a-z\s.]/g, ' ')
-    .replace(/\./g, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-  return base.sort().join(' ')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z]+/)
+    .filter((w) => w && w !== 'dr')
+}
+
+/**
+ * Normalised runner identity (see nameWords), also ignoring word order
+ * ("Surname, First"): "Nagy-György Péter dr." = "nagy gyorgy peter".
+ */
+export function runnerKey(name: string): string {
+  return nameWords(name).sort().join(' ')
+}
+
+/** Free-text name search: every word of the query appears in the name, in any order. */
+export function nameMatches(name: string, query: string): boolean {
+  const q = nameWords(query)
+  if (!q.length) return false
+  const n = nameWords(name).join(' ')
+  return q.every((w) => n.includes(w))
+}
+
+/**
+ * What to send to the API's name filter. It's a substring match that treats
+ * hyphens, spaces and "dr" literally, so a whole name would miss its other
+ * spellings; the longest single word finds them all (a superset that
+ * nameMatches / runnerKey then narrow down).
+ */
+export function apiNameTerm(query: string): string {
+  const words = nameWords(query)
+  const longest = words.reduce((a, w) => (w.length > a.length ? w : a), '')
+  return longest.length >= 3 ? longest : words.join(' ') || query.trim()
 }
 
 /**

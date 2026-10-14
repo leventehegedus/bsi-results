@@ -247,7 +247,7 @@ export const en = {
       `Click any runner's name in a results table, or search here by part of a name (at least ${min} characters). A birth year keeps people who share a name apart.`,
     namePlaceholder: 'e.g. Hegedüs Levente, or just “Hegedüs”',
     typeAtLeast: (min: number) => `Type at least ${min} characters.`,
-    nameHint: 'Matches any name containing this text (accents ignored).',
+    nameHint: 'Matches names containing these words in any order; accents, hyphens and “dr.” don’t matter.',
     optional: 'optional',
     townPlaceholder: 'optional, e.g. Budapest',
     townHint: 'Whole town name.',

@@ -5,7 +5,7 @@ import { annotateBirthYears, findBirthYear, rowKey } from '@/api/runner'
 import type { RaceListItem, ResultFilters } from '@/api/types'
 import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
-import { mergeSubLists, runnerKey, toScanRow } from '@/lib/results'
+import { apiNameTerm, mergeSubLists, nameMatches, runnerKey, toScanRow } from '@/lib/results'
 import { personalBests, personKey, progressions, type RunnerResult } from '@/lib/runner'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
@@ -107,7 +107,9 @@ export const scanRunner = createAppAsyncThunk(
       const races = only ?? (await fetchRaceCatalogue(dispatch))
       dispatch(progress({ requestId, done: 0, total: races.length }))
 
-      const filters: ResultFilters = { name: query.name }
+      // the API gets one word of the name (a superset of every spelling), the
+      // matching below ignores case, accents, hyphens / special characters and "dr."
+      const filters: ResultFilters = { name: apiNameTerm(query.name) }
       if (query.town) filters.town = query.town
       if (query.yob) {
         filters.minYob = String(query.yob)
@@ -136,17 +138,22 @@ export const scanRunner = createAppAsyncThunk(
             tick()
             return
           }
-          let kept = rows
+          // names containing every word of the query ("Kiss Zoltán" also finds "Kiss Zoltán Péter")
+          const matching = rows.filter((r) => nameMatches(r.nev ?? '', query.name))
+          let kept = matching
           if (query.exact) {
-            // The API's name filter is a substring match ("Kiss Zoltán" also finds
-            // "Kiss Zoltán Péter"); an exact profile keeps exact names only.
-            kept = rows.filter((r) => runnerKey(r.nev ?? '') === key)
-            similar += rows.length - kept.length
+            // an exact profile keeps the same person only: "Nagy-György Péter dr." = "nagy györgy péter"
+            kept = matching.filter((r) => runnerKey(r.nev ?? '') === key)
+            similar += matching.length - kept.length
           }
           if (kept.length) {
-            let years = new Map<string, number>()
+            const years = new Map<string, number>()
             if (!query.yob && kept.length <= MAX_ROWS_TO_ANNOTATE) {
-              years = await annotateBirthYears(race.id, filters, { signal }).catch(() => years)
+              // per exact name as listed, so other people sharing the search word aren't counted
+              for (const name of new Set(kept.map((r) => r.nev ?? ''))) {
+                const byRow = await annotateBirthYears(race.id, { ...filters, name }, { signal }).catch(() => null)
+                byRow?.forEach((yob, row) => years.set(row, yob))
+              }
             }
             const meta = await fetchRaceMeta(dispatch, race.id)
             dispatch(
