@@ -1,22 +1,42 @@
 import { useEffect, useRef } from 'react'
+import { createSelector } from '@reduxjs/toolkit'
+import { useStore } from 'react-redux'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { openRaceRoute } from '@/features/results/resultsSlice'
+import { clearRace, openRaceRoute } from '@/features/results/resultsSlice'
 import { setCategories, setTownsInput } from '@/features/townScan/townScanSlice'
-import { prefillQuery } from '@/features/runner/runnerSlice'
+import { cancelRunner } from '@/features/runner/runnerActions'
+import { clearRunner, prefillQuery, type RunnerQuery } from '@/features/runner/runnerSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import type { RootState } from '@/store'
 import { EMPTY_ROUTE, formatRoute, parseRoute, routeIdentity, type Route } from './route'
 
-/** The route the current state describes. */
-function currentRoute(s: RootState): Route {
-  return {
-    tab: s.ui.tab,
-    race: s.results.raceId
-      ? { id: s.results.raceId, filters: s.results.filters, page: s.results.page, view: s.results.view }
-      : null,
-    town: { towns: s.townScan.townsInput, categories: s.townScan.categories },
-    runner: s.runner.query,
-  }
+/**
+ * The route the current state describes. Memoized: a new object only when one of
+ * its parts changes, so components using it don't re-render on unrelated updates.
+ */
+const currentRoute = createSelector(
+  [
+    (s: RootState) => s.ui.tab,
+    (s: RootState) => s.results.raceId,
+    (s: RootState) => s.results.filters,
+    (s: RootState) => s.results.page,
+    (s: RootState) => s.results.view,
+    (s: RootState) => s.townScan.townsInput,
+    (s: RootState) => s.townScan.categories,
+    (s: RootState) => s.runner.query,
+  ],
+  (tab, raceId, filters, page, view, towns, categories, runner): Route => ({
+    tab,
+    race: raceId ? { id: raceId, filters, page, view } : null,
+    town: { towns, categories },
+    runner,
+  }),
+)
+
+/** Same person and search, whichever way the query was built (link, form or result row). */
+function sameRunner(a: RunnerQuery | null, b: RunnerQuery | null) {
+  if (!a || !b) return a === b
+  return a.name === b.name && (a.yob ?? null) === (b.yob ?? null) && !!a.exact === !!b.exact && (a.town ?? null) === (b.town ?? null)
 }
 
 /**
@@ -26,6 +46,7 @@ function currentRoute(s: RootState): Route {
  */
 export function useUrlSync() {
   const dispatch = useAppDispatch()
+  const store = useStore<RootState>()
   const route = useAppSelector(currentRoute)
   const hash = formatRoute(route)
   // what we last wrote or read, so our own writes don't look like navigation
@@ -41,12 +62,23 @@ export function useUrlSync() {
       identity.current = routeIdentity(r)
       dispatch(setTab(r.tab))
       if (r.race) dispatch(openRaceRoute({ raceId: r.race.id, filters: r.race.filters, page: r.race.page, view: r.race.view }))
+      // back to the race list without a race: don't leave the previous one on screen
+      else if (r.tab === 'races') dispatch(clearRace())
       if (r.town) {
         dispatch(setTownsInput(r.town.towns))
         dispatch(setCategories(r.town.categories))
       }
-      // the scan itself is thousands of requests, so a link only fills the form in
-      if (r.runner) dispatch(prefillQuery(r.runner))
+      // The scan itself is thousands of requests, so a link only fills the form in.
+      // A different runner (or none) than the one on screen: stop any search and
+      // clear the old profile first; the same runner keeps what's already loaded.
+      const shown = store.getState().runner.query
+      if (r.runner || r.tab === 'runner') {
+        if (!sameRunner(r.runner, shown)) {
+          cancelRunner()
+          dispatch(clearRunner())
+        }
+        if (r.runner) dispatch(prefillQuery(r.runner))
+      }
     }
     apply()
     window.addEventListener('popstate', apply)
@@ -55,7 +87,7 @@ export function useUrlSync() {
       window.removeEventListener('popstate', apply)
       window.removeEventListener('hashchange', apply)
     }
-  }, [dispatch])
+  }, [dispatch, store])
 
   useEffect(() => {
     if (hash === known.current || hash === location.hash) {

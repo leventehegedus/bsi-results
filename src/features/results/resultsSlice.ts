@@ -29,6 +29,10 @@ const resultsSlice = createSlice({
     selectRace(_state, action: PayloadAction<string>) {
       return { ...initialState, raceId: action.payload }
     },
+    /** No race selected (e.g. back to a link without one). */
+    clearRace() {
+      return initialState
+    },
     setFilters(state, action: PayloadAction<ResultFilters>) {
       state.filters = action.payload
       state.page = 1
@@ -46,5 +50,5 @@ const resultsSlice = createSlice({
   },
 })
 
-export const { selectRace, setFilters, setPage, setView, openRaceRoute } = resultsSlice.actions
+export const { selectRace, clearRace, setFilters, setPage, setView, openRaceRoute } = resultsSlice.actions
 export const resultsReducer = resultsSlice.reducer
