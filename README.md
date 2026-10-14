@@ -42,6 +42,15 @@ cream `#f0eedf`, periwinkle `#b1bfe2`, orange `#fe492a`. Every text/background p
   - personal bests per distance, stats, CSV export, and a shareable link
     (`#runner=<name>&yob=<year>`).
 
+- **Race weather**: a Weather tab on every race with the historical weather from
+  [Open-Meteo](https://open-meteo.com/) (ERA5 reanalysis back to 1940; the forecast API fills the
+  last few days): temperature, feels-like, wind with direction, gusts, humidity and rain at the
+  start; charts of temperature and of wind/gusts (with direction arrows) over race day with the
+  race window shaded; an hourly table. The results API has no start time or venue, so both are
+  estimated (weekend 09:00, weekday 18:00, "esti" races 20:00; usual venue per series, else
+  Budapest) and can be corrected per race (kept in localStorage; place search via Open-Meteo
+  geocoding). Requests go through the same-origin proxy (`/api/weather/*`, `/api/geocode/*`).
+
 ## Development
 
 ```bash

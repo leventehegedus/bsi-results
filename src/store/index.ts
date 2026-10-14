@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { futanetApi } from '@/api/futanetApi'
+import { weatherApi } from '@/api/weatherApi'
 import { racesReducer } from '@/features/races/racesSlice'
 import { resultsReducer } from '@/features/results/resultsSlice'
 import { townScanReducer } from '@/features/townScan/townScanSlice'
@@ -14,8 +15,9 @@ export const store = configureStore({
     runner: runnerReducer,
     ui: uiReducer,
     [futanetApi.reducerPath]: futanetApi.reducer,
+    [weatherApi.reducerPath]: weatherApi.reducer,
   },
-  middleware: (getDefault) => getDefault().concat(futanetApi.middleware),
+  middleware: (getDefault) => getDefault().concat(futanetApi.middleware, weatherApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

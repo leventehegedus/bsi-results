@@ -34,6 +34,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import { RaceBreakdown } from './RaceBreakdown'
+import { RaceWeather } from '@/features/weather/RaceWeather'
 import { useLang, useT, type Messages } from '@/i18n'
 
 const ANY = '__any__'
@@ -67,7 +68,7 @@ export function ResultsPanel() {
   // the panel is keyed by race, so the form starts empty for every race
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
-  const [view, setView] = useState<'results' | 'breakdown'>('results')
+  const [view, setView] = useState<'results' | 'breakdown' | 'weather'>('results')
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -245,7 +246,12 @@ export function ResultsPanel() {
           <TabsList>
             <TabsTrigger value="results">{t.breakdown.views.results}</TabsTrigger>
             <TabsTrigger value="breakdown">{t.breakdown.views.breakdown}</TabsTrigger>
+            <TabsTrigger value="weather">{t.breakdown.views.weather}</TabsTrigger>
           </TabsList>
+          {/* keyed by race so start-time / place corrections are re-read per race */}
+          <TabsContent value="weather">
+            {raceId && r.meta && <RaceWeather key={raceId} raceId={raceId} meta={r.meta} />}
+          </TabsContent>
           {/* the breakdown loads every finisher, so it's only mounted (and fetched) when opened */}
           <TabsContent value="breakdown">{raceId && <RaceBreakdown raceId={raceId} />}</TabsContent>
           <TabsContent value="results" className="flex flex-col gap-5">
