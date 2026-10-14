@@ -26,6 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cleanTime } from '@/lib/results'
+import { formatPace, pacePerKm } from '@/lib/pace'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { setFilters, setPage } from './resultsSlice'
@@ -105,6 +106,13 @@ export function ResultsPanel() {
         key: k,
         label: fallbackHeaders(t)[k] ?? k,
       }))
+  // Pace (from the net time and the race distance) goes right after the net time.
+  const distance = r.meta?.tav ?? 0
+  const netIndex = columns.findIndex((c) => c.key === 'netto')
+  if (distance > 0 && netIndex >= 0) columns.splice(netIndex + 1, 0, { key: PACE_KEY, label: t.col.pace })
+  /** A cell's text, for the table and the CSV. */
+  const cellText = (row: ResultRow, key: string) =>
+    key === PACE_KEY ? formatPace(pacePerKm(row.netto, distance)) : display(row, key)
 
   /** Update the filters (back to page 1), right away or after `delay` ms. */
   const apply = (next: ResultFilters, delay = 0) => {
@@ -124,7 +132,7 @@ export function ResultsPanel() {
       const rows = await getAllResults(r.raceId, r.filters)
       const csv = toCsv(
         columns.map((c) => c.label),
-        rows.map((row) => columns.map((c) => display(row, c.key))),
+        rows.map((row) => columns.map((c) => cellText(row, c.key))),
       )
       downloadCsv(`${r.raceId}.csv`, csv)
     } finally {
@@ -356,7 +364,7 @@ export function ResultsPanel() {
                                   bib={row.rajtszam ?? null}
                                 />
                               ) : (
-                                display(row, c.key)
+                                cellText(row, c.key)
                               )}
                             </TableCell>
                           ))}
@@ -386,6 +394,9 @@ function display(row: ResultRow, key: string) {
   return String(v)
 }
 
+/** Computed column: not a field of the API's rows. */
+const PACE_KEY = '__pace'
+
 function isNumericCol(key: string) {
-  return key === 'hely' || key === 'netto' || key === 'brutto' || key.startsWith('reszido')
+  return key === 'hely' || key === 'netto' || key === 'brutto' || key === PACE_KEY || key.startsWith('reszido')
 }

@@ -36,6 +36,7 @@ export const en = {
     place: 'Place',
     catPlace: 'Cat. place',
     netTime: 'Net time',
+    pace: 'Pace (min/km)',
     gunTime: 'Gun time',
     bestTime: 'Best time',
     finishes: 'Finishes',
