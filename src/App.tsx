@@ -33,11 +33,15 @@ export default function App() {
 
   return (
     <div className="min-h-svh">
-      <header className="border-b">
+      <header className="bg-header text-header-foreground border-brand border-b-4">
         <div className="mx-auto flex max-w-7xl items-start justify-between gap-4 px-4 py-5 sm:px-6">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold tracking-tight">{t.app.title}</h1>
-            <p className="text-muted-foreground text-sm">{t.app.intro}</p>
+          <div className="flex items-start gap-3">
+            {/* brand mark */}
+            <span aria-hidden className="bg-brand mt-1 size-5 shrink-0 rounded-sm" />
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-semibold tracking-tight">{t.app.title}</h1>
+              <p className="text-header-foreground/80 text-sm">{t.app.intro}</p>
+            </div>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
             <Segmented label={t.app.theme}>
@@ -99,7 +103,7 @@ const THEME_ICONS: Record<ThemeMode, LucideIcon> = { light: Sun, dark: Moon, sys
 /** A small group of mutually exclusive buttons (theme, language). */
 function Segmented({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div role="group" aria-label={label} className="bg-muted flex rounded-md p-0.5 text-xs font-medium">
+    <div role="group" aria-label={label} className="bg-header-foreground/10 flex rounded-md p-0.5 text-xs font-medium">
       {children}
     </div>
   )
@@ -123,7 +127,9 @@ function SegmentButton(props: {
       onClick={props.onClick}
       className={cn(
         'flex h-6 min-w-7 items-center justify-center rounded px-2 transition-colors',
-        props.active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+        props.active
+          ? 'bg-brand text-brand-foreground shadow-sm'
+          : 'text-header-foreground/80 hover:text-header-foreground hover:bg-header-foreground/10',
       )}
     >
       {props.children}

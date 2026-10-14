@@ -224,8 +224,8 @@ export function ResultsPanel() {
         )}
         <CardDescription className="flex flex-wrap items-center gap-2">
           {r.meta?.datum && <Badge variant="secondary">{r.meta.datum.slice(0, 10)}</Badge>}
-          {!!r.meta?.tav && <Badge variant="secondary">{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
-          {r.meta && <Badge variant="secondary">{t.results.finishers(r.meta.meret.toLocaleString('hu-HU'))}</Badge>}
+          {!!r.meta?.tav && <Badge>{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
+          {r.meta && <Badge variant="brand">{t.results.finishers(r.meta.meret.toLocaleString('hu-HU'))}</Badge>}
         </CardDescription>
       </CardHeader>
 
@@ -331,7 +331,7 @@ export function ResultsPanel() {
                             <button
                               type="button"
                               title={t.common.showOnlyTown}
-                              className="hover:bg-accent -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted underline-offset-4"
+                              className="hover:bg-accent decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
                               onClick={() => filterTown(String(row.varos))}
                             >
                               {display(row, 'varos')}

@@ -137,7 +137,7 @@ function YearSection(props: {
             className="hover:bg-accent group bg-card sticky top-0 z-10 flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left transition-colors"
           >
             <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
-            <span className="flex-1 text-sm font-semibold">{g.year}</span>
+            <span className="text-primary flex-1 text-sm font-semibold">{g.year}</span>
             <span className="text-muted-foreground text-xs">
               {g.events.length ? t.races.yearSummary(g.events.length, g.raceCount) : t.races.noRaces}
             </span>
@@ -206,13 +206,13 @@ function EventGroup(props: {
               </span>
               <span className="text-muted-foreground block font-mono text-xs">{dates}</span>
             </span>
-            <Badge variant="secondary" className="mt-0.5">
+            <Badge variant="brand" className="mt-0.5">
               {ev.races.length}
             </Badge>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <ul className="border-border ml-4 border-l pl-2">
+          <ul className="border-primary/25 ml-4 border-l-2 pl-2">
             {ev.races.map((r) => (
               <li key={r.id}>
                 <RaceItem
@@ -257,12 +257,15 @@ function RaceItem(props: {
       type="button"
       onClick={() => props.onSelect(r.id)}
       className={cn(
-        'hover:bg-accent w-full rounded-md px-2 py-1.5 text-left transition-colors',
-        props.selected && 'bg-accent',
+        'w-full rounded-md px-2 py-1.5 text-left transition-colors',
+        // selected: primary fill with an orange edge
+        props.selected
+          ? 'bg-primary text-primary-foreground shadow-[inset_4px_0_0_var(--color-brand)]'
+          : 'hover:bg-accent',
       )}
     >
       <div className="text-sm font-medium break-words">{name}</div>
-      <div className="text-muted-foreground font-mono text-xs">
+      <div className={cn('font-mono text-xs', props.selected ? 'text-primary-foreground/85' : 'text-muted-foreground')}>
         {r.date}
         {meta?.meret === 0 && ` · ${t.races.noResults}`}
       </div>

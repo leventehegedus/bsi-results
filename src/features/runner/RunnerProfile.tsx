@@ -131,7 +131,7 @@ export function RunnerProfile() {
           <Card className="items-center justify-center gap-3 py-12 text-center text-sm">
             <UserRound className="text-muted-foreground size-8 opacity-50" />
             <p className="text-muted-foreground max-w-sm">{t.runner.linkIntro}</p>
-            <Button onClick={runDraft} disabled={!draftQuery}>
+            <Button variant="brand" onClick={runDraft} disabled={!draftQuery}>
               <Search />
               {draftQuery
                 ? t.runner.searchAll(draftQuery.name, queryDetails(draftQuery, t))
@@ -329,7 +329,7 @@ export function RunnerProfile() {
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {t.runner.results} <Badge variant="secondary">{results.length}</Badge>
+                {t.runner.results} <Badge variant="brand">{results.length}</Badge>
               </CardTitle>
               {r.status === 'done' && r.similarNames > 0 && (
                 <CardDescription>{t.runner.similarLeftOut(r.similarNames, r.query.name)}</CardDescription>
@@ -556,7 +556,7 @@ function SearchForm(props: {
             <Square /> {t.common.stop}
           </Button>
         ) : (
-          <Button key="submit" type="submit" className="w-full sm:w-auto" disabled={tooShort}>
+          <Button key="submit" type="submit" variant="brand" className="w-full sm:w-auto" disabled={tooShort}>
             <Search /> {t.runner.find}
           </Button>
         )}
@@ -578,7 +578,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border px-4 py-3">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className="text-2xl font-semibold tabular-nums">{value}</dd>
+      <dd className="text-primary text-2xl font-semibold tabular-nums">{value}</dd>
     </div>
   )
 }
@@ -589,7 +589,7 @@ function LinkButton({ children, onClick, title }: { children: React.ReactNode; o
       type="button"
       onClick={onClick}
       title={title}
-      className="cursor-pointer underline-offset-4 hover:underline"
+      className="text-primary decoration-brand cursor-pointer decoration-2 underline-offset-4 hover:underline"
     >
       {children}
     </button>
@@ -604,7 +604,7 @@ function FilterButton(props: { children: React.ReactNode; onClick: () => void; a
       onClick={props.onClick}
       title={props.title}
       aria-pressed={props.active}
-      className="hover:bg-accent aria-pressed:bg-secondary -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted underline-offset-4"
+      className="hover:bg-accent aria-pressed:bg-secondary decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
     >
       {props.children}
     </button>

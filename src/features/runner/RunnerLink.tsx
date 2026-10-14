@@ -32,7 +32,7 @@ export function RunnerLink(props: {
         })
       }
       className={cn(
-        'cursor-pointer text-left font-medium underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none',
+        'text-primary decoration-brand cursor-pointer text-left font-medium decoration-2 underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none',
         props.className,
       )}
     >

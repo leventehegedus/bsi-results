@@ -95,6 +95,7 @@ export function TownScan() {
               ) : (
                 <Button
                   key="start"
+                  variant="brand"
                   onClick={start}
                   disabled={!towns.length || !scan.categories.length}
                   className="w-full md:w-auto"
@@ -170,8 +171,8 @@ export function TownScan() {
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-2">
               {t.town.results}
-              <Badge variant="secondary">{t.town.finishes(finishes.length)}</Badge>
-              <Badge variant="secondary">{t.town.runners(runners)}</Badge>
+              <Badge variant="brand">{t.town.finishes(finishes.length)}</Badge>
+              <Badge>{t.town.runners(runners)}</Badge>
             </CardTitle>
             <CardDescription>{t.town.matchingNote}</CardDescription>
           </CardHeader>
