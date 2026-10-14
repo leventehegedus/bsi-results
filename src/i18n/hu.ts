@@ -88,9 +88,9 @@ export const hu: Messages = {
     none: 'Nincs eredmény.',
   },
   breakdown: {
-    views: { results: 'Eredmények', breakdown: 'Megoszlás' },
+    views: { results: 'Eredmények', breakdown: 'Eloszlás' },
     loading: 'Az összes befutó idejének betöltése…',
-    failed: 'Nem sikerült betölteni a megoszlást',
+    failed: 'Nem sikerült betölteni a eloszlást',
     wholeRace: 'A teljes versenyre (az eredményszűrők itt nem számítanak).',
     finishers: 'Befutó',
     fastest: 'Leggyorsabb',
