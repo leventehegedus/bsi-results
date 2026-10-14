@@ -1,5 +1,6 @@
 import type { AppDispatch } from '@/store'
 import { setTab } from '@/features/ui/uiSlice'
+import type { RaceListItem } from '@/api/types'
 import { openRunner, scanRunner, type RunnerQuery } from './runnerSlice'
 
 /** Only one profile lookup runs at a time; starting a new one cancels the previous. */
@@ -28,9 +29,10 @@ export function openRunnerFromResult(
   }
 }
 
-export function searchRunner(dispatch: AppDispatch, query: RunnerQuery) {
+/** Scan all races for `query`, or only `races` (retrying failed ones). */
+export function searchRunner(dispatch: AppDispatch, query: RunnerQuery, races?: RaceListItem[]) {
   cancelRunner()
-  active = dispatch(scanRunner(query))
+  active = dispatch(scanRunner({ ...query, races }))
 }
 
 /** Shareable link: #runner=<name>&yob=<year>&exact=1 */

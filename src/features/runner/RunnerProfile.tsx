@@ -114,7 +114,20 @@ export function RunnerProfile() {
         </CardContent>
       </Card>
 
-      {r.status === 'idle' && <EmptyState />}
+      {r.status === 'idle' &&
+        (r.query ? (
+          <Card className="items-center justify-center gap-3 py-12 text-center text-sm">
+            <UserRound className="text-muted-foreground size-8 opacity-50" />
+            <p className="text-muted-foreground max-w-sm">
+              Searching every race takes a little while, so it only starts when you ask.
+            </p>
+            <Button onClick={() => r.query && searchRunner(dispatch, r.query)}>
+              <Search /> Search all races for “{r.query.name}”{r.query.yob ? ` (born ${r.query.yob})` : ''}
+            </Button>
+          </Card>
+        ) : (
+          <EmptyState />
+        ))}
 
       {r.status !== 'idle' && r.query && (
         <>
@@ -178,6 +191,35 @@ export function RunnerProfile() {
                 <Alert variant="destructive">
                   <AlertTitle>Search failed</AlertTitle>
                   <AlertDescription>{r.error}</AlertDescription>
+                </Alert>
+              )}
+              {r.failedRaces.length > 0 && !busy && (
+                <Alert>
+                  <Info />
+                  <AlertTitle>
+                    {r.failedRaces.length === 1
+                      ? "1 race couldn't be searched"
+                      : `${r.failedRaces.length} races couldn't be searched`}
+                  </AlertTitle>
+                  <AlertDescription className="gap-2">
+                    <p>
+                      results.futanet.hu returned errors even after retrying:{' '}
+                      {r.failedRaces
+                        .slice(0, 3)
+                        .map((x) => `${x.name} (${x.date.slice(0, 4)})`)
+                        .join(', ')}
+                      {r.failedRaces.length > 3 && ` and ${r.failedRaces.length - 3} more`}. The results below may
+                      be incomplete.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-foreground w-fit"
+                      onClick={() => r.query && searchRunner(dispatch, r.query, r.failedRaces)}
+                    >
+                      Retry {r.failedRaces.length === 1 ? 'it' : `these ${r.failedRaces.length}`}
+                    </Button>
+                  </AlertDescription>
                 </Alert>
               )}
               {r.status === 'cancelled' && (
