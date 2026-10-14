@@ -14,7 +14,7 @@ Redux Toolkit · axios · oxlint · Vercel
   sub-events. Search by name, open results, filter by name, town (or click a town), club, bib,
   category, gender, country, net time, birth year and place, paginate, export to CSV.
   Includes 542 older races (1984–2019) that the API has but doesn't list (`src/api/legacyRaces.json`).
-- **Town search**: give one or more towns (`Makó, Zsombó`) and pick distances (marathon, half
+- **Town search**: give one or more towns (`Budapest, Szeged`) and pick distances (marathon, half
   marathon, 10 km, 5 km, other). Race distances are read once and cached in localStorage; the
   matching lists are scanned with the `town` filter (cancellable) and shown as:
   - every finish, with sub-lists of the same event (amateur cup, profession championships)
