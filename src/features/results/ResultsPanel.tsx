@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, Loader2, X } from 'lucide-react'
 import { getAllResults } from '@/api/futanet'
 import type { ResultFilters, ResultRow } from '@/api/types'
@@ -31,6 +31,8 @@ import { fetchResults, loadRace, setFilters } from './resultsSlice'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 
 const ANY = '__any__'
+/** Wait for a pause in typing before querying the API. */
+const TYPE_DELAY_MS = 300
 const FALLBACK_COLUMNS = ['hely', 'nev', 'kategoria', 'kat_hely', 'netto', 'brutto', 'varos', 'egyesulet', 'rajtszam']
 const FALLBACK_HEADERS: Record<string, string> = {
   hely: 'Rank',
@@ -50,14 +52,19 @@ export function ResultsPanel() {
   const r = useAppSelector((s) => s.results)
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
+  /** the in-flight results request, aborted when a newer filter replaces it */
+  const pending = useRef<{ abort: () => void } | null>(null)
+  const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (!r.raceId) return
+    setForm({})
     const a = dispatch(loadRace(r.raceId))
-    const b = dispatch(fetchResults(1))
+    pending.current = dispatch(fetchResults(1))
     return () => {
+      window.clearTimeout(timer.current)
       a.abort()
-      b.abort()
+      pending.current?.abort()
     }
   }, [dispatch, r.raceId])
 
@@ -76,22 +83,20 @@ export function ResultsPanel() {
         label: FALLBACK_HEADERS[k] ?? k,
       }))
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    dispatch(setFilters(form))
-    dispatch(fetchResults(1))
-  }
-  const filterTown = (town: string) => {
-    const next = { ...form, town }
+  /** Update the filters and reload page 1, right away or after `delay` ms. */
+  const apply = (next: ResultFilters, delay = 0) => {
     setForm(next)
-    dispatch(setFilters(next))
-    dispatch(fetchResults(1))
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => {
+      pending.current?.abort()
+      dispatch(setFilters(next))
+      pending.current = dispatch(fetchResults(1))
+    }, delay)
   }
-  const clear = () => {
-    setForm({})
-    dispatch(setFilters({}))
-    dispatch(fetchResults(1))
-  }
+  const setFilter = (key: keyof ResultFilters, value: string | undefined, delay = 0) =>
+    apply({ ...form, [key]: value || undefined }, delay)
+  const filterTown = (town: string) => setFilter('town', town)
+  const hasFilters = Object.values(form).some((v) => v != null && v.trim() !== '')
 
   const exportCsv = async () => {
     if (!r.raceId) return
@@ -108,15 +113,88 @@ export function ResultsPanel() {
     }
   }
 
+  const clearButton = (key: keyof ResultFilters, label: string) =>
+    form[key] ? (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="text-muted-foreground absolute top-1/2 right-1 size-7 -translate-y-1/2"
+        onClick={() => setFilter(key, undefined)}
+        aria-label={`Clear ${label.toLowerCase()} filter`}
+      >
+        <X />
+      </Button>
+    ) : null
+
+  const textInput = (key: keyof ResultFilters, label: string, placeholder?: string, numeric = false) => (
+    <div className="relative">
+      <Input
+        id={`f-${key}`}
+        aria-label={label}
+        placeholder={placeholder}
+        inputMode={numeric ? 'numeric' : undefined}
+        className="pr-9"
+        value={form[key] ?? ''}
+        onChange={(e) => setFilter(key, e.target.value, TYPE_DELAY_MS)}
+      />
+      {clearButton(key, label)}
+    </div>
+  )
+
   const field = (key: keyof ResultFilters, label: string, placeholder?: string) => (
     <div className="grid gap-1.5">
       <Label htmlFor={`f-${key}`}>{label}</Label>
-      <Input
-        id={`f-${key}`}
-        placeholder={placeholder}
-        value={form[key] ?? ''}
-        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-      />
+      {textInput(key, label, placeholder)}
+    </div>
+  )
+
+  /** A from–to pair, e.g. birth year 1980–1989. */
+  const range = (
+    label: string,
+    [minKey, maxKey]: [keyof ResultFilters, keyof ResultFilters],
+    [minHint, maxHint]: [string, string],
+    numeric = true,
+  ) => (
+    <div className="grid gap-1.5">
+      <Label htmlFor={`f-${minKey}`}>{label}</Label>
+      <div className="grid grid-cols-2 gap-2">
+        {textInput(minKey, `${label} from`, minHint, numeric)}
+        {textInput(maxKey, `${label} to`, maxHint, numeric)}
+      </div>
+    </div>
+  )
+
+  const select = (key: keyof ResultFilters, label: string, options: { value: string; label: string }[]) => (
+    <div className="grid gap-1.5">
+      <Label>{label}</Label>
+      <div className="relative">
+        <Select value={form[key] ?? ANY} onValueChange={(v) => setFilter(key, v === ANY ? undefined : v)}>
+          <SelectTrigger className={form[key] ? 'w-full pr-14' : 'w-full'}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>Any</SelectItem>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {form[key] && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground absolute top-1/2 right-7 size-7 -translate-y-1/2"
+            onClick={() => setFilter(key, undefined)}
+            aria-label={`Clear ${label.toLowerCase()} filter`}
+          >
+            <X />
+          </Button>
+        )}
+      </div>
     </div>
   )
 
@@ -129,9 +207,6 @@ export function ResultsPanel() {
           <CardTitle className="text-lg">{r.meta?.nev ?? r.raceId}</CardTitle>
         )}
         <CardDescription className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="font-mono">
-            {r.raceId}
-          </Badge>
           {r.meta?.datum && <Badge variant="secondary">{r.meta.datum.slice(0, 10)}</Badge>}
           {!!r.meta?.tav && <Badge variant="secondary">{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
           {r.meta && <Badge variant="secondary">{r.meta.meret.toLocaleString('hu-HU')} finishers</Badge>}
@@ -139,39 +214,38 @@ export function ResultsPanel() {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-5">
-        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="flex flex-col gap-3">
           {field('name', 'Name')}
-          {field('town', 'Town', 'exact, e.g. Makó')}
-          {field('club', 'Club')}
-          {field('bib', 'Bib')}
-          <div className="grid gap-1.5">
-            <Label>Category</Label>
-            <Select
-              value={form.category ?? ANY}
-              onValueChange={(v) => setForm({ ...form, category: v === ANY ? undefined : v })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ANY}>Any</SelectItem>
-                {r.categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {field('town', 'Town', 'exact, e.g. Makó')}
+            {field('club', 'Club')}
+            {field('bib', 'Bib')}
+            {select(
+              'category',
+              'Category',
+              r.categories.map((c) => ({ value: c, label: c })),
+            )}
+            {/* the API's codes: F = férfi, N = nő */}
+            {select('sex', 'Gender', [
+              { value: 'F', label: 'Men' },
+              { value: 'N', label: 'Women' },
+            ])}
+            {select(
+              'country',
+              'Country',
+              r.countries.map((c) => ({ value: c.value, label: `${c.text} (${c.value})` })),
+            )}
+            {range('Net time (mm:ss or h:mm:ss)', ['minNetTime', 'maxNetTime'], ['from', 'to'], false)}
+            {range('Birth year', ['minYob', 'maxYob'], ['from', 'to'])}
+            {range('Place', ['minPlace', 'maxPlace'], ['from', 'to'])}
           </div>
-          <div className="flex items-end gap-2">
-            <Button type="submit" className="flex-1">
-              Filter
-            </Button>
-            <Button type="button" variant="ghost" size="icon" onClick={clear} aria-label="Clear filters">
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>
               <X />
+              Clear all filters
             </Button>
           </div>
-        </form>
+        </div>
 
         {r.status === 'failed' && (
           <Alert variant="destructive">

@@ -1,16 +1,20 @@
 import { useEffect } from 'react'
 import { useAppDispatch } from '@/store/hooks'
 import { setTab } from '@/features/ui/uiSlice'
-import { readHash, searchRunner } from './runnerActions'
+import { readHash } from './runnerActions'
+import { prefillQuery } from './runnerSlice'
 
-/** Restores a profile from a shared #runner=…&yob=… link on first load. */
+/**
+ * Opens the Runner tab for a shared #runner=…&yob=… link on first load. The scan
+ * (thousands of requests) only starts when the user asks for it.
+ */
 export function useRunnerFromHash() {
   const dispatch = useAppDispatch()
   useEffect(() => {
     const q = readHash()
     if (q) {
       dispatch(setTab('runner'))
-      searchRunner(dispatch, q)
+      dispatch(prefillQuery(q))
     }
   }, [dispatch])
 }

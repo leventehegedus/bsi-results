@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Download, Info, Loader2, Search, Square, UserRound, Users, X } from 'lucide-react'
+import { Download, Info, Loader2, MapPin, Search, Square, UserRound, Users, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -89,6 +89,9 @@ export function RunnerProfile() {
   const towns = topValues(results.map((x) => x.town))
   const clubs = topValues(results.map((x) => x.club))
   const singleYob = people === 1 ? (results[0]?.yob ?? null) : null
+  // quick filters for the "several people" notice, most results first
+  const yobOptions = countBy(results.map((x) => (x.yob === null ? 'unknown' : String(x.yob))))
+  const townOptions = countBy(results.map((x) => x.town)).slice(0, MAX_TOWN_OPTIONS)
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,15 +106,29 @@ export function RunnerProfile() {
         <CardContent>
           {/* keyed so the fields follow the active profile but stay editable */}
           <SearchForm
-            key={`${r.query?.name ?? ''}|${r.query?.yob ?? ''}`}
+            key={`${r.query?.name ?? ''}|${r.query?.yob ?? ''}|${r.query?.town ?? ''}`}
             initialName={r.query?.name ?? ''}
             initialYob={r.query?.yob ?? null}
+            initialTown={r.query?.town ?? ''}
             busy={busy}
           />
         </CardContent>
       </Card>
 
-      {r.status === 'idle' && <EmptyState />}
+      {r.status === 'idle' &&
+        (r.query ? (
+          <Card className="items-center justify-center gap-3 py-12 text-center text-sm">
+            <UserRound className="text-muted-foreground size-8 opacity-50" />
+            <p className="text-muted-foreground max-w-sm">
+              Searching every race takes a little while, so it only starts when you ask.
+            </p>
+            <Button onClick={() => r.query && searchRunner(dispatch, r.query)}>
+              <Search /> Search all races for “{r.query.name}”{queryDetails(r.query)}
+            </Button>
+          </Card>
+        ) : (
+          <EmptyState />
+        ))}
 
       {r.status !== 'idle' && r.query && (
         <>
@@ -126,6 +143,11 @@ export function RunnerProfile() {
                     {r.query.exact ? r.query.name : `Results for “${r.query.name}”`}
                   </CardTitle>
                   <div className="flex flex-wrap gap-2">
+                    {r.query.town && (
+                      <Badge variant="secondary">
+                        <MapPin /> Only {r.query.town}
+                      </Badge>
+                    )}
                     {r.status === 'resolving' ? (
                       <Badge variant="outline">
                         <Loader2 className="animate-spin" /> Looking up birth year…
@@ -177,6 +199,35 @@ export function RunnerProfile() {
                   <AlertDescription>{r.error}</AlertDescription>
                 </Alert>
               )}
+              {r.failedRaces.length > 0 && !busy && (
+                <Alert>
+                  <Info />
+                  <AlertTitle>
+                    {r.failedRaces.length === 1
+                      ? "1 race couldn't be searched"
+                      : `${r.failedRaces.length} races couldn't be searched`}
+                  </AlertTitle>
+                  <AlertDescription className="gap-2">
+                    <p>
+                      results.futanet.hu returned errors even after retrying:{' '}
+                      {r.failedRaces
+                        .slice(0, 3)
+                        .map((x) => `${x.name} (${x.date.slice(0, 4)})`)
+                        .join(', ')}
+                      {r.failedRaces.length > 3 && ` and ${r.failedRaces.length - 3} more`}. The results below may
+                      be incomplete.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-foreground w-fit"
+                      onClick={() => r.query && searchRunner(dispatch, r.query, r.failedRaces)}
+                    >
+                      Retry {r.failedRaces.length === 1 ? 'it' : `these ${r.failedRaces.length}`}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
               {r.status === 'cancelled' && (
                 <p className="text-muted-foreground text-sm">Stopped. Showing what was found so far.</p>
               )}
@@ -184,9 +235,25 @@ export function RunnerProfile() {
                 <Alert>
                   <Info />
                   <AlertTitle>Several people match</AlertTitle>
-                  <AlertDescription>
-                    Click a birth year or town in the table to narrow the results, or a name to open that
-                    person's profile.
+                  <AlertDescription className="gap-2">
+                    <p>
+                      Pick a birth year or town to narrow the results (also clickable in the table), or a
+                      name to open that person's profile.
+                    </p>
+                    {yobOptions.length > 1 && (
+                      <QuickFilters
+                        label="Birth year"
+                        options={yobOptions.map(([v, n]) => ({ key: v, label: v === 'unknown' ? 'unknown' : v, count: n }))}
+                        onPick={(v) => dispatch(setFilterYob(v === 'unknown' ? 'unknown' : Number(v)))}
+                      />
+                    )}
+                    {townOptions.length > 1 && (
+                      <QuickFilters
+                        label="Town"
+                        options={townOptions.map(([v, n]) => ({ key: v, label: v || 'no town', count: n }))}
+                        onPick={(v) => dispatch(setFilterTown(v))}
+                      />
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
@@ -271,6 +338,14 @@ export function RunnerProfile() {
                 <Button variant="outline" size="sm" onClick={exportCsv} disabled={!results.length}>
                   <Download /> Download CSV
                 </Button>
+                {r.query.town && (
+                  <FilterChip
+                    onClear={() => r.query && searchRunner(dispatch, { ...r.query, town: null })}
+                    clearLabel="Search again without the town filter"
+                  >
+                    <MapPin /> Town: {r.query.town}
+                  </FilterChip>
+                )}
                 {r.filterYob !== null && (
                   <FilterChip onClear={() => dispatch(setFilterYob(null))}>
                     Born {r.filterYob === 'unknown' ? 'unknown' : r.filterYob}
@@ -376,10 +451,11 @@ export function RunnerProfile() {
   )
 }
 
-function SearchForm(props: { initialName: string; initialYob: number | null; busy: boolean }) {
+function SearchForm(props: { initialName: string; initialYob: number | null; initialTown: string; busy: boolean }) {
   const dispatch = useAppDispatch()
   const [name, setName] = useState(props.initialName)
   const [yob, setYob] = useState(props.initialYob ? String(props.initialYob) : '')
+  const [town, setTown] = useState(props.initialTown)
   const tooShort = name.trim().length < MIN_QUERY_LENGTH
 
   const submit = (e: FormEvent) => {
@@ -387,11 +463,16 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
     const n = name.trim()
     if (n.length < MIN_QUERY_LENGTH) return
     const y = Number(yob)
-    searchRunner(dispatch, { name: n, yob: Number.isInteger(y) && y > 1900 ? y : null, exact: false })
+    searchRunner(dispatch, {
+      name: n,
+      yob: Number.isInteger(y) && y > 1900 ? y : null,
+      exact: false,
+      town: town.trim() || null,
+    })
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_9rem_auto]">
+    <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_9rem_11rem_auto]">
       <div className="grid gap-1.5">
         <Label htmlFor="runner-name">Name</Label>
         <Input
@@ -416,6 +497,19 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
           value={yob}
           onChange={(e) => setYob(e.target.value.replace(/\D/g, '').slice(0, 4))}
         />
+      </div>
+      <div className="grid content-start gap-1.5">
+        <Label htmlFor="runner-town">Town</Label>
+        <Input
+          id="runner-town"
+          placeholder="optional, e.g. Makó"
+          aria-describedby="runner-town-hint"
+          value={town}
+          onChange={(e) => setTown(e.target.value)}
+        />
+        <p id="runner-town-hint" className="text-muted-foreground text-xs">
+          Whole town name.
+        </p>
       </div>
       <div className="flex items-start sm:pt-[1.375rem]">
         {/* Distinct keys: otherwise React reuses the same <button> and flips it to
@@ -492,14 +586,56 @@ function FilterButton(props: { children: React.ReactNode; onClick: () => void; a
   )
 }
 
-function FilterChip({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
+const MAX_TOWN_OPTIONS = 8
+
+/** " (born 1992, Zsombó)" for the optional parts of a query, or "". */
+function queryDetails(q: { yob: number | null; town?: string | null }) {
+  const parts = [q.yob ? `born ${q.yob}` : null, q.town || null].filter(Boolean)
+  return parts.length ? ` (${parts.join(', ')})` : ''
+}
+
+/** [value, count] pairs, most frequent first. */
+function countBy<T>(values: T[]): [T, number][] {
+  const counts = new Map<T, number>()
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
+
+function QuickFilters(props: {
+  label: string
+  options: { key: string; label: string; count: number }[]
+  onPick: (key: string) => void
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-muted-foreground mr-1 text-xs">{props.label}:</span>
+      {props.options.map((o) => (
+        <Button key={o.key} variant="outline" size="sm" className="text-foreground h-7 px-2" onClick={() => props.onPick(o.key)}>
+          {o.label}
+          <span className="text-muted-foreground tabular-nums">{o.count}</span>
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+function FilterChip({
+  children,
+  onClear,
+  clearLabel = 'Remove filter',
+}: {
+  children: React.ReactNode
+  onClear: () => void
+  clearLabel?: string
+}) {
   return (
     <Badge variant="secondary" className="gap-1 pr-1">
       {children}
       <button
         type="button"
         onClick={onClear}
-        aria-label="Remove filter"
+        aria-label={clearLabel}
+        title={clearLabel}
         className="hover:bg-background/60 rounded-sm p-0.5"
       >
         <X className="size-3" />

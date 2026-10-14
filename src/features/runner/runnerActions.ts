@@ -1,5 +1,6 @@
 import type { AppDispatch } from '@/store'
 import { setTab } from '@/features/ui/uiSlice'
+import type { RaceListItem } from '@/api/types'
 import { openRunner, scanRunner, type RunnerQuery } from './runnerSlice'
 
 /** Only one profile lookup runs at a time; starting a new one cancels the previous. */
@@ -28,18 +29,20 @@ export function openRunnerFromResult(
   }
 }
 
-export function searchRunner(dispatch: AppDispatch, query: RunnerQuery) {
+/** Scan all races for `query`, or only `races` (retrying failed ones). */
+export function searchRunner(dispatch: AppDispatch, query: RunnerQuery, races?: RaceListItem[]) {
   cancelRunner()
-  active = dispatch(scanRunner(query))
+  active = dispatch(scanRunner({ ...query, races }))
 }
 
-/** Shareable link: #runner=<name>&yob=<year>&exact=1 */
+/** Shareable link: #runner=<name>&yob=<year>&town=<town>&exact=1 */
 export function writeHash(query: RunnerQuery | null) {
   const next = query
     ? '#' +
       new URLSearchParams({
         runner: query.name,
         ...(query.yob ? { yob: String(query.yob) } : {}),
+        ...(query.town ? { town: query.town } : {}),
         ...(query.exact ? { exact: '1' } : {}),
       }).toString()
     : ''
@@ -51,5 +54,10 @@ export function readHash(): RunnerQuery | null {
   const name = p.get('runner')?.trim()
   if (!name) return null
   const yob = Number(p.get('yob'))
-  return { name, yob: Number.isInteger(yob) && yob > 1900 ? yob : null, exact: p.get('exact') === '1' }
+  return {
+    name,
+    yob: Number.isInteger(yob) && yob > 1900 ? yob : null,
+    exact: p.get('exact') === '1',
+    town: p.get('town')?.trim() || null,
+  }
 }

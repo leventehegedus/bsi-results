@@ -9,11 +9,12 @@ Redux Toolkit · axios · oxlint · Vercel
 
 ## Features
 
-- **Race browser**: ~2 600 result lists since 1984, grouped into events (e.g. the whole SPAR
-  Budapest Maraton weekend), expandable to their sub-events. Search by name/year, open results,
-  filter by name, town (or click a town), club, bib and category, paginate, export to CSV.
-  Includes 390 older races (1984–2017) that the API has but doesn't list (`src/api/legacyRaces.json`).
-- **Town search**: give one or more towns (`Makó, Zsombó`) and pick distances (marathon, half
+- **Race browser**: ~2 800 result lists since 1984, grouped by year (the current year opens by
+  default) and into events (e.g. the whole SPAR Budapest Maraton weekend), expandable to their
+  sub-events. Search by name, open results, filter by name, town (or click a town), club, bib,
+  category, gender, country, net time, birth year and place, paginate, export to CSV.
+  Includes 542 older races (1984–2019) that the API has but doesn't list (`src/api/legacyRaces.json`).
+- **Town search**: give one or more towns (`Budapest, Szeged`) and pick distances (marathon, half
   marathon, 10 km, 5 km, other). Race distances are read once and cached in localStorage; the
   matching lists are scanned with the `town` filter (cancellable) and shown as:
   - every finish, with sub-lists of the same event (amateur cup, profession championships)
@@ -70,8 +71,8 @@ Result rows have no birth year field, but `minYob`/`maxYob` filter on it for eve
 1984. `name` matches accent-insensitively as a substring.
 
 The `town` filter is an exact match. Town data exists from 1996; 1984–1993 lists only have
-name/club/country. Budapest Marathon editions not in `/raceList/` are listed in
-`src/api/legacyRaces.ts` (no code found for 2009).
+name/club/country. Races from before 2020 that are not in `/raceList/` are listed in
+`src/api/legacyRaces.ts` (no Budapest Marathon code found for 2009).
 
 ## Project layout
 
