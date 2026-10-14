@@ -3,7 +3,7 @@ import { Download, Loader2, Play, Square } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,6 +22,7 @@ import { runnerKey, type RunnerBest, type ScanRow } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useT, type Messages } from '@/i18n'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { ShareLink } from '@/routing/ShareLink'
 import {
   parseTowns,
   runTownScan,
@@ -74,6 +75,9 @@ export function TownScan() {
         <CardHeader>
           <CardTitle>{t.town.title}</CardTitle>
           <CardDescription>{t.town.description}</CardDescription>
+          <CardAction>
+            <ShareLink />
+          </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="grid gap-4 md:grid-cols-[1fr_auto]">
