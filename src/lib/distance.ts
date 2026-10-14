@@ -1,13 +1,8 @@
 /** Distance buckets used by the Town search filters. */
 export type DistanceCategory = 'marathon' | 'half' | '10k' | '5k' | 'other'
 
-export const DISTANCE_CATEGORIES: { value: DistanceCategory; label: string }[] = [
-  { value: 'marathon', label: 'Marathon' },
-  { value: 'half', label: 'Half marathon' },
-  { value: '10k', label: '10 km' },
-  { value: '5k', label: '5 km' },
-  { value: 'other', label: 'Other' },
-]
+/** In display order; their names are in the i18n texts (`distance`). */
+export const DISTANCE_CATEGORIES: DistanceCategory[] = ['marathon', 'half', '10k', '5k', 'other']
 
 /**
  * Not one runner's run at that distance: team/relay/pair/stage formats, and

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
@@ -20,6 +21,7 @@ const CODE_RE = /^\d{4}[a-z0-9_]+$/i
 
 export function RaceBrowser() {
   const dispatch = useAppDispatch()
+  const t = useT()
   const { status, error, query } = useAppSelector((s) => s.races)
   const years = useAppSelector(selectEventsByYear)
   const selectedId = useAppSelector((s) => s.results.raceId)
@@ -40,14 +42,14 @@ export function RaceBrowser() {
     <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
       <Card className="min-w-0 gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100svh-3rem)] lg:self-start">
         <CardHeader>
-          <CardTitle>Races</CardTitle>
+          <CardTitle>{t.races.title}</CardTitle>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-col gap-3">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
             <Input
               className="pl-8"
-              placeholder="Search races…"
+              placeholder={t.races.search}
               value={query}
               onChange={(e) => dispatch(setQuery(e.target.value))}
             />
@@ -55,14 +57,14 @@ export function RaceBrowser() {
 
           {status === 'failed' && (
             <Alert variant="destructive">
-              <AlertTitle>Couldn't load races</AlertTitle>
+              <AlertTitle>{t.races.loadFailed}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           <div className="text-muted-foreground text-xs">
             {status === 'succeeded' &&
-              `${eventCount.toLocaleString('hu-HU')} events · ${raceCount.toLocaleString('hu-HU')} result lists`}
+              t.races.summary(eventCount.toLocaleString('hu-HU'), raceCount.toLocaleString('hu-HU'))}
           </div>
 
           <ul className="-mx-2 max-h-[60svh] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
@@ -100,7 +102,7 @@ export function RaceBrowser() {
                   className="text-sm underline underline-offset-4"
                   onClick={() => dispatch(selectRace(query.trim()))}
                 >
-                  Open race code <span className="font-mono">{query.trim()}</span>
+                  {t.races.openCode} <span className="font-mono">{query.trim()}</span>
                 </button>
               </li>
             )}
@@ -125,6 +127,7 @@ function YearSection(props: {
   onSelect: (id: string) => void
 }) {
   const { group: g } = props
+  const t = useT()
   return (
     <li>
       <Collapsible open={props.open} onOpenChange={props.onOpenChange}>
@@ -136,7 +139,7 @@ function YearSection(props: {
             <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
             <span className="flex-1 text-sm font-semibold">{g.year}</span>
             <span className="text-muted-foreground text-xs">
-              {g.events.length ? `${plural(g.events.length, 'event')} · ${plural(g.raceCount, 'list')}` : 'no races'}
+              {g.events.length ? t.races.yearSummary(g.events.length, g.raceCount) : t.races.noRaces}
             </span>
           </button>
         </CollapsibleTrigger>
@@ -164,11 +167,11 @@ function YearSection(props: {
             )}
             {g.events.length > MAX_VISIBLE && (
               <li className="text-muted-foreground px-2 py-2 text-xs">
-                Showing the first {MAX_VISIBLE} events. Narrow the search to see more.
+                {t.races.showingFirst(MAX_VISIBLE)}
               </li>
             )}
             {!g.events.length && (
-              <li className="text-muted-foreground px-2 py-2 text-xs">No result lists for this year.</li>
+              <li className="text-muted-foreground px-2 py-2 text-xs">{t.races.noListsThisYear}</li>
             )}
           </ul>
         </CollapsibleContent>
@@ -264,6 +267,7 @@ function RaceItem(props: {
   onSelect: (id: string) => void
 }) {
   const r = props.race
+  const t = useT()
   const name = props.meta?.nev || r.name
   return (
     <button
@@ -277,12 +281,8 @@ function RaceItem(props: {
       <div className="text-sm font-medium break-words">{name}</div>
       <div className="text-muted-foreground font-mono text-xs">
         {r.date}
-        {props.meta?.meret === 0 && ' · no results'}
+        {props.meta?.meret === 0 && ` · ${t.races.noResults}`}
       </div>
     </button>
   )
-}
-
-function plural(n: number, word: string) {
-  return `${n.toLocaleString('hu-HU')} ${word}${n === 1 ? '' : 's'}`
 }

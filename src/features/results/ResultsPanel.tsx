@@ -29,26 +29,30 @@ import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { fetchResults, loadRace, setFilters } from './resultsSlice'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { useLang, useT, type Messages } from '@/i18n'
 
 const ANY = '__any__'
 /** Wait for a pause in typing before querying the API. */
 const TYPE_DELAY_MS = 300
 const FALLBACK_COLUMNS = ['hely', 'nev', 'kategoria', 'kat_hely', 'netto', 'brutto', 'varos', 'egyesulet', 'rajtszam']
-const FALLBACK_HEADERS: Record<string, string> = {
-  hely: 'Rank',
-  nev: 'Name',
-  kategoria: 'Category',
-  kat_hely: 'Cat. rank',
-  netto: 'Net time',
-  brutto: 'Gun time',
-  varos: 'Town',
-  egyesulet: 'Club',
-  rajtszam: 'Bib',
-  orszag: 'Country',
-}
+/** Headers for when the API's field list is missing. */
+const fallbackHeaders = (t: Messages): Record<string, string> => ({
+  hely: t.col.rank,
+  nev: t.col.name,
+  kategoria: t.col.category,
+  kat_hely: t.col.catRank,
+  netto: t.col.netTime,
+  brutto: t.col.gunTime,
+  varos: t.col.town,
+  egyesulet: t.col.club,
+  rajtszam: t.col.bib,
+  orszag: t.col.country,
+})
 
 export function ResultsPanel() {
   const dispatch = useAppDispatch()
+  const t = useT()
+  const lang = useLang()
   const r = useAppSelector((s) => s.results)
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
@@ -71,16 +75,19 @@ export function ResultsPanel() {
   if (!r.raceId) {
     return (
       <Card className="text-muted-foreground min-w-0 items-center justify-center px-6 py-24 text-center text-sm">
-        Pick a race on the left to see its results.
+        {t.results.pickRace}
       </Card>
     )
   }
 
   const columns = r.fields.length
-    ? r.fields.map((f) => ({ key: f.mezo, label: f.header_en || f.header_hu }))
+    ? r.fields.map((f) => ({
+        key: f.mezo,
+        label: (lang === 'hu' ? f.header_hu || f.header_en : f.header_en || f.header_hu) || f.mezo,
+      }))
     : (r.rows[0] ? Object.keys(r.rows[0]).filter((k) => k !== 'race') : FALLBACK_COLUMNS).map((k) => ({
         key: k,
-        label: FALLBACK_HEADERS[k] ?? k,
+        label: fallbackHeaders(t)[k] ?? k,
       }))
 
   /** Update the filters and reload page 1, right away or after `delay` ms. */
@@ -121,7 +128,7 @@ export function ResultsPanel() {
         size="icon"
         className="text-muted-foreground absolute top-1/2 right-1 size-7 -translate-y-1/2"
         onClick={() => setFilter(key, undefined)}
-        aria-label={`Clear ${label.toLowerCase()} filter`}
+        aria-label={t.results.clearFilter(label)}
       >
         <X />
       </Button>
@@ -159,8 +166,8 @@ export function ResultsPanel() {
     <div className="grid gap-1.5">
       <Label htmlFor={`f-${minKey}`}>{label}</Label>
       <div className="grid grid-cols-2 gap-2">
-        {textInput(minKey, `${label} from`, minHint, numeric)}
-        {textInput(maxKey, `${label} to`, maxHint, numeric)}
+        {textInput(minKey, t.results.rangeFrom(label), minHint, numeric)}
+        {textInput(maxKey, t.results.rangeTo(label), maxHint, numeric)}
       </div>
     </div>
   )
@@ -174,7 +181,7 @@ export function ResultsPanel() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any</SelectItem>
+            <SelectItem value={ANY}>{t.common.any}</SelectItem>
             {options.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -189,7 +196,7 @@ export function ResultsPanel() {
             size="icon"
             className="text-muted-foreground absolute top-1/2 right-7 size-7 -translate-y-1/2"
             onClick={() => setFilter(key, undefined)}
-            aria-label={`Clear ${label.toLowerCase()} filter`}
+            aria-label={t.results.clearFilter(label)}
           >
             <X />
           </Button>
@@ -209,54 +216,54 @@ export function ResultsPanel() {
         <CardDescription className="flex flex-wrap items-center gap-2">
           {r.meta?.datum && <Badge variant="secondary">{r.meta.datum.slice(0, 10)}</Badge>}
           {!!r.meta?.tav && <Badge variant="secondary">{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
-          {r.meta && <Badge variant="secondary">{r.meta.meret.toLocaleString('hu-HU')} finishers</Badge>}
+          {r.meta && <Badge variant="secondary">{t.results.finishers(r.meta.meret.toLocaleString('hu-HU'))}</Badge>}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-col gap-3">
-          {field('name', 'Name')}
+          {field('name', t.col.name)}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {field('town', 'Town', 'exact, e.g. Budapest')}
-            {field('club', 'Club')}
-            {field('bib', 'Bib')}
+            {field('town', t.col.town, t.results.townHint)}
+            {field('club', t.col.club)}
+            {field('bib', t.col.bib)}
             {select(
               'category',
-              'Category',
+              t.col.category,
               r.categories.map((c) => ({ value: c, label: c })),
             )}
             {/* the API's codes: F = férfi, N = nő */}
-            {select('sex', 'Gender', [
-              { value: 'F', label: 'Men' },
-              { value: 'N', label: 'Women' },
+            {select('sex', t.results.gender, [
+              { value: 'F', label: t.results.men },
+              { value: 'N', label: t.results.women },
             ])}
             {select(
               'country',
-              'Country',
+              t.col.country,
               r.countries.map((c) => ({ value: c.value, label: `${c.text} (${c.value})` })),
             )}
-            {range('Net time (mm:ss or h:mm:ss)', ['minNetTime', 'maxNetTime'], ['from', 'to'], false)}
-            {range('Birth year', ['minYob', 'maxYob'], ['from', 'to'])}
-            {range('Place', ['minPlace', 'maxPlace'], ['from', 'to'])}
+            {range(t.results.netTimeRange, ['minNetTime', 'maxNetTime'], [t.common.from, t.common.to], false)}
+            {range(t.col.birthYear, ['minYob', 'maxYob'], [t.common.from, t.common.to])}
+            {range(t.col.place, ['minPlace', 'maxPlace'], [t.common.from, t.common.to])}
           </div>
           <div className="flex justify-end">
             <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>
               <X />
-              Clear all filters
+              {t.results.clearAll}
             </Button>
           </div>
         </div>
 
         {r.status === 'failed' && (
           <Alert variant="destructive">
-            <AlertTitle>Couldn't load results</AlertTitle>
+            <AlertTitle>{t.results.loadFailed}</AlertTitle>
             <AlertDescription>{r.error}</AlertDescription>
           </Alert>
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="text-muted-foreground">
-            {r.status === 'loading' ? 'Loading…' : `${r.total.toLocaleString('hu-HU')} results`}
+            {r.status === 'loading' ? t.results.loading : t.results.count(r.total.toLocaleString('hu-HU'))}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting || !r.total}>
@@ -267,7 +274,7 @@ export function ResultsPanel() {
               variant="outline"
               size="icon"
               className="size-8"
-              aria-label="Previous page"
+              aria-label={t.results.prevPage}
               disabled={r.page <= 1 || r.status === 'loading'}
               onClick={() => dispatch(fetchResults(r.page - 1))}
             >
@@ -280,7 +287,7 @@ export function ResultsPanel() {
               variant="outline"
               size="icon"
               className="size-8"
-              aria-label="Next page"
+              aria-label={t.results.nextPage}
               disabled={r.page >= r.lastPage || r.status === 'loading'}
               onClick={() => dispatch(fetchResults(r.page + 1))}
             >
@@ -314,7 +321,7 @@ export function ResultsPanel() {
                           {c.key === 'varos' && row.varos ? (
                             <button
                               type="button"
-                              title="Show only this town"
+                              title={t.common.showOnlyTown}
                               className="hover:bg-accent -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted underline-offset-4"
                               onClick={() => filterTown(String(row.varos))}
                             >
@@ -338,7 +345,7 @@ export function ResultsPanel() {
               {r.status === 'succeeded' && r.rows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-muted-foreground py-10 text-center">
-                    No results.
+                    {t.results.none}
                   </TableCell>
                 </TableRow>
               )}

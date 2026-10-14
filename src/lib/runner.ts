@@ -20,8 +20,19 @@ const NAMED: Record<number, string> = {
   5000: '5 km',
 }
 
-export function distanceLabel(m: number | null): string {
-  if (!m) return 'Unknown distance'
+/** Names for the named distances; English unless a translation is passed in. */
+export interface DistanceNames {
+  marathon: string
+  half: string
+  unknown: string
+}
+
+const ENGLISH: DistanceNames = { marathon: 'Marathon', half: 'Half marathon', unknown: 'Unknown distance' }
+
+export function distanceLabel(m: number | null, names: DistanceNames = ENGLISH): string {
+  if (!m) return names.unknown
+  if (m === 42195) return names.marathon
+  if (m === 21097 || m === 21100) return names.half
   if (NAMED[m]) return NAMED[m]
   const km = m / 1000
   return `${km.toLocaleString('hu-HU', { maximumFractionDigits: 3 })} km`
