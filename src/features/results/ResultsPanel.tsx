@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, Loader2, X } from 'lucide-react'
-import { getAllResults } from '@/api/futanet'
+import { ChevronLeft, ChevronRight, Download, FileDown, Loader2, X } from 'lucide-react'
+import { certificateUrl, getAllResults } from '@/api/futanet'
 import type { ResultFilters, ResultRow } from '@/api/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -111,6 +111,8 @@ export function ResultsPanel() {
   const distance = r.meta?.tav ?? 0
   const netIndex = columns.findIndex((c) => c.key === 'netto')
   if (distance > 0 && netIndex >= 0) columns.splice(netIndex + 1, 0, { key: PACE_KEY, label: t.col.pace })
+  // The API only has certificates for races with a template, and only per bib number.
+  if (r.meta?.oklevel) columns.push({ key: CERT_KEY, label: t.col.certificate })
   /** A cell's text, for the table and the CSV. */
   const cellText = (row: ResultRow, key: string) =>
     key === PACE_KEY ? formatPace(pacePerKm(row.netto, distance)) : display(row, key)
@@ -131,9 +133,11 @@ export function ResultsPanel() {
     setExporting(true)
     try {
       const rows = await getAllResults(r.raceId, r.filters)
+      // the certificate column is a download link, not data
+      const csvColumns = columns.filter((c) => c.key !== CERT_KEY)
       const csv = toCsv(
-        columns.map((c) => c.label),
-        rows.map((row) => columns.map((c) => cellText(row, c.key))),
+        csvColumns.map((c) => c.label),
+        rows.map((row) => csvColumns.map((c) => cellText(row, c.key))),
       )
       downloadCsv(`${r.raceId}.csv`, csv)
     } finally {
@@ -335,7 +339,9 @@ export function ResultsPanel() {
                 <TableHeader>
                   <TableRow>
                     {columns.map((c) => (
-                      <TableHead key={c.key}>{c.label}</TableHead>
+                      <TableHead key={c.key} className={c.key === CERT_KEY ? 'text-center' : undefined}>
+                        {c.label}
+                      </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
@@ -351,8 +357,20 @@ export function ResultsPanel() {
                     : r.rows.map((row, i) => (
                         <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
                           {columns.map((c) => (
-                            <TableCell key={c.key} className={isNumericCol(c.key) ? 'tabular-nums' : ''}>
-                              {c.key === 'varos' && row.varos ? (
+                            <TableCell
+                              key={c.key}
+                              className={
+                                isNumericCol(c.key) ? 'tabular-nums' : c.key === CERT_KEY ? 'text-center' : ''
+                              }
+                            >
+                              {c.key === CERT_KEY ? (
+                                <CertificateLink
+                                  raceId={r.raceId!}
+                                  bib={row.rajtszam ?? null}
+                                  name={display(row, 'nev')}
+                                  t={t}
+                                />
+                              ) : c.key === 'varos' && row.varos ? (
                                 <button
                                   type="button"
                                   title={t.common.showOnlyTown}
@@ -400,8 +418,28 @@ function display(row: ResultRow, key: string) {
   return String(v)
 }
 
-/** Computed column: not a field of the API's rows. */
+/** Computed columns: not fields of the API's rows. */
 const PACE_KEY = '__pace'
+const CERT_KEY = '__certificate'
+
+/** Downloads the finisher's certificate; needs a bib number, which a few rows lack. */
+function CertificateLink(props: { raceId: string; bib: string | null; name: string; t: Messages }) {
+  const { bib, t } = props
+  if (!bib) return <span className="text-muted-foreground">–</span>
+  return (
+    <a
+      href={certificateUrl(props.raceId, bib)}
+      download={`oklevel-${props.raceId}-${bib}.pdf`}
+      target="_blank"
+      rel="noopener"
+      title={t.results.certificateFor(props.name)}
+      aria-label={t.results.certificateFor(props.name)}
+      className="hover:bg-accent text-muted-foreground hover:text-foreground inline-flex size-7 items-center justify-center rounded transition-colors"
+    >
+      <FileDown className="size-4" />
+    </a>
+  )
+}
 
 function isNumericCol(key: string) {
   return key === 'hely' || key === 'netto' || key === 'brutto' || key === PACE_KEY || key.startsWith('reszido')

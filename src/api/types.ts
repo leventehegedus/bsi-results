@@ -25,6 +25,11 @@ export interface RaceMeta {
   /** distance in metres (0 for some legacy races) */
   tav: number
   sorozat: string | null
+  /**
+   * Name of the certificate template ("oklevel_2026_spar_42k"), or null for races
+   * that have none — only then does GET /pdf/{code}/{bib} return a certificate.
+   */
+  oklevel?: string | null
 }
 
 /** One row of POST /resultList/{code}. Split-time columns (reszido_N) vary per race. */

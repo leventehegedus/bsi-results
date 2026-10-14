@@ -11,6 +11,14 @@ import type {
 
 type Opts = { signal?: AbortSignal }
 
+/**
+ * Link to a finisher's certificate PDF. The endpoint only has one for races whose
+ * metadata carries an `oklevel` template; for the others it answers with an error page.
+ */
+export function certificateUrl(code: string, bib: string) {
+  return `${api.defaults.baseURL}/pdf/${encodeURIComponent(code)}/${encodeURIComponent(bib)}`
+}
+
 /** Older names start with their date: "2019. 10. 26. - 12. Intersport Túranap" → "12. Intersport Túranap". */
 export function cleanRaceName(name: string) {
   return name.replace(/^\s*\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*(-\s*)?/, '').trim()
