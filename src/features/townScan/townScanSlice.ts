@@ -111,6 +111,9 @@ const townScanSlice = createSlice({
     setTownsInput(s, a: PayloadAction<string>) {
       s.townsInput = a.payload
     },
+    setCategories(s, a: PayloadAction<DistanceCategory[]>) {
+      s.categories = DISTANCE_CATEGORIES.filter((c) => a.payload.includes(c))
+    },
     toggleCategory(s, a: PayloadAction<DistanceCategory>) {
       s.categories = s.categories.includes(a.payload)
         ? s.categories.filter((c) => c !== a.payload)
@@ -163,6 +166,7 @@ const townScanSlice = createSlice({
 
 export const {
   setTownsInput,
+  setCategories,
   toggleCategory,
   setExcludeVirtual,
   setMergeSubLists,

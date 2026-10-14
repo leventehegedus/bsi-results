@@ -5,7 +5,7 @@ import type { ResultFilters, ResultRow } from '@/api/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -30,10 +30,11 @@ import { formatPace, pacePerKm } from '@/lib/pace'
 import { formatFade, runnerSplits, splitPoints, type SplitPoint } from '@/lib/splits'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { setFilters, setPage } from './resultsSlice'
+import { setFilters, setPage, setView } from './resultsSlice'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { ShareLink } from '@/routing/ShareLink'
 import { RaceBreakdown } from './RaceBreakdown'
 import { RaceSplits } from './RaceSplits'
 import { RaceWeather } from '@/features/weather/RaceWeather'
@@ -61,16 +62,16 @@ export function ResultsPanel() {
   const dispatch = useAppDispatch()
   const t = useT()
   const lang = useLang()
-  const { raceId, filters, page } = useAppSelector((s) => s.results)
+  const { raceId, filters, page, view } = useAppSelector((s) => s.results)
   // Cached per race / per (race, page, filters): going back to a race or page is instant,
   // and a newer filter simply switches to another cache entry.
   const metaQuery = useRaceQuery(raceId ?? skipToken)
   const detailsQuery = useRaceDetailsQuery(raceId ?? skipToken)
   const pageQuery = useResultPageQuery(raceId ? { raceId, page, filters } : skipToken)
-  // the panel is keyed by race, so the form starts empty for every race
-  const [form, setForm] = useState<ResultFilters>({})
+  // The panel is keyed by race, so the form starts over for every race — from the
+  // filters in the URL when a shared link brought us here, otherwise empty.
+  const [form, setForm] = useState<ResultFilters>(filters)
   const [exporting, setExporting] = useState(false)
-  const [view, setView] = useState<'results' | 'breakdown' | 'splits' | 'weather'>('results')
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -88,6 +89,7 @@ export function ResultsPanel() {
     rows: pageQuery.data?.data ?? [],
     total: pageQuery.data?.meta.total ?? 0,
     lastPage: pageQuery.data?.meta.last_page ?? 1,
+    view,
     status: pageQuery.isError ? 'failed' : pageQuery.isFetching ? 'loading' : pageQuery.isSuccess ? 'succeeded' : 'idle',
     error: pageQuery.error && 'message' in pageQuery.error ? pageQuery.error.message : null,
   }
@@ -249,6 +251,9 @@ export function ResultsPanel() {
         ) : (
           <CardTitle className="text-lg">{r.meta?.nev ?? r.raceId}</CardTitle>
         )}
+        <CardAction>
+          <ShareLink />
+        </CardAction>
         <CardDescription className="flex flex-wrap items-center gap-2">
           {r.meta?.datum && <Badge variant="secondary">{r.meta.datum.slice(0, 10)}</Badge>}
           {!!r.meta?.tav && <Badge>{(r.meta.tav / 1000).toLocaleString('hu-HU')} km</Badge>}
@@ -257,11 +262,12 @@ export function ResultsPanel() {
       </CardHeader>
 
       <CardContent>
-        <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="gap-5">
+        <Tabs value={r.view} onValueChange={(v) => dispatch(setView(v as typeof r.view))} className="gap-5">
           <TabsList>
             <TabsTrigger value="results">{t.breakdown.views.results}</TabsTrigger>
             <TabsTrigger value="breakdown">{t.breakdown.views.breakdown}</TabsTrigger>
-            {hasSplits && <TabsTrigger value="splits">{t.breakdown.views.splits}</TabsTrigger>}
+            {/* also when a shared link opens the splits of a race without them, so the active tab shows */}
+            {(hasSplits || r.view === 'splits') && <TabsTrigger value="splits">{t.breakdown.views.splits}</TabsTrigger>}
             <TabsTrigger value="weather">{t.breakdown.views.weather}</TabsTrigger>
           </TabsList>
           {/* keyed by race so start-time / place corrections are re-read per race */}
