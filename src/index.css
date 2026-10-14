@@ -26,49 +26,72 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-table-head: var(--table-head);
 }
 
+/*
+ * Palette: ink #1c1c1a · navy #16336f · cream #f0eedf · periwinkle #b1bfe2 · orange #fe492a.
+ * Tints are mixes of these; every text/background pair meets WCAG AA (4.5:1),
+ * focus rings 3:1.
+ */
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #f0eedf; /* cream */
+  --foreground: #1c1c1a; /* ink */
+  --card: #f8f7f1; /* cream lifted toward white */
+  --card-foreground: #1c1c1a;
+  --popover: #f8f7f1;
+  --popover-foreground: #1c1c1a;
+  --primary: #16336f; /* navy */
+  --primary-foreground: #f0eedf;
+  --secondary: #b1bfe2; /* periwinkle */
+  --secondary-foreground: #16336f;
+  --muted: #e3e1d3;
+  --muted-foreground: #605f59;
+  --accent: #d4d9e0; /* periwinkle washed into cream: hover / selected rows */
+  --accent-foreground: #16336f;
+  --destructive: #ba3b25; /* orange darkened so error text reads on cream */
+  --border: #d2d1c3;
+  --input: #b0afa4;
+  --ring: #e34428; /* orange, a touch darker for 3:1 on cream */
+  /* accents: orange fills (never as text on cream: 2.9:1), navy header band */
+  --brand: #fe492a; /* orange: call-to-action buttons, counts, progress, selection edge */
+  --brand-foreground: #1c1c1a; /* ink on orange: 5.0:1 */
+  --header: #16336f; /* navy */
+  --header-foreground: #f0eedf;
+  --table-head: #d8deea; /* periwinkle washed into the card */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  color-scheme: dark;
+  --background: #1c1c1a; /* ink */
+  --foreground: #f0eedf; /* cream */
+  --card: #272624;
+  --card-foreground: #f0eedf;
+  --popover: #2b2b28;
+  --popover-foreground: #f0eedf;
+  --primary: #b1bfe2; /* periwinkle */
+  --primary-foreground: #16336f;
+  --secondary: #16336f; /* navy */
+  --secondary-foreground: #f0eedf;
+  --muted: #31312e;
+  --muted-foreground: #acaba0;
+  --accent: #182d5a; /* navy sunk into ink */
+  --accent-foreground: #f0eedf;
+  --destructive: #fc5d40; /* orange, lifted slightly for 4.5:1 on cards */
+  --border: #3a3936;
+  --input: #5c5b55;
+  --ring: #fe492a; /* orange */
+  --brand: #fe492a;
+  --brand-foreground: #1c1c1a;
+  --header: #16336f;
+  --header-foreground: #f0eedf;
+  --table-head: #1b2f58; /* navy sunk into the card */
 }
 
 @layer base {

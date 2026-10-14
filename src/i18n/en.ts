@@ -9,6 +9,8 @@ export const en = {
       'Browse race results from results.futanet.hu, find every finisher from a given town, and follow a runner across all races.',
     tabs: { races: 'Race browser', town: 'Town search', runner: 'Runner' },
     language: 'Language',
+    theme: 'Colour scheme',
+    themes: { light: 'Light', dark: 'Dark', system: 'System' },
   },
   common: {
     stop: 'Stop',
