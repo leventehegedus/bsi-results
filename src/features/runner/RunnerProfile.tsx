@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Download, Info, Loader2, MapPin, Search, Square, UserRound, Users, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -23,9 +23,10 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useT, type Messages } from '@/i18n'
 import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
-import { cancelRunner, searchRunner, writeHash } from './runnerActions'
+import { cancelRunner, searchRunner } from './runnerActions'
 import { FavouriteButton } from '@/features/favourites/FavouriteButton'
 import { sameRunner, toggleRunner } from '@/features/favourites/favouritesSlice'
+import { ShareLink } from '@/routing/ShareLink'
 import { RunnerLink } from './RunnerLink'
 import { ProgressionChart } from './ProgressionChart'
 import {
@@ -67,11 +68,6 @@ export function RunnerProfile() {
   }
   const draftQuery = queryFromDraft(draft, r.query)
   const runDraft = () => draftQuery && searchRunner(dispatch, draftQuery)
-
-  // Keep the URL shareable once we know who we're looking at.
-  useEffect(() => {
-    if (r.status === 'scanning' || r.status === 'done') writeHash(r.query)
-  }, [r.status, r.query])
 
   const openRace = (raceId: string) => {
     dispatch(selectRace(raceId))
@@ -123,7 +119,7 @@ export function RunnerProfile() {
           <CardTitle>{t.runner.title}</CardTitle>
           <CardDescription>{t.runner.description(MIN_QUERY_LENGTH)}</CardDescription>
           {current && (
-            <CardAction>
+            <CardAction className="flex items-center gap-1">
               <FavouriteButton
                 active={savedCurrent}
                 addLabel={t.favourites.addRunner}
@@ -131,6 +127,7 @@ export function RunnerProfile() {
                 withText
                 onToggle={() => dispatch(toggleRunner(current))}
               />
+              <ShareLink />
             </CardAction>
           )}
         </CardHeader>

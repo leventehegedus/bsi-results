@@ -201,6 +201,10 @@ const runnerSlice = createSlice({
       if (s.status !== 'idle') return
       s.query = a.payload
     },
+    /** No profile (e.g. back to a link without one); keeps the display options. */
+    clearRunner(s) {
+      return { ...initialState, mergeSubLists: s.mergeSubLists, includeVirtual: s.includeVirtual }
+    },
   },
   extraReducers: (b) => {
     b.addCase(scanRunner.pending, (s, a) => {
@@ -257,7 +261,8 @@ const runnerSlice = createSlice({
   },
 })
 
-export const { setMergeSubLists, setIncludeVirtual, setFilterYob, setFilterTown, prefillQuery } = runnerSlice.actions
+export const { setMergeSubLists, setIncludeVirtual, setFilterYob, setFilterTown, prefillQuery, clearRunner } =
+  runnerSlice.actions
 const { progress, found } = runnerSlice.actions
 export const runnerReducer = runnerSlice.reducer
 

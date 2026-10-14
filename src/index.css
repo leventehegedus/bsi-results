@@ -71,6 +71,9 @@
   --chart-context: #7d7c73; /* "all finishers": neutral context line, 3.9:1 */
   --chart-series: #3463c4; /* a single series (same validated step as --chart-men) */
   --chart-highlight: #fe492a; /* the one point a chart is about, e.g. a PB */
+  /* diverging pair for pacing: faster / slower than the start (same validated steps) */
+  --chart-faster: #3463c4;
+  --chart-slower: #fe492a;
 }
 
 .dark {
@@ -103,6 +106,8 @@
   --chart-context: #8d8c84; /* 4.5:1 */
   --chart-series: #5b84d4;
   --chart-highlight: #fe492a;
+  --chart-faster: #5b84d4;
+  --chart-slower: #fe492a;
 }
 
 @layer base {

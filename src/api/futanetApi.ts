@@ -1,5 +1,6 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import { toBreakdownRow, type BreakdownRow } from '@/lib/breakdown'
+import { runnerSplits, splitPoints, splitStats, type RunnerSplits, type SplitPoint, type SplitStats } from '@/lib/splits'
 import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
 import { errorMessage } from '@/store/createAppAsyncThunk'
@@ -24,6 +25,12 @@ export interface RaceDetails {
   fields: FieldDef[]
   categories: string[]
   countries: Country[]
+}
+
+export interface RaceSplitsData {
+  /** the race's timing points, in order */
+  points: SplitPoint[]
+  stats: SplitStats | null
 }
 
 export interface ResultPageArgs {
@@ -121,6 +128,34 @@ export const futanetApi = createApi({
           false, // pages retry individually
         ),
     }),
+    /**
+     * Pacing of a whole race, worked out from the intermediate times in the
+     * result rows. Only fetched when the splits view is opened.
+     */
+    raceSplits: build.query<RaceSplitsData, string>({
+      queryFn: (raceId, { signal }) =>
+        run(
+          async () => {
+            // the metadata and field list come straight from the API here: reading them
+            // through this very endpoint collection would make its types circular
+            const [meta, fields, rows] = await Promise.all([
+              getRace(raceId, { signal }).catch(() => null),
+              getFields(raceId, { signal }).catch(() => [] as FieldDef[]),
+              fetchAllPages(raceId, {}, signal),
+            ])
+            const points = splitPoints(fields, meta?.tav)
+            if (!points.length) return { points, stats: null }
+            const runs: RunnerSplits[] = []
+            for (const row of rows) {
+              const split = runnerSplits(row, points, meta?.tav)
+              if (split) runs.push(split)
+            }
+            return { points, stats: splitStats(runs) }
+          },
+          signal,
+          false, // pages retry individually
+        ),
+    }),
     /** One page (40 rows) of results with filters. */
     resultPage: build.query<Paginated<ResultRow>, ResultPageArgs>({
       queryFn: ({ raceId, page, filters }, { signal }) =>
@@ -133,8 +168,14 @@ export const futanetApi = createApi({
   }),
 })
 
-export const { useRaceCatalogueQuery, useRaceQuery, useRaceDetailsQuery, useResultPageQuery, useRaceBreakdownQuery } =
-  futanetApi
+export const {
+  useRaceCatalogueQuery,
+  useRaceQuery,
+  useRaceDetailsQuery,
+  useResultPageQuery,
+  useRaceBreakdownQuery,
+  useRaceSplitsQuery,
+} = futanetApi
 
 /** Thunks and scans read through the same cache (no subscription is kept). */
 export function fetchRaceMeta(dispatch: AppDispatch, raceId: string): Promise<RaceMeta | null> {

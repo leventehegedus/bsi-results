@@ -25,6 +25,7 @@ import { useT, type Messages } from '@/i18n'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import { FavouriteButton } from '@/features/favourites/FavouriteButton'
 import { sameTown, toggleTown } from '@/features/favourites/favouritesSlice'
+import { ShareLink } from '@/routing/ShareLink'
 import {
   parseTowns,
   runTownScan,
@@ -89,7 +90,7 @@ export function TownScan() {
         <CardHeader>
           <CardTitle>{t.town.title}</CardTitle>
           <CardDescription>{t.town.description}</CardDescription>
-          <CardAction>
+          <CardAction className="flex items-center gap-1">
             <FavouriteButton
               active={allSaved}
               addLabel={t.favourites.addTown}
@@ -97,6 +98,7 @@ export function TownScan() {
               withText
               onToggle={() => towns.forEach((town) => dispatch(toggleTown(town)))}
             />
+            <ShareLink />
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">

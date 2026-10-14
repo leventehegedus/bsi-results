@@ -20,7 +20,6 @@ export function openRunnerFromResult(
   arg: Parameters<typeof openRunner>[0] & { yob?: number | null },
 ) {
   cancelRunner()
-  writeHash(null)
   if (arg.yob) {
     dispatch(setTab('runner'))
     active = dispatch(scanRunner({ name: arg.name, yob: arg.yob, exact: true }))
@@ -33,31 +32,4 @@ export function openRunnerFromResult(
 export function searchRunner(dispatch: AppDispatch, query: RunnerQuery, races?: RaceListItem[]) {
   cancelRunner()
   active = dispatch(scanRunner({ ...query, races }))
-}
-
-/** Shareable link: #runner=<name>&yob=<year>&town=<town>&exact=1 */
-export function writeHash(query: RunnerQuery | null) {
-  const next = query
-    ? '#' +
-      new URLSearchParams({
-        runner: query.name,
-        ...(query.yob ? { yob: String(query.yob) } : {}),
-        ...(query.town ? { town: query.town } : {}),
-        ...(query.exact ? { exact: '1' } : {}),
-      }).toString()
-    : ''
-  if (location.hash !== next) history.replaceState(null, '', next || location.pathname + location.search)
-}
-
-export function readHash(): RunnerQuery | null {
-  const p = new URLSearchParams(location.hash.slice(1))
-  const name = p.get('runner')?.trim()
-  if (!name) return null
-  const yob = Number(p.get('yob'))
-  return {
-    name,
-    yob: Number.isInteger(yob) && yob > 1900 ? yob : null,
-    exact: p.get('exact') === '1',
-    town: p.get('town')?.trim() || null,
-  }
 }

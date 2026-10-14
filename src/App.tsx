@@ -3,7 +3,7 @@ import { ListOrdered, MapPin, Monitor, Moon, Sun, UserRound, type LucideIcon } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RaceBrowser } from '@/features/races/RaceBrowser'
 import { RunnerProfile } from '@/features/runner/RunnerProfile'
-import { useRunnerFromHash } from '@/features/runner/useRunnerFromHash'
+import { useUrlSync } from '@/routing/useUrlSync'
 import { TownScan } from '@/features/townScan/TownScan'
 import { setLang, setTab, setTheme, type AppTab } from '@/features/ui/uiSlice'
 import { LANGS, saveLang, useLang, useT } from '@/i18n'
@@ -17,7 +17,7 @@ export default function App() {
   const theme = useAppSelector((s) => s.ui.theme)
   const lang = useLang()
   const t = useT()
-  useRunnerFromHash()
+  useUrlSync()
 
   useEffect(() => {
     document.documentElement.lang = lang
