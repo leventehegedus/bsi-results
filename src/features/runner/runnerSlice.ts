@@ -6,7 +6,7 @@ import type { RaceListItem, ResultFilters } from '@/api/types'
 import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
 import { mergeSubLists, runnerKey, toScanRow } from '@/lib/results'
-import { personalBests, personKey, type RunnerResult } from '@/lib/runner'
+import { personalBests, personKey, progressions, type RunnerResult } from '@/lib/runner'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
 import { setTab } from '@/features/ui/uiSlice'
@@ -284,6 +284,11 @@ export const selectRunnerResults = createSelector(
 
 /** Distinct people (name + birth year) in the filtered results. */
 export const selectPeople = createSelector([selectRunnerResults], (rows) => new Set(rows.map(personKey)).size)
+
+/** Results over time per distance; like PBs, only for a single person. */
+export const selectProgressions = createSelector([selectRunnerResults, (s: RootState) => selectPeople(s)], (rows, people) =>
+  people === 1 ? progressions(rows) : [],
+)
 
 /** PBs only make sense for a single person. */
 export const selectPersonalBests = createSelector([selectRunnerResults, selectPeople], (rows, people) =>

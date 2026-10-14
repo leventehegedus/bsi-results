@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ChevronRight, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,8 @@ import type { RaceListItem } from '@/api/types'
 const MAX_VISIBLE = 150
 const CURRENT_YEAR = String(new Date().getFullYear())
 const CODE_RE = /^\d{4}[a-z0-9_]+$/i
+/** The list and the results sit side by side from Tailwind's `lg` breakpoint up. */
+const SIDE_BY_SIDE = '(min-width: 1024px)'
 
 export function RaceBrowser() {
   const dispatch = useAppDispatch()
@@ -34,6 +36,18 @@ export function RaceBrowser() {
   const raceCount = years.reduce((n, y) => n + y.raceCount, 0)
   // while searching, only years with matches are listed
   const shownYears = searching ? years.filter((y) => y.events.length) : years
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  /** Select a race; on small screens, where the results are below the list, scroll to them. */
+  const openRace = (id: string) => {
+    dispatch(selectRace(id))
+    if (window.matchMedia(SIDE_BY_SIDE).matches) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // after the panel has rendered for the new race
+    requestAnimationFrame(() =>
+      resultsRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }),
+    )
+  }
 
 
   return (
@@ -91,7 +105,7 @@ export function RaceBrowser() {
                     isOpen={(ev) => openState[ev.key] ?? (ev.partial || ev.races.some((r) => r.id === selectedId))}
                     onEventOpenChange={(ev, o) => setOpenState((m) => ({ ...m, [ev.key]: o }))}
                     selectedId={selectedId}
-                    onSelect={(id) => dispatch(selectRace(id))}
+                    onSelect={openRace}
                   />
                 )
               })}
@@ -100,7 +114,7 @@ export function RaceBrowser() {
                 <button
                   type="button"
                   className="text-sm underline underline-offset-4"
-                  onClick={() => dispatch(selectRace(query.trim()))}
+                  onClick={() => openRace(query.trim())}
                 >
                   {t.races.openCode} <span className="font-mono">{query.trim()}</span>
                 </button>
@@ -111,7 +125,9 @@ export function RaceBrowser() {
       </Card>
 
       {/* keyed so the filter form resets when another race is picked */}
-      <ResultsPanel key={selectedId ?? 'none'} />
+      <div ref={resultsRef} className="min-w-0 scroll-mt-4">
+        <ResultsPanel key={selectedId ?? 'none'} />
+      </div>
     </div>
   )
 }

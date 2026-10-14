@@ -189,6 +189,13 @@ export const en = {
     mergeSubLists: 'Count a run once (merge sub-lists)',
     includeVirtual: 'Include virtual races',
     pbTitle: 'Personal bests',
+    progressTitle: 'Progression',
+    progressDescription:
+      'Net times over the years, one chart per distance with at least two races (virtual races excluded). Faster is higher.',
+    races: (n: number) => `${n} races`,
+    pb: 'PB',
+    faster: 'faster ↑',
+    placeN: (n: number) => `place ${n}`,
     pbDescription: 'Fastest net time per distance (virtual races excluded).',
     results: 'Results',
     similarLeftOut: (n: number, name: string) =>

@@ -67,6 +67,40 @@ export function personalBests(rows: RunnerResult[]): PersonalBest[] {
     .sort((a, b) => (b.distance ?? 0) - (a.distance ?? 0))
 }
 
+export interface Progression {
+  /** distance group key (see distanceKey) */
+  key: string
+  /** distance in metres, as reported by the fastest result of the group */
+  distance: number
+  /** results at this distance, oldest first */
+  points: (RunnerResult & { seconds: number })[]
+  /** the fastest of them */
+  best: RunnerResult & { seconds: number }
+}
+
+/**
+ * A runner's results over time, one group per distance: real (non-virtual) races
+ * with a known distance and a net time, at least `minResults` per distance.
+ * Longest distance first.
+ */
+export function progressions(rows: RunnerResult[], minResults = 2): Progression[] {
+  const groups = new Map<string, (RunnerResult & { seconds: number })[]>()
+  for (const r of rows) {
+    const seconds = timeToSeconds(r.time)
+    if (r.virtual || !r.distance || !Number.isFinite(seconds)) continue
+    const k = distanceKey(r.distance)
+    groups.set(k, [...(groups.get(k) ?? []), { ...r, seconds }])
+  }
+  return [...groups]
+    .filter(([, g]) => g.length >= minResults)
+    .map(([key, g]) => {
+      const points = [...g].sort((a, b) => a.date.localeCompare(b.date) || a.seconds - b.seconds)
+      const best = points.reduce((a, b) => (b.seconds < a.seconds ? b : a))
+      return { key, distance: best.distance!, points, best }
+    })
+    .sort((a, b) => b.distance - a.distance)
+}
+
 /** Most frequent non-empty values, e.g. towns or clubs a runner registered with. */
 export function topValues(values: string[], limit = 3): string[] {
   const counts = new Map<string, number>()
