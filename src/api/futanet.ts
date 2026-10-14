@@ -92,7 +92,8 @@ export async function getResultPage(
 export function toApiTime(input: string): string | null {
   const parts = input.trim().split(':')
   if (parts.length > 3 || !parts.every((p) => /^\d{1,2}$/.test(p))) return null
-  while (parts.length < 3) parts.length === 1 ? parts.push('00') : parts.unshift('00')
+  if (parts.length === 1) parts.push('00') // "25" = minutes
+  while (parts.length < 3) parts.unshift('00')
   return parts.map((p) => p.padStart(2, '0')).join(':')
 }
 
@@ -100,7 +101,7 @@ export function toApiTime(input: string): string | null {
  * Trimmed, non-empty filters in the format the API expects. Times must be hh:mm:ss
  * (it silently ignores "25:00"); unfinished birth years and places are left out.
  */
-function apiFilters(filters: ResultFilters): Record<string, string> {
+export function apiFilters(filters: ResultFilters): Record<string, string> {
   const out: Record<string, string> = {}
   for (const [k, raw] of Object.entries(filters)) {
     const v = raw == null ? '' : String(raw).trim()

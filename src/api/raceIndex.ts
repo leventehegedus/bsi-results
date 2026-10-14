@@ -1,6 +1,5 @@
 import { LEGACY_RACES } from './legacyRaces'
-import { getRaceCached } from './runner'
-import type { RaceListItem } from './types'
+import type { RaceListItem, RaceMeta } from './types'
 import { runPool } from '@/lib/pool'
 
 /** What we need to know about a race to decide whether to scan it. */
@@ -42,7 +41,16 @@ const legacyTav = new Map(LEGACY_RACES.map((r) => [r.id, r.tav]))
  */
 export async function getRaceFacts(
   races: RaceListItem[],
-  { signal, onProgress }: { signal?: AbortSignal; onProgress?: (done: number, total: number) => void } = {},
+  {
+    fetchMeta,
+    signal,
+    onProgress,
+  }: {
+    /** race metadata lookup, e.g. through the futanetApi cache */
+    fetchMeta: (raceId: string) => Promise<RaceMeta | null>
+    signal?: AbortSignal
+    onProgress?: (done: number, total: number) => void
+  },
 ): Promise<Map<string, RaceFacts>> {
   const stored = load()
   const facts = new Map<string, RaceFacts>()
@@ -61,7 +69,7 @@ export async function getRaceFacts(
     missing,
     12,
     async (r) => {
-      const meta = await getRaceCached(r.id, { signal })
+      const meta = await fetchMeta(r.id)
       const f: RaceFacts = { tav: meta?.tav ?? 0, empty: meta?.statusz === 'ures' }
       facts.set(r.id, f)
       if (meta && Date.parse(r.date) < cutoff) stored[r.id] = [f.tav, f.empty ? 1 : 0]

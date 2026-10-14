@@ -1,37 +1,17 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { getRaceCatalogue } from '@/api/runner'
+import { futanetApi } from '@/api/futanetApi'
 import type { RaceListItem } from '@/api/types'
-import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
 import { groupRaces, type RaceEvent } from '@/lib/events'
 
-type Status = 'idle' | 'loading' | 'succeeded' | 'failed'
-
+/** The race list itself lives in the futanetApi cache (raceCatalogue); this is just the search. */
 interface RacesState {
-  items: RaceListItem[]
-  status: Status
-  error: string | null
   query: string
 }
 
 const initialState: RacesState = {
-  items: [],
-  status: 'idle',
-  error: null,
   query: '',
 }
-
-export const fetchRaces = createAppAsyncThunk(
-  'races/fetch',
-  async (_: void, { signal, rejectWithValue }) => {
-    try {
-      return await getRaceCatalogue({ signal })
-    } catch (e) {
-      return rejectWithValue(errorMessage(e))
-    }
-  },
-  { condition: (_, { getState }) => getState().races.status !== 'loading' },
-)
 
 const racesSlice = createSlice({
   name: 'races',
@@ -41,26 +21,14 @@ const racesSlice = createSlice({
       state.query = action.payload
     },
   },
-  extraReducers: (b) => {
-    b.addCase(fetchRaces.pending, (s) => {
-      s.status = 'loading'
-      s.error = null
-    })
-      .addCase(fetchRaces.fulfilled, (s, a) => {
-        s.status = 'succeeded'
-        s.items = a.payload
-      })
-      .addCase(fetchRaces.rejected, (s, a) => {
-        s.status = 'failed'
-        s.error = a.payload ?? a.error.message ?? 'Failed to load races'
-      })
-  },
 })
 
 export const { setQuery } = racesSlice.actions
 export const racesReducer = racesSlice.reducer
 
-const selectItems = (s: RootState) => s.races.items
+const EMPTY: RaceListItem[] = []
+const selectCatalogue = futanetApi.endpoints.raceCatalogue.select()
+const selectItems = (s: RootState) => selectCatalogue(s).data ?? EMPTY
 const selectQuery = (s: RootState) => s.races.query
 const selectAllEvents = createSelector([selectItems], (items) => groupRaces(items))
 
