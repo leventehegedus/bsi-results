@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { getCategories, getFields, getRace, getResultPage } from '@/api/futanet'
+import { getCategories, getFields, getRace, getRaceCountries, getResultPage, type Country } from '@/api/futanet'
 import type { FieldDef, RaceMeta, ResultFilters, ResultRow } from '@/api/types'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 
@@ -10,6 +10,7 @@ interface ResultsState {
   meta: RaceMeta | null
   fields: FieldDef[]
   categories: string[]
+  countries: Country[]
   metaStatus: Status
   filters: ResultFilters
   page: number
@@ -25,6 +26,7 @@ const initialState: ResultsState = {
   meta: null,
   fields: [],
   categories: [],
+  countries: [],
   metaStatus: 'idle',
   filters: {},
   page: 1,
@@ -35,17 +37,18 @@ const initialState: ResultsState = {
   error: null,
 }
 
-/** Loads race metadata, visible columns and categories for the selected race. */
+/** Loads race metadata, visible columns, categories and countries for the selected race. */
 export const loadRace = createAppAsyncThunk(
   'results/loadRace',
   async (raceId: string, { signal, rejectWithValue }) => {
     try {
-      const [meta, fields, categories] = await Promise.all([
+      const [meta, fields, categories, countries] = await Promise.all([
         getRace(raceId, { signal }),
         getFields(raceId, { signal }).catch(() => [] as FieldDef[]),
         getCategories(raceId, { signal }).catch(() => [] as string[]),
+        getRaceCountries(raceId, { signal }).catch(() => [] as Country[]),
       ])
-      return { meta, fields, categories }
+      return { meta, fields, categories, countries }
     } catch (e) {
       return rejectWithValue(errorMessage(e))
     }
@@ -88,6 +91,7 @@ const resultsSlice = createSlice({
         s.meta = a.payload.meta
         s.fields = a.payload.fields
         s.categories = a.payload.categories
+        s.countries = a.payload.countries
       })
       .addCase(loadRace.rejected, (s, a) => {
         if (a.meta.aborted) return

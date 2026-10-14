@@ -5,26 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 import { selectRace } from '@/features/results/resultsSlice'
-import {
-  fetchRaces,
-  selectRaceYears,
-  selectVisibleEvents,
-  setQuery,
-  setYear,
-  type VisibleEvent,
-} from './racesSlice'
+import { fetchRaces, selectEventsByYear, setQuery, type VisibleEvent, type YearGroup } from './racesSlice'
 import { getRaceCached } from '@/api/runner'
 import type { RaceListItem, RaceMeta } from '@/api/types'
 import { runPool } from '@/lib/pool'
@@ -34,13 +20,17 @@ const CODE_RE = /^\d{4}[a-z0-9_]+$/i
 
 export function RaceBrowser() {
   const dispatch = useAppDispatch()
-  const { status, error, query, year } = useAppSelector((s) => s.races)
-  const years = useAppSelector(selectRaceYears)
-  const events = useAppSelector(selectVisibleEvents)
+  const { status, error, query } = useAppSelector((s) => s.races)
+  const years = useAppSelector(selectEventsByYear)
   const selectedId = useAppSelector((s) => s.results.raceId)
   // explicit open/closed choices; otherwise groups open when searching or holding the selected race
   const [openState, setOpenState] = useState<Record<string, boolean>>({})
-  const raceCount = events.reduce((n, e) => n + e.races.length, 0)
+  const searching = query.trim() !== ''
+  const eventCount = years.reduce((n, y) => n + y.events.length, 0)
+  const raceCount = years.reduce((n, y) => n + y.raceCount, 0)
+  const currentYear = String(new Date().getFullYear())
+  // while searching, only years with matches are listed
+  const shownYears = searching ? years.filter((y) => y.events.length) : years
 
   useEffect(() => {
     if (status === 'idle') dispatch(fetchRaces())
@@ -53,29 +43,14 @@ export function RaceBrowser() {
           <CardTitle>Races</CardTitle>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-col gap-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                className="pl-8"
-                placeholder="Search races…"
-                value={query}
-                onChange={(e) => dispatch(setQuery(e.target.value))}
-              />
-            </div>
-            <Select value={year} onValueChange={(v) => dispatch(setYear(v))}>
-              <SelectTrigger className="w-24" aria-label="Year">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {years.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+            <Input
+              className="pl-8"
+              placeholder="Search races…"
+              value={query}
+              onChange={(e) => dispatch(setQuery(e.target.value))}
+            />
           </div>
 
           {status === 'failed' && (
@@ -87,7 +62,7 @@ export function RaceBrowser() {
 
           <div className="text-muted-foreground text-xs">
             {status === 'succeeded' &&
-              `${events.length.toLocaleString('hu-HU')} events · ${raceCount.toLocaleString('hu-HU')} result lists`}
+              `${eventCount.toLocaleString('hu-HU')} events · ${raceCount.toLocaleString('hu-HU')} result lists`}
           </div>
 
           <ul className="-mx-2 max-h-[60svh] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
@@ -97,23 +72,28 @@ export function RaceBrowser() {
                   <Skeleton className="h-9 w-full" />
                 </li>
               ))}
-            {events.slice(0, MAX_VISIBLE).map((ev) =>
-              ev.races.length === 1 ? (
-                <li key={ev.key}>
-                  <RaceItem race={ev.races[0]} selected={selectedId === ev.races[0].id} onSelect={(id) => dispatch(selectRace(id))} />
-                </li>
-              ) : (
-                <EventGroup
-                  key={ev.key}
-                  event={ev}
-                  open={openState[ev.key] ?? (ev.partial || ev.races.some((r) => r.id === selectedId))}
-                  onOpenChange={(o) => setOpenState((m) => ({ ...m, [ev.key]: o }))}
-                  selectedId={selectedId}
-                  onSelect={(id) => dispatch(selectRace(id))}
-                />
-              ),
-            )}
-            {status === 'succeeded' && events.length === 0 && CODE_RE.test(query.trim()) && (
+            {status === 'succeeded' &&
+              shownYears.map((y) => {
+                const key = `year:${y.year}`
+                return (
+                  <YearSection
+                    key={y.year}
+                    group={y}
+                    open={
+                      openState[key] ??
+                      (searching ||
+                        y.year === currentYear ||
+                        y.events.some((e) => e.races.some((r) => r.id === selectedId)))
+                    }
+                    onOpenChange={(o) => setOpenState((m) => ({ ...m, [key]: o }))}
+                    isOpen={(ev) => openState[ev.key] ?? (ev.partial || ev.races.some((r) => r.id === selectedId))}
+                    onEventOpenChange={(ev, o) => setOpenState((m) => ({ ...m, [ev.key]: o }))}
+                    selectedId={selectedId}
+                    onSelect={(id) => dispatch(selectRace(id))}
+                  />
+                )
+              })}
+            {status === 'succeeded' && eventCount === 0 && CODE_RE.test(query.trim()) && (
               <li className="px-2 py-2">
                 <button
                   type="button"
@@ -124,11 +104,6 @@ export function RaceBrowser() {
                 </button>
               </li>
             )}
-            {events.length > MAX_VISIBLE && (
-              <li className="text-muted-foreground px-2 py-2 text-xs">
-                Showing the first {MAX_VISIBLE} events. Narrow the search or pick a year to see more.
-              </li>
-            )}
           </ul>
         </CardContent>
       </Card>
@@ -136,6 +111,69 @@ export function RaceBrowser() {
       {/* keyed so the filter form resets when another race is picked */}
       <ResultsPanel key={selectedId ?? 'none'} />
     </div>
+  )
+}
+
+/** One year of events; its contents are only rendered (and fetched) while open. */
+function YearSection(props: {
+  group: YearGroup
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  isOpen: (ev: VisibleEvent) => boolean
+  onEventOpenChange: (ev: VisibleEvent, open: boolean) => void
+  selectedId: string | null
+  onSelect: (id: string) => void
+}) {
+  const { group: g } = props
+  return (
+    <li>
+      <Collapsible open={props.open} onOpenChange={props.onOpenChange}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="hover:bg-accent group bg-card sticky top-0 z-10 flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left transition-colors"
+          >
+            <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
+            <span className="flex-1 text-sm font-semibold">{g.year}</span>
+            <span className="text-muted-foreground text-xs">
+              {g.events.length ? `${plural(g.events.length, 'event')} · ${plural(g.raceCount, 'list')}` : 'no races'}
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ul className="ml-2">
+            {g.events.slice(0, MAX_VISIBLE).map((ev) =>
+              ev.races.length === 1 ? (
+                <li key={ev.key}>
+                  <RaceItem
+                    race={ev.races[0]}
+                    selected={props.selectedId === ev.races[0].id}
+                    onSelect={props.onSelect}
+                  />
+                </li>
+              ) : (
+                <EventGroup
+                  key={ev.key}
+                  event={ev}
+                  open={props.isOpen(ev)}
+                  onOpenChange={(o) => props.onEventOpenChange(ev, o)}
+                  selectedId={props.selectedId}
+                  onSelect={props.onSelect}
+                />
+              ),
+            )}
+            {g.events.length > MAX_VISIBLE && (
+              <li className="text-muted-foreground px-2 py-2 text-xs">
+                Showing the first {MAX_VISIBLE} events. Narrow the search to see more.
+              </li>
+            )}
+            {!g.events.length && (
+              <li className="text-muted-foreground px-2 py-2 text-xs">No result lists for this year.</li>
+            )}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>
   )
 }
 
@@ -159,7 +197,10 @@ function EventGroup(props: {
           >
             <ChevronRight className="text-muted-foreground mt-0.5 size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{ev.label}</span>
+              <span className="block truncate text-sm font-medium" title={ev.label}>
+                {/* the year is already on the year group */}
+                {ev.label.replace(new RegExp(`\\s+${ev.from.slice(0, 4)}$`), '')}
+              </span>
               <span className="text-muted-foreground block font-mono text-xs">{dates}</span>
             </span>
             <Badge variant="secondary" className="mt-0.5">
@@ -240,4 +281,8 @@ function RaceItem(props: {
       </div>
     </button>
   )
+}
+
+function plural(n: number, word: string) {
+  return `${n.toLocaleString('hu-HU')} ${word}${n === 1 ? '' : 's'}`
 }

@@ -127,18 +127,40 @@ export function ResultsPanel() {
       </Button>
     ) : null
 
+  const textInput = (key: keyof ResultFilters, label: string, placeholder?: string, numeric = false) => (
+    <div className="relative">
+      <Input
+        id={`f-${key}`}
+        aria-label={label}
+        placeholder={placeholder}
+        inputMode={numeric ? 'numeric' : undefined}
+        className="pr-9"
+        value={form[key] ?? ''}
+        onChange={(e) => setFilter(key, e.target.value, TYPE_DELAY_MS)}
+      />
+      {clearButton(key, label)}
+    </div>
+  )
+
   const field = (key: keyof ResultFilters, label: string, placeholder?: string) => (
     <div className="grid gap-1.5">
       <Label htmlFor={`f-${key}`}>{label}</Label>
-      <div className="relative">
-        <Input
-          id={`f-${key}`}
-          placeholder={placeholder}
-          className="pr-9"
-          value={form[key] ?? ''}
-          onChange={(e) => setFilter(key, e.target.value, TYPE_DELAY_MS)}
-        />
-        {clearButton(key, label)}
+      {textInput(key, label, placeholder)}
+    </div>
+  )
+
+  /** A from–to pair, e.g. birth year 1980–1989. */
+  const range = (
+    label: string,
+    [minKey, maxKey]: [keyof ResultFilters, keyof ResultFilters],
+    [minHint, maxHint]: [string, string],
+    numeric = true,
+  ) => (
+    <div className="grid gap-1.5">
+      <Label htmlFor={`f-${minKey}`}>{label}</Label>
+      <div className="grid grid-cols-2 gap-2">
+        {textInput(minKey, `${label} from`, minHint, numeric)}
+        {textInput(maxKey, `${label} to`, maxHint, numeric)}
       </div>
     </div>
   )
@@ -194,7 +216,7 @@ export function ResultsPanel() {
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-col gap-3">
           {field('name', 'Name')}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {field('town', 'Town', 'exact, e.g. Makó')}
             {field('club', 'Club')}
             {field('bib', 'Bib')}
@@ -208,6 +230,14 @@ export function ResultsPanel() {
               { value: 'F', label: 'Men' },
               { value: 'N', label: 'Women' },
             ])}
+            {select(
+              'country',
+              'Country',
+              r.countries.map((c) => ({ value: c.value, label: `${c.text} (${c.value})` })),
+            )}
+            {range('Net time (mm:ss or h:mm:ss)', ['minNetTime', 'maxNetTime'], ['from', 'to'], false)}
+            {range('Birth year', ['minYob', 'maxYob'], ['from', 'to'])}
+            {range('Place', ['minPlace', 'maxPlace'], ['from', 'to'])}
           </div>
           <div className="flex justify-end">
             <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>

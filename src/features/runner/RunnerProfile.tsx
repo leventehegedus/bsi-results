@@ -89,6 +89,9 @@ export function RunnerProfile() {
   const towns = topValues(results.map((x) => x.town))
   const clubs = topValues(results.map((x) => x.club))
   const singleYob = people === 1 ? (results[0]?.yob ?? null) : null
+  // quick filters for the "several people" notice, most results first
+  const yobOptions = countBy(results.map((x) => (x.yob === null ? 'unknown' : String(x.yob))))
+  const townOptions = countBy(results.map((x) => x.town)).slice(0, MAX_TOWN_OPTIONS)
 
   return (
     <div className="flex flex-col gap-6">
@@ -184,9 +187,25 @@ export function RunnerProfile() {
                 <Alert>
                   <Info />
                   <AlertTitle>Several people match</AlertTitle>
-                  <AlertDescription>
-                    Click a birth year or town in the table to narrow the results, or a name to open that
-                    person's profile.
+                  <AlertDescription className="gap-2">
+                    <p>
+                      Pick a birth year or town to narrow the results (also clickable in the table), or a
+                      name to open that person's profile.
+                    </p>
+                    {yobOptions.length > 1 && (
+                      <QuickFilters
+                        label="Birth year"
+                        options={yobOptions.map(([v, n]) => ({ key: v, label: v === 'unknown' ? 'unknown' : v, count: n }))}
+                        onPick={(v) => dispatch(setFilterYob(v === 'unknown' ? 'unknown' : Number(v)))}
+                      />
+                    )}
+                    {townOptions.length > 1 && (
+                      <QuickFilters
+                        label="Town"
+                        options={townOptions.map(([v, n]) => ({ key: v, label: v || 'no town', count: n }))}
+                        onPick={(v) => dispatch(setFilterTown(v))}
+                      />
+                    )}
                   </AlertDescription>
                 </Alert>
               )}
@@ -489,6 +508,33 @@ function FilterButton(props: { children: React.ReactNode; onClick: () => void; a
     >
       {props.children}
     </button>
+  )
+}
+
+const MAX_TOWN_OPTIONS = 8
+
+/** [value, count] pairs, most frequent first. */
+function countBy<T>(values: T[]): [T, number][] {
+  const counts = new Map<T, number>()
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+}
+
+function QuickFilters(props: {
+  label: string
+  options: { key: string; label: string; count: number }[]
+  onPick: (key: string) => void
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-muted-foreground mr-1 text-xs">{props.label}:</span>
+      {props.options.map((o) => (
+        <Button key={o.key} variant="outline" size="sm" className="text-foreground h-7 px-2" onClick={() => props.onPick(o.key)}>
+          {o.label}
+          <span className="text-muted-foreground tabular-nums">{o.count}</span>
+        </Button>
+      ))}
+    </div>
   )
 }
 

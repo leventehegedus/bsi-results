@@ -9,10 +9,11 @@ export interface LegacyRace {
 }
 
 /**
- * 390 races from 1984–2017 that exist in the API but are not returned by
+ * 542 races from 1984–2019 that exist in the API but are not returned by
  * /raceList. Found by probing /race/{code} with every code suffix used in
- * 2018–2020 (e.g. "_spar_e", "_nike_e", "_balaton_f_e") for each earlier year,
- * plus the Budapest Marathon sponsor names (ibusz, mars, kaiser, plus).
- * Lists marked empty ("ures") are left out. No 2009 Budapest Marathon was found.
+ * 2018–2022 (e.g. "_spar_e", "_nike_e", "_balaton_f_e"), with and without the
+ * "_e" ending older codes lack ("2008_nike"), for each earlier year, plus the
+ * Budapest Marathon sponsor names (ibusz, mars, kaiser, plus). Empty lists
+ * ("ures") and start lists are left out. No 2009 Budapest Marathon was found.
  */
 export const LEGACY_RACES: LegacyRace[] = legacy as LegacyRace[]
