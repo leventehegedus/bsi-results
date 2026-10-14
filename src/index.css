@@ -65,6 +65,10 @@
   --header: #16336f; /* navy */
   --header-foreground: #f0eedf;
   --table-head: #d8deea; /* periwinkle washed into the card */
+  /* chart series, validated (lightness band, chroma, CVD ΔE ≥ 8, 3:1) on the card */
+  --chart-men: #3463c4; /* navy's hue, lifted into the band */
+  --chart-women: #fe492a; /* orange */
+  --chart-context: #7d7c73; /* "all finishers": neutral context line, 3.9:1 */
 }
 
 .dark {
@@ -92,6 +96,9 @@
   --header: #16336f;
   --header-foreground: #f0eedf;
   --table-head: #1b2f58; /* navy sunk into the card */
+  --chart-men: #5b84d4;
+  --chart-women: #fe492a;
+  --chart-context: #8d8c84; /* 4.5:1 */
 }
 
 @layer base {

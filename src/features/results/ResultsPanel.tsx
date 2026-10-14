@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -31,6 +32,7 @@ import { setFilters, setPage } from './resultsSlice'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { RaceBreakdown } from './RaceBreakdown'
 import { useLang, useT, type Messages } from '@/i18n'
 
 const ANY = '__any__'
@@ -64,6 +66,7 @@ export function ResultsPanel() {
   // the panel is keyed by race, so the form starts empty for every race
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
+  const [view, setView] = useState<'results' | 'breakdown'>('results')
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -229,138 +232,148 @@ export function ResultsPanel() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-5">
-        <div className="flex flex-col gap-3">
-          {field('name', t.col.name)}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {field('town', t.col.town, t.results.townHint)}
-            {field('club', t.col.club)}
-            {field('bib', t.col.bib)}
-            {select(
-              'category',
-              t.col.category,
-              r.categories.map((c) => ({ value: c, label: c })),
+      <CardContent>
+        <Tabs value={view} onValueChange={(v) => setView(v as typeof view)} className="gap-5">
+          <TabsList>
+            <TabsTrigger value="results">{t.breakdown.views.results}</TabsTrigger>
+            <TabsTrigger value="breakdown">{t.breakdown.views.breakdown}</TabsTrigger>
+          </TabsList>
+          {/* the breakdown loads every finisher, so it's only mounted (and fetched) when opened */}
+          <TabsContent value="breakdown">{raceId && <RaceBreakdown raceId={raceId} />}</TabsContent>
+          <TabsContent value="results" className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3">
+              {field('name', t.col.name)}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {field('town', t.col.town, t.results.townHint)}
+                {field('club', t.col.club)}
+                {field('bib', t.col.bib)}
+                {select(
+                  'category',
+                  t.col.category,
+                  r.categories.map((c) => ({ value: c, label: c })),
+                )}
+                {/* the API's codes: F = férfi, N = nő */}
+                {select('sex', t.results.gender, [
+                  { value: 'F', label: t.results.men },
+                  { value: 'N', label: t.results.women },
+                ])}
+                {select(
+                  'country',
+                  t.col.country,
+                  r.countries.map((c) => ({ value: c.value, label: `${c.text} (${c.value})` })),
+                )}
+                {range(t.results.netTimeRange, ['minNetTime', 'maxNetTime'], [t.common.from, t.common.to], false)}
+                {range(t.col.birthYear, ['minYob', 'maxYob'], [t.common.from, t.common.to])}
+                {range(t.col.place, ['minPlace', 'maxPlace'], [t.common.from, t.common.to])}
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>
+                  <X />
+                  {t.results.clearAll}
+                </Button>
+              </div>
+            </div>
+
+            {r.status === 'failed' && (
+              <Alert variant="destructive">
+                <AlertTitle>{t.results.loadFailed}</AlertTitle>
+                <AlertDescription>{r.error}</AlertDescription>
+              </Alert>
             )}
-            {/* the API's codes: F = férfi, N = nő */}
-            {select('sex', t.results.gender, [
-              { value: 'F', label: t.results.men },
-              { value: 'N', label: t.results.women },
-            ])}
-            {select(
-              'country',
-              t.col.country,
-              r.countries.map((c) => ({ value: c.value, label: `${c.text} (${c.value})` })),
-            )}
-            {range(t.results.netTimeRange, ['minNetTime', 'maxNetTime'], [t.common.from, t.common.to], false)}
-            {range(t.col.birthYear, ['minYob', 'maxYob'], [t.common.from, t.common.to])}
-            {range(t.col.place, ['minPlace', 'maxPlace'], [t.common.from, t.common.to])}
-          </div>
-          <div className="flex justify-end">
-            <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>
-              <X />
-              {t.results.clearAll}
-            </Button>
-          </div>
-        </div>
 
-        {r.status === 'failed' && (
-          <Alert variant="destructive">
-            <AlertTitle>{t.results.loadFailed}</AlertTitle>
-            <AlertDescription>{r.error}</AlertDescription>
-          </Alert>
-        )}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {r.status === 'loading' ? t.results.loading : t.results.count(r.total.toLocaleString('hu-HU'))}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting || !r.total}>
+                  {exporting ? <Loader2 className="animate-spin" /> : <Download />}
+                  CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t.results.prevPage}
+                  disabled={r.page <= 1 || r.status === 'loading'}
+                  onClick={() => dispatch(setPage(r.page - 1))}
+                >
+                  <ChevronLeft />
+                </Button>
+                <span className="tabular-nums">
+                  {r.page} / {r.lastPage}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t.results.nextPage}
+                  disabled={r.page >= r.lastPage || r.status === 'loading'}
+                  onClick={() => dispatch(setPage(r.page + 1))}
+                >
+                  <ChevronRight />
+                </Button>
+              </div>
+            </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">
-            {r.status === 'loading' ? t.results.loading : t.results.count(r.total.toLocaleString('hu-HU'))}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting || !r.total}>
-              {exporting ? <Loader2 className="animate-spin" /> : <Download />}
-              CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              aria-label={t.results.prevPage}
-              disabled={r.page <= 1 || r.status === 'loading'}
-              onClick={() => dispatch(setPage(r.page - 1))}
-            >
-              <ChevronLeft />
-            </Button>
-            <span className="tabular-nums">
-              {r.page} / {r.lastPage}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              aria-label={t.results.nextPage}
-              disabled={r.page >= r.lastPage || r.status === 'loading'}
-              onClick={() => dispatch(setPage(r.page + 1))}
-            >
-              <ChevronRight />
-            </Button>
-          </div>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((c) => (
-                  <TableHead key={c.key}>{c.label}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {r.status === 'loading' && r.rows.length === 0
-                ? Array.from({ length: 8 }, (_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={columns.length}>
-                        <Skeleton className="h-5 w-full" />
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {columns.map((c) => (
+                      <TableHead key={c.key}>{c.label}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {r.status === 'loading' && r.rows.length === 0
+                    ? Array.from({ length: 8 }, (_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={columns.length}>
+                            <Skeleton className="h-5 w-full" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : r.rows.map((row, i) => (
+                        <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
+                          {columns.map((c) => (
+                            <TableCell key={c.key} className={isNumericCol(c.key) ? 'tabular-nums' : ''}>
+                              {c.key === 'varos' && row.varos ? (
+                                <button
+                                  type="button"
+                                  title={t.common.showOnlyTown}
+                                  className="hover:bg-accent decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
+                                  onClick={() => filterTown(String(row.varos))}
+                                >
+                                  {display(row, 'varos')}
+                                </button>
+                              ) : c.key === 'nev' ? (
+                                <RunnerLink
+                                  name={display(row, 'nev')}
+                                  raceId={r.raceId!}
+                                  raceName={r.meta?.nev}
+                                  place={typeof row.hely === 'number' ? row.hely : null}
+                                  bib={row.rajtszam ?? null}
+                                />
+                              ) : (
+                                display(row, c.key)
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                  {r.status === 'succeeded' && r.rows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="text-muted-foreground py-10 text-center">
+                        {t.results.none}
                       </TableCell>
                     </TableRow>
-                  ))
-                : r.rows.map((row, i) => (
-                    <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
-                      {columns.map((c) => (
-                        <TableCell key={c.key} className={isNumericCol(c.key) ? 'tabular-nums' : ''}>
-                          {c.key === 'varos' && row.varos ? (
-                            <button
-                              type="button"
-                              title={t.common.showOnlyTown}
-                              className="hover:bg-accent decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
-                              onClick={() => filterTown(String(row.varos))}
-                            >
-                              {display(row, 'varos')}
-                            </button>
-                          ) : c.key === 'nev' ? (
-                            <RunnerLink
-                              name={display(row, 'nev')}
-                              raceId={r.raceId!}
-                              raceName={r.meta?.nev}
-                              place={typeof row.hely === 'number' ? row.hely : null}
-                              bib={row.rajtszam ?? null}
-                            />
-                          ) : (
-                            display(row, c.key)
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-              {r.status === 'succeeded' && r.rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="text-muted-foreground py-10 text-center">
-                    {t.results.none}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )

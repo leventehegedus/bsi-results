@@ -1,4 +1,6 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
+import { toBreakdownRow, type BreakdownRow } from '@/lib/breakdown'
+import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
 import { errorMessage } from '@/store/createAppAsyncThunk'
 import type { AppDispatch } from '@/store'
@@ -30,14 +32,35 @@ export interface ResultPageArgs {
   filters: ResultFilters
 }
 
-/** Run a request (retrying server hiccups) and shape the outcome for RTK Query. */
-async function run<T>(fn: () => Promise<T>, signal: AbortSignal): Promise<{ data: T } | { error: ApiError }> {
+export interface RaceBreakdownData {
+  all: BreakdownRow[]
+  men: BreakdownRow[]
+  women: BreakdownRow[]
+}
+
+/** Run a request (retrying server hiccups unless `retry` is false) and shape the outcome for RTK Query. */
+async function run<T>(
+  fn: () => Promise<T>,
+  signal: AbortSignal,
+  retry = true,
+): Promise<{ data: T } | { error: ApiError }> {
   try {
-    return { data: await withRetry(fn, { signal }) }
+    return { data: await (retry ? withRetry(fn, { signal }) : fn()) }
   } catch (e) {
     return { error: { message: errorMessage(e) } }
   }
 }
+
+/** Every result row of a race for `filters`, a few pages at a time (each page retried on its own). */
+async function fetchAllPages(raceId: string, filters: ResultFilters, signal: AbortSignal): Promise<ResultRow[]> {
+  const page = (n: number) => withRetry(() => getResultPage(raceId, n, filters, { signal }), { signal })
+  const first = await page(1)
+  const rest = Array.from({ length: Math.max(0, first.meta.last_page - 1) }, (_, i) => i + 2)
+  const pages = await runPool(rest, 6, page, signal)
+  return [first, ...pages].flatMap((p) => p.data)
+}
+
+const keep = (rows: (BreakdownRow | null)[]) => rows.filter((r): r is BreakdownRow => r !== null)
 
 /**
  * Cached access to results.futanet.hu. The endpoints wrap the axios calls in
@@ -72,6 +95,32 @@ export const futanetApi = createApi({
           return { fields, categories, countries }
         }, signal),
     }),
+    /**
+     * Every finisher's time for the breakdown: men and women are fetched with the
+     * API's gender filter (together they're usually the whole list); the unfiltered
+     * list is only fetched as well when some finishers have no gender.
+     */
+    raceBreakdown: build.query<RaceBreakdownData, string>({
+      queryFn: (raceId, { signal }) =>
+        run(
+          async () => {
+            const [menRows, womenRows, firstAll] = await Promise.all([
+              fetchAllPages(raceId, { sex: 'F' }, signal),
+              fetchAllPages(raceId, { sex: 'N' }, signal),
+              withRetry(() => getResultPage(raceId, 1, {}, { signal }), { signal }),
+            ])
+            const men = keep(menRows.map((r) => toBreakdownRow(r, 'F')))
+            const women = keep(womenRows.map((r) => toBreakdownRow(r, 'N')))
+            const complete = firstAll.meta.total <= menRows.length + womenRows.length
+            const all = complete
+              ? [...men, ...women]
+              : keep((await fetchAllPages(raceId, {}, signal)).map((r) => toBreakdownRow(r, null)))
+            return { all, men, women }
+          },
+          signal,
+          false, // pages retry individually
+        ),
+    }),
     /** One page (40 rows) of results with filters. */
     resultPage: build.query<Paginated<ResultRow>, ResultPageArgs>({
       queryFn: ({ raceId, page, filters }, { signal }) =>
@@ -84,7 +133,8 @@ export const futanetApi = createApi({
   }),
 })
 
-export const { useRaceCatalogueQuery, useRaceQuery, useRaceDetailsQuery, useResultPageQuery } = futanetApi
+export const { useRaceCatalogueQuery, useRaceQuery, useRaceDetailsQuery, useResultPageQuery, useRaceBreakdownQuery } =
+  futanetApi
 
 /** Thunks and scans read through the same cache (no subscription is kept). */
 export function fetchRaceMeta(dispatch: AppDispatch, raceId: string): Promise<RaceMeta | null> {
