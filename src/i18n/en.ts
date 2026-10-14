@@ -135,6 +135,8 @@ export const en = {
     group: 'Group',
     groupLabel: (percent: number) => `Top ${percent}%`,
     medianFinish: 'Median finish',
+    medianSplitAt: (point: string) => `Median split time at ${point}`,
+    medianSplitsNote: 'Columns before the finish: the group’s median time at each timing point.',
     runners: (n: number) => `${n} runners`,
     runnersCol: 'Runners',
     negativeOfGroup: (percent: string) => `${percent} ran a negative split`,

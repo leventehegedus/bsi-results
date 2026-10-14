@@ -150,7 +150,7 @@ export const futanetApi = createApi({
               const split = runnerSplits(row, points, meta?.tav)
               if (split) runs.push(split)
             }
-            return { points, stats: splitStats(runs) }
+            return { points, stats: splitStats(runs, points, meta?.tav) }
           },
           signal,
           false, // pages retry individually
