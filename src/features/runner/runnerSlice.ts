@@ -19,6 +19,8 @@ export interface RunnerQuery {
    * false: any name containing the text (min. 3 characters), like the API's own filter.
    */
   exact: boolean
+  /** only results from this town (whole name; the API ignores case and accents) */
+  town?: string | null
 }
 
 export const MIN_QUERY_LENGTH = 3
@@ -105,6 +107,7 @@ export const scanRunner = createAppAsyncThunk(
       dispatch(progress({ requestId, done: 0, total: races.length }))
 
       const filters: ResultFilters = { name: query.name }
+      if (query.town) filters.town = query.town
       if (query.yob) {
         filters.minYob = String(query.yob)
         filters.maxYob = String(query.yob)

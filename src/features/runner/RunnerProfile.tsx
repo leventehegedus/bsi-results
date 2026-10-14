@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Download, Info, Loader2, Search, Square, UserRound, Users, X } from 'lucide-react'
+import { Download, Info, Loader2, MapPin, Search, Square, UserRound, Users, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -106,9 +106,10 @@ export function RunnerProfile() {
         <CardContent>
           {/* keyed so the fields follow the active profile but stay editable */}
           <SearchForm
-            key={`${r.query?.name ?? ''}|${r.query?.yob ?? ''}`}
+            key={`${r.query?.name ?? ''}|${r.query?.yob ?? ''}|${r.query?.town ?? ''}`}
             initialName={r.query?.name ?? ''}
             initialYob={r.query?.yob ?? null}
+            initialTown={r.query?.town ?? ''}
             busy={busy}
           />
         </CardContent>
@@ -122,7 +123,7 @@ export function RunnerProfile() {
               Searching every race takes a little while, so it only starts when you ask.
             </p>
             <Button onClick={() => r.query && searchRunner(dispatch, r.query)}>
-              <Search /> Search all races for “{r.query.name}”{r.query.yob ? ` (born ${r.query.yob})` : ''}
+              <Search /> Search all races for “{r.query.name}”{queryDetails(r.query)}
             </Button>
           </Card>
         ) : (
@@ -142,6 +143,11 @@ export function RunnerProfile() {
                     {r.query.exact ? r.query.name : `Results for “${r.query.name}”`}
                   </CardTitle>
                   <div className="flex flex-wrap gap-2">
+                    {r.query.town && (
+                      <Badge variant="secondary">
+                        <MapPin /> Only {r.query.town}
+                      </Badge>
+                    )}
                     {r.status === 'resolving' ? (
                       <Badge variant="outline">
                         <Loader2 className="animate-spin" /> Looking up birth year…
@@ -437,10 +443,11 @@ export function RunnerProfile() {
   )
 }
 
-function SearchForm(props: { initialName: string; initialYob: number | null; busy: boolean }) {
+function SearchForm(props: { initialName: string; initialYob: number | null; initialTown: string; busy: boolean }) {
   const dispatch = useAppDispatch()
   const [name, setName] = useState(props.initialName)
   const [yob, setYob] = useState(props.initialYob ? String(props.initialYob) : '')
+  const [town, setTown] = useState(props.initialTown)
   const tooShort = name.trim().length < MIN_QUERY_LENGTH
 
   const submit = (e: FormEvent) => {
@@ -448,11 +455,16 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
     const n = name.trim()
     if (n.length < MIN_QUERY_LENGTH) return
     const y = Number(yob)
-    searchRunner(dispatch, { name: n, yob: Number.isInteger(y) && y > 1900 ? y : null, exact: false })
+    searchRunner(dispatch, {
+      name: n,
+      yob: Number.isInteger(y) && y > 1900 ? y : null,
+      exact: false,
+      town: town.trim() || null,
+    })
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_9rem_auto]">
+    <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_9rem_11rem_auto]">
       <div className="grid gap-1.5">
         <Label htmlFor="runner-name">Name</Label>
         <Input
@@ -477,6 +489,19 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
           value={yob}
           onChange={(e) => setYob(e.target.value.replace(/\D/g, '').slice(0, 4))}
         />
+      </div>
+      <div className="grid content-start gap-1.5">
+        <Label htmlFor="runner-town">Town</Label>
+        <Input
+          id="runner-town"
+          placeholder="optional, e.g. Makó"
+          aria-describedby="runner-town-hint"
+          value={town}
+          onChange={(e) => setTown(e.target.value)}
+        />
+        <p id="runner-town-hint" className="text-muted-foreground text-xs">
+          Whole town name.
+        </p>
       </div>
       <div className="flex items-start sm:pt-[1.375rem]">
         {/* Distinct keys: otherwise React reuses the same <button> and flips it to
@@ -554,6 +579,12 @@ function FilterButton(props: { children: React.ReactNode; onClick: () => void; a
 }
 
 const MAX_TOWN_OPTIONS = 8
+
+/** " (born 1992, Zsombó)" for the optional parts of a query, or "". */
+function queryDetails(q: { yob: number | null; town?: string | null }) {
+  const parts = [q.yob ? `born ${q.yob}` : null, q.town || null].filter(Boolean)
+  return parts.length ? ` (${parts.join(', ')})` : ''
+}
 
 /** [value, count] pairs, most frequent first. */
 function countBy<T>(values: T[]): [T, number][] {
