@@ -22,7 +22,7 @@ export interface Route {
 
 export const EMPTY_ROUTE: Route = { tab: 'races', race: null, town: null, runner: null }
 
-const VIEWS: ResultView[] = ['results', 'breakdown', 'weather']
+const VIEWS: ResultView[] = ['results', 'breakdown', 'splits', 'weather']
 /** Filters that travel in the URL; the rest are rarely worth sharing. */
 const FILTER_KEYS = [
   'name',

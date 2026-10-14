@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { ResultFilters } from '@/api/types'
 
 /** The sub-view of the results panel; part of the shareable URL. */
-export type ResultView = 'results' | 'breakdown' | 'weather'
+export type ResultView = 'results' | 'breakdown' | 'splits' | 'weather'
 
 /**
  * What the results panel shows: race, filters and page. The data itself (race
