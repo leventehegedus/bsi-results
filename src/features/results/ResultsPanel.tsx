@@ -34,6 +34,8 @@ import { setFilters, setPage, setView } from './resultsSlice'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { FavouriteButton } from '@/features/favourites/FavouriteButton'
+import { toggleRace } from '@/features/favourites/favouritesSlice'
 import { ShareLink } from '@/routing/ShareLink'
 import { RaceBreakdown } from './RaceBreakdown'
 import { RaceSplits } from './RaceSplits'
@@ -63,6 +65,7 @@ export function ResultsPanel() {
   const t = useT()
   const lang = useLang()
   const { raceId, filters, page, view } = useAppSelector((s) => s.results)
+  const favouriteRace = useAppSelector((s) => s.favourites.races.some((r) => r.id === raceId))
   // Cached per race / per (race, page, filters): going back to a race or page is instant,
   // and a newer filter simply switches to another cache entry.
   const metaQuery = useRaceQuery(raceId ?? skipToken)
@@ -251,7 +254,21 @@ export function ResultsPanel() {
         ) : (
           <CardTitle className="text-lg">{r.meta?.nev ?? r.raceId}</CardTitle>
         )}
-        <CardAction>
+        <CardAction className="flex items-center gap-1">
+          <FavouriteButton
+            active={favouriteRace}
+            addLabel={t.favourites.addRace}
+            removeLabel={t.favourites.removeRace}
+            onToggle={() =>
+              dispatch(
+                toggleRace({
+                  id: r.raceId!,
+                  name: r.meta?.nev ?? r.raceId!,
+                  date: (r.meta?.datum ?? '').slice(0, 10),
+                }),
+              )
+            }
+          />
           <ShareLink />
         </CardAction>
         <CardDescription className="flex flex-wrap items-center gap-2">

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronRight, Search } from 'lucide-react'
+import { ChevronRight, Search, Star, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { ResultsPanel } from '@/features/results/ResultsPanel'
 import { selectRace } from '@/features/results/resultsSlice'
+import { toggleRace, type FavouriteRace } from '@/features/favourites/favouritesSlice'
 import { selectEventsByYear, setQuery, type VisibleEvent, type YearGroup } from './racesSlice'
 import { useRaceCatalogueQuery, useRaceQuery } from '@/api/futanetApi'
 import type { RaceListItem } from '@/api/types'
@@ -29,6 +30,7 @@ export function RaceBrowser() {
   const status = catalogue.isError ? 'failed' : catalogue.isSuccess ? 'succeeded' : 'loading'
   const years = useAppSelector(selectEventsByYear)
   const selectedId = useAppSelector((s) => s.results.raceId)
+  const favourites = useAppSelector((s) => s.favourites.races)
   // explicit open/closed choices; otherwise groups open when searching or holding the selected race
   const [openState, setOpenState] = useState<Record<string, boolean>>({})
   const searching = query.trim() !== ''
@@ -81,6 +83,15 @@ export function RaceBrowser() {
               t.races.summary(eventCount.toLocaleString('hu-HU'), raceCount.toLocaleString('hu-HU'))}
           </div>
 
+          {favourites.length > 0 && !searching && (
+            <FavouriteRaces
+              races={favourites}
+              selectedId={selectedId}
+              onSelect={openRace}
+              onRemove={(race) => dispatch(toggleRace(race))}
+            />
+          )}
+
           <ul className="-mx-2 max-h-[60svh] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
             {status === 'loading' &&
               Array.from({ length: 10 }, (_, i) => (
@@ -129,6 +140,58 @@ export function RaceBrowser() {
         <ResultsPanel key={selectedId ?? 'none'} />
       </div>
     </div>
+  )
+}
+
+/** Saved races, pinned above the year list for one-click access. */
+function FavouriteRaces(props: {
+  races: FavouriteRace[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onRemove: (race: FavouriteRace) => void
+}) {
+  const t = useT()
+  return (
+    <section className="flex flex-col gap-1 border-b pb-2">
+      <h3 className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+        <Star className="fill-brand text-brand size-3.5" /> {t.favourites.title}
+      </h3>
+      <ul className="-mx-2 max-h-48 overflow-y-auto">
+        {props.races.map((r) => (
+          <li key={r.id} className="group/fav flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => props.onSelect(r.id)}
+              className={cn(
+                'min-w-0 flex-1 rounded-md px-2 py-1.5 text-left transition-colors',
+                props.selectedId === r.id
+                  ? 'bg-primary text-primary-foreground shadow-[inset_4px_0_0_var(--color-brand)]'
+                  : 'hover:bg-accent',
+              )}
+            >
+              <span className="block truncate text-sm font-medium">{r.name}</span>
+              <span
+                className={cn(
+                  'block font-mono text-xs',
+                  props.selectedId === r.id ? 'text-primary-foreground/85' : 'text-muted-foreground',
+                )}
+              >
+                {r.date}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label={t.favourites.remove}
+              title={t.favourites.remove}
+              onClick={() => props.onRemove(r)}
+              className="text-muted-foreground hover:bg-accent hover:text-foreground rounded p-1 opacity-0 transition-opacity group-hover/fav:opacity-100 focus-visible:opacity-100"
+            >
+              <X className="size-3.5" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
