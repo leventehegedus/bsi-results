@@ -38,8 +38,10 @@ export interface VisibleEvent extends RaceEvent {
 }
 
 /**
- * Events after the search filter. A label match keeps the whole event;
- * otherwise only the matching lists are shown inside it.
+ * Events after the search filter, matched on names only (not race codes: codes
+ * like "2018_nike_e" would pull in lists of other names). A label match keeps
+ * the whole event; otherwise only the matching lists are shown inside it.
+ * A full race code can still be opened directly (see RaceBrowser).
  */
 export const selectVisibleEvents = createSelector(
   [selectAllEvents, selectQuery],
@@ -51,7 +53,7 @@ export const selectVisibleEvents = createSelector(
         out.push({ ...ev, partial: false })
         continue
       }
-      const hits = ev.races.filter((r) => fold(r.name).includes(q) || r.id.toLowerCase().includes(q))
+      const hits = ev.races.filter((r) => fold(r.name).includes(q))
       if (hits.length) out.push({ ...ev, races: hits, partial: true })
     }
     return out
