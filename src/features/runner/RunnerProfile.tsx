@@ -25,11 +25,13 @@ import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import { cancelRunner, searchRunner, writeHash } from './runnerActions'
 import { RunnerLink } from './RunnerLink'
+import { ProgressionChart } from './ProgressionChart'
 import {
   MIN_QUERY_LENGTH,
   selectAllRunnerResults,
   selectPeople,
   selectPersonalBests,
+  selectProgressions,
   selectRunnerResults,
   setFilterTown,
   setFilterYob,
@@ -46,6 +48,7 @@ export function RunnerProfile() {
   const results = useAppSelector(selectRunnerResults)
   const people = useAppSelector(selectPeople)
   const pbs = useAppSelector(selectPersonalBests)
+  const progress = useAppSelector(selectProgressions)
   const busy = r.status === 'resolving' || r.status === 'scanning'
 
   // The search fields; they follow the active profile (or a shared link) but stay editable,
@@ -322,6 +325,37 @@ export function RunnerProfile() {
                     </TableBody>
                   </Table>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {progress.length > 0 && (
+            <Card className="min-w-0">
+              <CardHeader>
+                <CardTitle>{t.runner.progressTitle}</CardTitle>
+                <CardDescription>{t.runner.progressDescription}</CardDescription>
+              </CardHeader>
+              {/* two charts per row on wide screens; a lone chart gets the full width */}
+              <CardContent className={progress.length > 1 ? 'grid gap-6 lg:grid-cols-2' : 'grid gap-6'}>
+                {progress.map((p) => {
+                  const label = distanceLabel(p.distance, t.distance)
+                  return (
+                    <section key={p.key} className="flex min-w-0 flex-col gap-2">
+                      <h3 className="text-primary text-sm font-semibold">
+                        {label} <span className="text-muted-foreground font-normal">· {t.runner.races(p.points.length)}</span>
+                      </h3>
+                      <ProgressionChart
+                        progression={p}
+                        labels={{
+                          pb: t.runner.pb,
+                          faster: t.runner.faster,
+                          place: t.runner.placeN,
+                          ariaLabel: `${t.runner.progressTitle}: ${label}`,
+                        }}
+                      />
+                    </section>
+                  )
+                })}
               </CardContent>
             </Card>
           )}

@@ -187,6 +187,13 @@ export const hu: Messages = {
     mergeSubLists: 'Egy futás egyszer számít (allisták összevonása)',
     includeVirtual: 'Virtuális versenyekkel együtt',
     pbTitle: 'Egyéni csúcsok',
+    progressTitle: 'Fejlődés',
+    progressDescription:
+      'Nettó idők az évek során, távonként külön diagramon, ha legalább két verseny van rajta (virtuális versenyek nélkül). A gyorsabb van feljebb.',
+    races: (n) => `${n} verseny`,
+    pb: 'EC',
+    faster: 'gyorsabb ↑',
+    placeN: (n) => `${n}. hely`,
     pbDescription: 'Leggyorsabb nettó idő távonként (virtuális versenyek nélkül).',
     results: 'Eredmények',
     similarLeftOut: (n, name) => `${n} találat hosszabb, „${name}” részt tartalmazó nevekre kimaradt.`,
