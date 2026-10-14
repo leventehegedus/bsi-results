@@ -245,7 +245,7 @@ export const hu: Messages = {
       `Kattints egy futó nevére bármelyik eredménytáblában, vagy keress itt névrészletre (legalább ${min} karakter). A születési év szétválasztja az azonos nevű embereket.`,
     namePlaceholder: 'pl. Hegedüs Levente, vagy csak „Hegedüs”',
     typeAtLeast: (min) => `Írj be legalább ${min} karaktert.`,
-    nameHint: 'Minden nevet megtalál, amely tartalmazza ezt a szöveget (ékezettől függetlenül).',
+    nameHint: 'Minden nevet megtalál, amelyben ezek a szavak szerepelnek, bármilyen sorrendben; az ékezet, a kötőjel és a „dr.” nem számít.',
     optional: 'nem kötelező',
     townPlaceholder: 'nem kötelező, pl. Budapest',
     townHint: 'A település teljes neve.',
