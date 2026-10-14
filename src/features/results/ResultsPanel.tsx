@@ -217,7 +217,7 @@ export function ResultsPanel() {
         <div className="flex flex-col gap-3">
           {field('name', 'Name')}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {field('town', 'Town', 'exact, e.g. Makó')}
+            {field('town', 'Town', 'exact, e.g. Budapest')}
             {field('club', 'Club')}
             {field('bib', 'Bib')}
             {select(

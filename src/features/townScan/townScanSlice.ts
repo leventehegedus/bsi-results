@@ -3,7 +3,7 @@ import { getAllResults } from '@/api/futanet'
 import { getRaceFacts } from '@/api/raceIndex'
 import { getRaceCatalogue } from '@/api/runner'
 import type { RaceListItem } from '@/api/types'
-import { categorize, type DistanceCategory } from '@/lib/distance'
+import { categorize, DISTANCE_CATEGORIES, type DistanceCategory } from '@/lib/distance'
 import { runPool } from '@/lib/pool'
 import {
   bestPerRunner,
@@ -38,8 +38,9 @@ interface TownScanState {
 }
 
 const initialState: TownScanState = {
-  townsInput: 'Makó',
-  categories: ['marathon'],
+  townsInput: 'Budapest',
+  // every distance by default; untick the ones you don't need
+  categories: DISTANCE_CATEGORIES.map((c) => c.value),
   excludeVirtual: true,
   mergeSubLists: true,
   bestOnly: false,

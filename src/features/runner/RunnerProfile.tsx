@@ -34,6 +34,7 @@ import {
   setFilterYob,
   setIncludeVirtual,
   setMergeSubLists,
+  type RunnerQuery,
 } from './runnerSlice'
 
 export function RunnerProfile() {
@@ -44,6 +45,18 @@ export function RunnerProfile() {
   const people = useAppSelector(selectPeople)
   const pbs = useAppSelector(selectPersonalBests)
   const busy = r.status === 'resolving' || r.status === 'scanning'
+
+  // The search fields; they follow the active profile (or a shared link) but stay editable,
+  // and both "Find results" and the link's "Search all races" button use them.
+  const queryKey = JSON.stringify(r.query)
+  const [draft, setDraft] = useState(() => draftFrom(r.query))
+  const [draftFor, setDraftFor] = useState(queryKey)
+  if (draftFor !== queryKey) {
+    setDraftFor(queryKey)
+    setDraft(draftFrom(r.query))
+  }
+  const draftQuery = queryFromDraft(draft, r.query)
+  const runDraft = () => draftQuery && searchRunner(dispatch, draftQuery)
 
   // Keep the URL shareable once we know who we're looking at.
   useEffect(() => {
@@ -104,12 +117,11 @@ export function RunnerProfile() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* keyed so the fields follow the active profile but stay editable */}
           <SearchForm
-            key={`${r.query?.name ?? ''}|${r.query?.yob ?? ''}|${r.query?.town ?? ''}`}
-            initialName={r.query?.name ?? ''}
-            initialYob={r.query?.yob ?? null}
-            initialTown={r.query?.town ?? ''}
+            draft={draft}
+            onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+            onSubmit={runDraft}
+            canSubmit={draftQuery !== null}
             busy={busy}
           />
         </CardContent>
@@ -122,8 +134,11 @@ export function RunnerProfile() {
             <p className="text-muted-foreground max-w-sm">
               Searching every race takes a little while, so it only starts when you ask.
             </p>
-            <Button onClick={() => r.query && searchRunner(dispatch, r.query)}>
-              <Search /> Search all races for “{r.query.name}”{queryDetails(r.query)}
+            <Button onClick={runDraft} disabled={!draftQuery}>
+              <Search />
+              {draftQuery
+                ? `Search all races for “${draftQuery.name}”${queryDetails(draftQuery)}`
+                : `Type at least ${MIN_QUERY_LENGTH} characters of a name`}
             </Button>
           </Card>
         ) : (
@@ -451,24 +466,46 @@ export function RunnerProfile() {
   )
 }
 
-function SearchForm(props: { initialName: string; initialYob: number | null; initialTown: string; busy: boolean }) {
-  const dispatch = useAppDispatch()
-  const [name, setName] = useState(props.initialName)
-  const [yob, setYob] = useState(props.initialYob ? String(props.initialYob) : '')
-  const [town, setTown] = useState(props.initialTown)
-  const tooShort = name.trim().length < MIN_QUERY_LENGTH
+interface Draft {
+  name: string
+  yob: string
+  town: string
+}
+
+function draftFrom(q: RunnerQuery | null): Draft {
+  return { name: q?.name ?? '', yob: q?.yob ? String(q.yob) : '', town: q?.town ?? '' }
+}
+
+/**
+ * The query the fields describe, or null while the name is too short. A profile's
+ * exact-name match (opened from a result row or a shared link) is kept as long as
+ * the name isn't changed.
+ */
+function queryFromDraft(d: Draft, current: RunnerQuery | null): RunnerQuery | null {
+  const name = d.name.trim()
+  if (name.length < MIN_QUERY_LENGTH) return null
+  const y = Number(d.yob)
+  return {
+    name,
+    yob: Number.isInteger(y) && y > 1900 ? y : null,
+    exact: !!current?.exact && name === current.name,
+    town: d.town.trim() || null,
+  }
+}
+
+function SearchForm(props: {
+  draft: Draft
+  onChange: (patch: Partial<Draft>) => void
+  onSubmit: () => void
+  canSubmit: boolean
+  busy: boolean
+}) {
+  const { name, yob, town } = props.draft
+  const tooShort = !props.canSubmit
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    const n = name.trim()
-    if (n.length < MIN_QUERY_LENGTH) return
-    const y = Number(yob)
-    searchRunner(dispatch, {
-      name: n,
-      yob: Number.isInteger(y) && y > 1900 ? y : null,
-      exact: false,
-      town: town.trim() || null,
-    })
+    props.onSubmit()
   }
 
   return (
@@ -480,7 +517,7 @@ function SearchForm(props: { initialName: string; initialYob: number | null; ini
           value={name}
           placeholder="e.g. Hegedüs Levente, or just “Hegedüs”"
           aria-describedby="runner-name-hint"
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => props.onChange({ name: e.target.value })}
         />
         <p id="runner-name-hint" className="text-muted-foreground text-xs">
           {name.trim() && tooShort
@@ -495,17 +532,17 @@ function SearchForm(props: { initialName: string; initialYob: number | null; ini
           inputMode="numeric"
           placeholder="optional"
           value={yob}
-          onChange={(e) => setYob(e.target.value.replace(/\D/g, '').slice(0, 4))}
+          onChange={(e) => props.onChange({ yob: e.target.value.replace(/\D/g, '').slice(0, 4) })}
         />
       </div>
       <div className="grid content-start gap-1.5">
         <Label htmlFor="runner-town">Town</Label>
         <Input
           id="runner-town"
-          placeholder="optional, e.g. Makó"
+          placeholder="optional, e.g. Budapest"
           aria-describedby="runner-town-hint"
           value={town}
-          onChange={(e) => setTown(e.target.value)}
+          onChange={(e) => props.onChange({ town: e.target.value })}
         />
         <p id="runner-town-hint" className="text-muted-foreground text-xs">
           Whole town name.
