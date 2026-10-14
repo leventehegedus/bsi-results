@@ -73,7 +73,7 @@ export function TownScan() {
           <CardTitle>Find finishers by town</CardTitle>
           <CardDescription>
             Scans race lists and collects every finisher whose registered town matches exactly
-            (e.g. “Makó”, not “mako”). Town data exists from 1996; earlier lists don't record it.
+            (e.g. “Székesfehérvár”, not “szekesfehervar”). Town data exists from 1996; earlier lists don't record it.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
@@ -84,7 +84,7 @@ export function TownScan() {
                 id="towns"
                 value={scan.townsInput}
                 disabled={running}
-                placeholder="Makó, Zsombó, Sándorfalva"
+                placeholder="Budapest, Szeged, Székesfehérvár"
                 onChange={(e) => dispatch(setTownsInput(e.target.value))}
               />
             </div>

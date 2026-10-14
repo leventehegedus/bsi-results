@@ -539,7 +539,7 @@ function SearchForm(props: {
         <Label htmlFor="runner-town">Town</Label>
         <Input
           id="runner-town"
-          placeholder="optional, e.g. Makó"
+          placeholder="optional, e.g. Budapest"
           aria-describedby="runner-town-hint"
           value={town}
           onChange={(e) => props.onChange({ town: e.target.value })}

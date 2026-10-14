@@ -38,7 +38,7 @@ interface TownScanState {
 }
 
 const initialState: TownScanState = {
-  townsInput: 'Makó',
+  townsInput: 'Budapest',
   // every distance by default; untick the ones you don't need
   categories: DISTANCE_CATEGORIES.map((c) => c.value),
   excludeVirtual: true,
