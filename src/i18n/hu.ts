@@ -48,6 +48,7 @@ export const hu: Messages = {
     catRank: 'Kat. hely',
     bib: 'Rajtszám',
     country: 'Ország',
+    certificate: 'Oklevél',
   },
   distance: {
     marathon: 'Maraton',
@@ -86,6 +87,7 @@ export const hu: Messages = {
     count: (n) => `${n} eredmény`,
     prevPage: 'Előző oldal',
     nextPage: 'Következő oldal',
+    certificateFor: (name) => `${name} oklevelének letöltése (PDF)`,
     none: 'Nincs eredmény.',
   },
   breakdown: {

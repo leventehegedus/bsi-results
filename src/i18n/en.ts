@@ -50,6 +50,7 @@ export const en = {
     catRank: 'Cat. rank',
     bib: 'Bib',
     country: 'Country',
+    certificate: 'Certificate',
   },
   distance: {
     marathon: 'Marathon',
@@ -89,6 +90,7 @@ export const en = {
     count: (n: string) => `${n} results`,
     prevPage: 'Previous page',
     nextPage: 'Next page',
+    certificateFor: (name: string) => `Download ${name}'s certificate (PDF)`,
     none: 'No results.',
   },
   breakdown: {
