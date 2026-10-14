@@ -6,6 +6,9 @@
   "git": { "deploymentEnabled": false },
   "rewrites": [
     { "source": "/api/futanet/:path*", "destination": "https://results.futanet.hu/api/:path*" },
+    { "source": "/api/weather/archive/:path*", "destination": "https://archive-api.open-meteo.com/v1/:path*" },
+    { "source": "/api/weather/forecast/:path*", "destination": "https://api.open-meteo.com/v1/:path*" },
+    { "source": "/api/geocode/:path*", "destination": "https://geocoding-api.open-meteo.com/v1/:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
