@@ -114,6 +114,15 @@ export const en = {
     countCol: 'Finishers',
     noGender: 'This race has no gender data, so only all finishers are shown.',
     empty: 'No finish times in this race.',
+    distTitle: 'How finish times are spread',
+    distDescription:
+      'Finishers per time slot. The thin lines mark the time needed for the top 10%, 20% … of all finishers.',
+    timeAxis: 'Finish time',
+    finishedBy: (p: number) => `${p}% had finished by then`,
+    showTable: 'Show as table',
+    timeSlot: 'Time slot',
+    total: 'Total',
+    finishedByCol: 'Finished by then',
   },
   town: {
     title: 'Find finishers by town',
