@@ -9,13 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Table,
   TableBody,
   TableCell,
@@ -24,6 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { downloadCsv, slug, toCsv } from '@/lib/csv'
+import { DISTANCE_CATEGORIES } from '@/lib/distance'
 import { runnerKey, type RunnerBest, type ScanRow } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { RunnerLink } from '@/features/runner/RunnerLink'
@@ -34,18 +28,10 @@ import {
   selectFinishes,
   setBestOnly,
   setExcludeVirtual,
-  setIncludeLegacy,
   setMergeSubLists,
-  setScope,
   setTownsInput,
-  type ScanScope,
+  toggleCategory,
 } from './townScanSlice'
-
-const SCOPES: { value: ScanScope; label: string; hint: string }[] = [
-  { value: 'marathon', label: 'All marathons (42.195 km)', hint: '≈130 race lists' },
-  { value: 'budapest', label: 'Budapest Marathon only', hint: 'one list per year' },
-  { value: 'all', label: 'Every race', hint: '≈2 200 race lists — takes several minutes' },
-]
 
 export function TownScan() {
   const dispatch = useAppDispatch()
@@ -58,7 +44,7 @@ export function TownScan() {
 
   const start = () => {
     promiseRef.current = dispatch(
-      runTownScan({ towns, scope: scan.scope, includeLegacy: scan.includeLegacy }),
+      runTownScan({ towns, categories: scan.categories }),
     )
   }
   const stop = () => promiseRef.current?.abort()
@@ -91,7 +77,7 @@ export function TownScan() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          <div className="grid gap-4 md:grid-cols-[1fr_18rem_auto]">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto]">
             <div className="grid gap-1.5">
               <Label htmlFor="towns">Towns (comma-separated)</Label>
               <Input
@@ -102,50 +88,46 @@ export function TownScan() {
                 onChange={(e) => dispatch(setTownsInput(e.target.value))}
               />
             </div>
-            <div className="grid gap-1.5">
-              <Label>Races to scan</Label>
-              <Select
-                value={scan.scope}
-                disabled={running}
-                onValueChange={(v) => dispatch(setScope(v as ScanScope))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCOPES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="flex items-end">
               {running ? (
-                <Button variant="outline" onClick={stop} className="w-full md:w-auto">
+                <Button key="stop" variant="outline" onClick={stop} className="w-full md:w-auto">
                   <Square /> Stop
                 </Button>
               ) : (
-                <Button onClick={start} disabled={!towns.length} className="w-full md:w-auto">
+                <Button
+                  key="start"
+                  onClick={start}
+                  disabled={!towns.length || !scan.categories.length}
+                  className="w-full md:w-auto"
+                >
                   <Play /> Run scan
                 </Button>
               )}
             </div>
           </div>
 
-          <p className="text-muted-foreground -mt-3 text-xs">
-            {SCOPES.find((s) => s.value === scan.scope)?.hint}
-          </p>
+          <fieldset className="grid gap-2">
+            <legend className="mb-2 text-sm font-medium">Races to scan</legend>
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              {DISTANCE_CATEGORIES.map((c) => (
+                <Toggle
+                  key={c.value}
+                  id={`cat-${c.value}`}
+                  checked={scan.categories.includes(c.value)}
+                  disabled={running}
+                  onChange={() => dispatch(toggleCategory(c.value))}
+                  label={c.label}
+                />
+              ))}
+            </div>
+            <p className="text-muted-foreground text-xs">
+              All races since 1984, including older ones missing from the race list. “Other” covers
+              swims, relays, pairs, stage races and other distances. The first scan reads every race's
+              distance once (cached afterwards).
+            </p>
+          </fieldset>
 
           <div className="flex flex-wrap gap-x-6 gap-y-3">
-            <Toggle
-              id="legacy"
-              checked={scan.includeLegacy}
-              disabled={running || scan.scope === 'all'}
-              onChange={(v) => dispatch(setIncludeLegacy(v))}
-              label="Include Budapest Marathons 1984–2017 missing from the race list"
-            />
             <Toggle
               id="virtual"
               checked={scan.excludeVirtual}
@@ -171,7 +153,7 @@ export function TownScan() {
               <Progress value={running ? pct : 100} />
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 {running && <Loader2 className="size-3.5 animate-spin" />}
-                {running && scan.phase === 'resolving' && `Finding races… ${scan.done}/${scan.total || '?'}`}
+                {running && scan.phase === 'resolving' && `Reading race distances… ${scan.done}/${scan.total || '?'}`}
                 {running && scan.phase === 'scanning' && `Scanning race lists… ${scan.done}/${scan.total}`}
                 {scan.status === 'done' && `Done — scanned ${scan.racesScanned} races.`}
                 {scan.status === 'cancelled' && 'Stopped. Showing what was found so far.'}

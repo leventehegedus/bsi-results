@@ -1,8 +1,15 @@
-import { timeToSeconds, type ScanRow } from './results'
+import { runnerKey, timeToSeconds, type ScanRow } from './results'
 
 export interface RunnerResult extends ScanRow {
   /** race distance in metres, null if unknown */
   distance: number | null
+  /** runner's birth year, null if unknown */
+  yob: number | null
+}
+
+/** One person = same normalised name + birth year. */
+export function personKey(r: { name: string; yob: number | null }): string {
+  return `${runnerKey(r.name)}|${r.yob ?? '?'}`
 }
 
 const NAMED: Record<number, string> = {

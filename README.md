@@ -9,19 +9,22 @@ Redux Toolkit · axios · oxlint · Vercel
 
 ## Features
 
-- **Race browser**: search ~2 200 races by name/year, open results, filter by name, town, club,
-  bib and category, paginate (40/page, server-side), export the filtered list to CSV.
-  Unlisted legacy codes (e.g. `1999_kaiser`, `2015_spar_e`) can be opened by typing the code.
-- **Town search**: give one or more towns (`Makó, Zsombó`) and a scope (all marathons, Budapest
-  Marathon only, every race). The app resolves the races, scans each list with the `town`
-  filter (6 requests in parallel, cancellable) and shows:
+- **Race browser**: ~2 600 result lists since 1984, grouped into events (e.g. the whole SPAR
+  Budapest Maraton weekend), expandable to their sub-events. Search by name/year, open results,
+  filter by name, town (or click a town), club, bib and category, paginate, export to CSV.
+  Includes 390 older races (1984–2017) that the API has but doesn't list (`src/api/legacyRaces.json`).
+- **Town search**: give one or more towns (`Makó, Zsombó`) and pick distances (marathon, half
+  marathon, 10 km, 5 km, other). Race distances are read once and cached in localStorage; the
+  matching lists are scanned with the `town` filter (cancellable) and shown as:
   - every finish, with sub-lists of the same event (amateur cup, profession championships)
     merged into one run, and virtual races optionally excluded;
   - or one row per runner with their best time and number of finishes.
   - CSV export (semicolon + UTF-8 BOM, opens cleanly in Hungarian Excel).
 
 - **Runner profile**: click any runner's name (Race browser or Town search) to see all of their
-  results across every race, or search by name + birth year in the **Runner** tab:
+  results across every race, or search by part of a name (≥ 3 characters) + optional birth year
+  in the **Runner** tab. Partial searches show a Name and Born column when several people match;
+  birth years and towns are buttons that filter the table, names open that person's profile:
   - the birth year is worked out from the clicked result row (the API doesn't return it, but can
     filter by it, so the app binary-searches `minYob`/`maxYob` on that row: ~8 requests);
   - every race (~2 250, incl. unlisted Budapest Marathon editions) is then scanned with

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Download, Info, Loader2, Search, Square, UserRound } from 'lucide-react'
+import { Download, Info, Loader2, Search, Square, UserRound, Users, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,14 +18,20 @@ import {
 } from '@/components/ui/table'
 import { downloadCsv, slug, toCsv } from '@/lib/csv'
 import { distanceLabel, topValues } from '@/lib/runner'
-import { MARATHON_METRES } from '@/lib/results'
+import { MARATHON_METRES, runnerKey } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import { cancelRunner, searchRunner, writeHash } from './runnerActions'
+import { RunnerLink } from './RunnerLink'
 import {
+  MIN_QUERY_LENGTH,
+  selectAllRunnerResults,
+  selectPeople,
   selectPersonalBests,
   selectRunnerResults,
+  setFilterTown,
+  setFilterYob,
   setIncludeVirtual,
   setMergeSubLists,
 } from './runnerSlice'
@@ -33,7 +39,9 @@ import {
 export function RunnerProfile() {
   const dispatch = useAppDispatch()
   const r = useAppSelector((s) => s.runner)
+  const all = useAppSelector(selectAllRunnerResults)
   const results = useAppSelector(selectRunnerResults)
+  const people = useAppSelector(selectPeople)
   const pbs = useAppSelector(selectPersonalBests)
   const busy = r.status === 'resolving' || r.status === 'scanning'
 
@@ -47,13 +55,22 @@ export function RunnerProfile() {
     dispatch(setTab('races'))
   }
 
+  // Columns that only matter when the results mix several names / birth years.
+  const names = new Set(all.map((x) => runnerKey(x.name)))
+  const years = new Set(all.map((x) => x.yob))
+  const showName = names.size > 1
+  const showYob = years.size > 1
+  const filtered = r.filterYob !== null || r.filterTown !== null
+
   const exportCsv = () => {
     const csv = toCsv(
-      ['Date', 'Race', 'Distance', 'Net time', 'Place', 'Category', 'Cat. place', 'Town', 'Club', 'Race code'],
+      ['Date', 'Race', 'Distance', 'Name', 'Birth year', 'Net time', 'Place', 'Category', 'Cat. place', 'Town', 'Club', 'Race code'],
       results.map((x) => [
         x.date,
         x.raceName,
         distanceLabel(x.distance),
+        x.name,
+        x.yob,
         x.time,
         x.place,
         x.category,
@@ -68,9 +85,10 @@ export function RunnerProfile() {
 
   const pct = r.total ? Math.round((r.done / r.total) * 100) : 0
   const marathons = results.filter((x) => x.distance === MARATHON_METRES).length
-  const years = results.map((x) => x.date.slice(0, 4)).sort()
+  const yearsRun = results.map((x) => x.date.slice(0, 4)).sort()
   const towns = topValues(results.map((x) => x.town))
   const clubs = topValues(results.map((x) => x.club))
+  const singleYob = people === 1 ? (results[0]?.yob ?? null) : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,8 +96,8 @@ export function RunnerProfile() {
         <CardHeader>
           <CardTitle>Runner profile</CardTitle>
           <CardDescription>
-            Click any runner's name in a results table, or search here. With a birth year, people who
-            share a name are kept apart.
+            Click any runner's name in a results table, or search here by part of a name (at least{' '}
+            {MIN_QUERY_LENGTH} characters). A birth year keeps people who share a name apart.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,30 +119,38 @@ export function RunnerProfile() {
             <CardHeader>
               <div className="flex items-start gap-4">
                 <div className="bg-muted text-muted-foreground flex size-12 shrink-0 items-center justify-center rounded-full">
-                  <UserRound className="size-6" />
+                  {people > 1 ? <Users className="size-6" /> : <UserRound className="size-6" />}
                 </div>
                 <div className="flex min-w-0 flex-col gap-2">
-                  <CardTitle className="text-xl">{r.query.name}</CardTitle>
+                  <CardTitle className="text-xl">
+                    {r.query.exact ? r.query.name : `Results for “${r.query.name}”`}
+                  </CardTitle>
                   <div className="flex flex-wrap gap-2">
                     {r.status === 'resolving' ? (
                       <Badge variant="outline">
                         <Loader2 className="animate-spin" /> Looking up birth year…
                       </Badge>
+                    ) : people > 1 ? (
+                      <Badge variant="secondary">{people} people</Badge>
+                    ) : singleYob ? (
+                      <Badge variant="secondary">Born {singleYob}</Badge>
                     ) : r.query.yob ? (
                       <Badge variant="secondary">Born {r.query.yob}</Badge>
                     ) : (
                       <Badge variant="outline">Birth year unknown</Badge>
                     )}
-                    {towns.map((t) => (
-                      <Badge key={t} variant="outline">
-                        {t}
-                      </Badge>
-                    ))}
-                    {clubs.map((c) => (
-                      <Badge key={c} variant="outline">
-                        {c}
-                      </Badge>
-                    ))}
+                    {people === 1 &&
+                      towns.map((t) => (
+                        <Badge key={t} variant="outline">
+                          {t}
+                        </Badge>
+                      ))}
+                    {people === 1 &&
+                      clubs.map((c) => (
+                        <Badge key={c} variant="outline">
+                          {c}
+                        </Badge>
+                      ))}
                   </div>
                   {r.source && r.status === 'resolving' && (
                     <CardDescription>from {r.source}</CardDescription>
@@ -154,13 +180,13 @@ export function RunnerProfile() {
               {r.status === 'cancelled' && (
                 <p className="text-muted-foreground text-sm">Stopped. Showing what was found so far.</p>
               )}
-              {!r.query.yob && r.status !== 'resolving' && (
+              {people > 1 && !busy && (
                 <Alert>
                   <Info />
-                  <AlertTitle>No birth year</AlertTitle>
+                  <AlertTitle>Several people match</AlertTitle>
                   <AlertDescription>
-                    Results of different people with the same name may be mixed. Add a birth year above
-                    to narrow it down.
+                    Click a birth year or town in the table to narrow the results, or a name to open that
+                    person's profile.
                   </AlertDescription>
                 </Alert>
               )}
@@ -168,8 +194,8 @@ export function RunnerProfile() {
               <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Finishes" value={results.length} />
                 <Stat label="Marathons" value={marathons} />
-                <Stat label="First race" value={years[0] ?? '–'} />
-                <Stat label="Latest race" value={years.at(-1) ?? '–'} />
+                <Stat label="First race" value={yearsRun[0] ?? '–'} />
+                <Stat label="Latest race" value={yearsRun.at(-1) ?? '–'} />
               </dl>
 
               <div className="flex flex-wrap gap-x-6 gap-y-3">
@@ -212,10 +238,10 @@ export function RunnerProfile() {
                       {pbs.map((pb) => (
                         <TableRow key={pb.label}>
                           <TableCell className="font-medium">{pb.label}</TableCell>
-                          <TableCell className="tabular-nums font-semibold">{pb.best.time}</TableCell>
+                          <TableCell className="font-semibold tabular-nums">{pb.best.time}</TableCell>
                           <TableCell className="tabular-nums">{pb.best.date}</TableCell>
                           <TableCell className="max-w-72 truncate" title={pb.best.raceName}>
-                            <RaceButton name={pb.best.raceName} onClick={() => openRace(pb.best.raceId)} />
+                            <LinkButton onClick={() => openRace(pb.best.raceId)}>{pb.best.raceName}</LinkButton>
                           </TableCell>
                           <TableCell className="text-right tabular-nums">{pb.best.place}</TableCell>
                           <TableCell className="text-right tabular-nums">{pb.count}</TableCell>
@@ -231,7 +257,7 @@ export function RunnerProfile() {
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
-                All results <Badge variant="secondary">{results.length}</Badge>
+                Results <Badge variant="secondary">{results.length}</Badge>
               </CardTitle>
               {r.status === 'done' && r.similarNames > 0 && (
                 <CardDescription>
@@ -241,10 +267,23 @@ export function RunnerProfile() {
               )}
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              <div>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={exportCsv} disabled={!results.length}>
                   <Download /> Download CSV
                 </Button>
+                {r.filterYob !== null && (
+                  <FilterChip onClear={() => dispatch(setFilterYob(null))}>
+                    Born {r.filterYob === 'unknown' ? 'unknown' : r.filterYob}
+                  </FilterChip>
+                )}
+                {r.filterTown !== null && (
+                  <FilterChip onClear={() => dispatch(setFilterTown(null))}>{r.filterTown || 'No town'}</FilterChip>
+                )}
+                {filtered && (
+                  <span className="text-muted-foreground text-xs">
+                    {results.length} of {all.length} shown
+                  </span>
+                )}
               </div>
               <div className="rounded-md border">
                 <Table>
@@ -253,6 +292,8 @@ export function RunnerProfile() {
                       <TableHead>Date</TableHead>
                       <TableHead>Race</TableHead>
                       <TableHead>Distance</TableHead>
+                      {showName && <TableHead>Name</TableHead>}
+                      {showYob && <TableHead>Born</TableHead>}
                       <TableHead>Net time</TableHead>
                       <TableHead className="text-right">Place</TableHead>
                       <TableHead>Cat. place</TableHead>
@@ -265,7 +306,7 @@ export function RunnerProfile() {
                       <TableRow key={`${x.raceId}-${i}`}>
                         <TableCell className="tabular-nums">{x.date}</TableCell>
                         <TableCell className="max-w-72 truncate" title={x.raceName}>
-                          <RaceButton name={x.raceName} onClick={() => openRace(x.raceId)} />
+                          <LinkButton onClick={() => openRace(x.raceId)}>{x.raceName}</LinkButton>
                           {x.virtual && (
                             <Badge variant="outline" className="ml-2">
                               virtual
@@ -273,26 +314,54 @@ export function RunnerProfile() {
                           )}
                         </TableCell>
                         <TableCell>{distanceLabel(x.distance)}</TableCell>
+                        {showName && (
+                          <TableCell>
+                            <RunnerLink
+                              name={x.name}
+                              raceId={x.raceId}
+                              raceName={x.raceName}
+                              place={x.place}
+                              bib={x.bib}
+                              yob={x.yob}
+                            />
+                          </TableCell>
+                        )}
+                        {showYob && (
+                          <TableCell className="tabular-nums">
+                            <FilterButton
+                              active={r.filterYob === (x.yob ?? 'unknown')}
+                              onClick={() => dispatch(setFilterYob(x.yob ?? 'unknown'))}
+                              title="Show only this birth year"
+                            >
+                              {x.yob ?? '?'}
+                            </FilterButton>
+                          </TableCell>
+                        )}
                         <TableCell className="tabular-nums">{x.time}</TableCell>
                         <TableCell className="text-right tabular-nums">{x.place}</TableCell>
                         <TableCell className="tabular-nums">{x.categoryPlace}</TableCell>
-                        <TableCell>{x.town}</TableCell>
+                        <TableCell>
+                          {x.town ? (
+                            <FilterButton
+                              active={r.filterTown === x.town}
+                              onClick={() => dispatch(setFilterTown(x.town))}
+                              title="Show only this town"
+                            >
+                              {x.town}
+                            </FilterButton>
+                          ) : (
+                            <span className="text-muted-foreground">–</span>
+                          )}
+                        </TableCell>
                         <TableCell className="max-w-48 truncate" title={x.club}>
                           {x.club}
                         </TableCell>
                       </TableRow>
                     ))}
-                    {!results.length && !busy && (
+                    {!results.length && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-muted-foreground py-10 text-center">
-                          No results found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!results.length && busy && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-muted-foreground py-10 text-center">
-                          Searching…
+                        <TableCell colSpan={10} className="text-muted-foreground py-10 text-center">
+                          {busy ? 'Searching…' : 'No results found.'}
                         </TableCell>
                       </TableRow>
                     )}
@@ -311,13 +380,14 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
   const dispatch = useAppDispatch()
   const [name, setName] = useState(props.initialName)
   const [yob, setYob] = useState(props.initialYob ? String(props.initialYob) : '')
+  const tooShort = name.trim().length < MIN_QUERY_LENGTH
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const n = name.trim()
-    if (!n) return
+    if (n.length < MIN_QUERY_LENGTH) return
     const y = Number(yob)
-    searchRunner(dispatch, { name: n, yob: Number.isInteger(y) && y > 1900 ? y : null })
+    searchRunner(dispatch, { name: n, yob: Number.isInteger(y) && y > 1900 ? y : null, exact: false })
   }
 
   return (
@@ -327,11 +397,17 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
         <Input
           id="runner-name"
           value={name}
-          placeholder="e.g. Hegedüs Levente"
+          placeholder="e.g. Hegedüs Levente, or just “Hegedüs”"
+          aria-describedby="runner-name-hint"
           onChange={(e) => setName(e.target.value)}
         />
+        <p id="runner-name-hint" className="text-muted-foreground text-xs">
+          {name.trim() && tooShort
+            ? `Type at least ${MIN_QUERY_LENGTH} characters.`
+            : 'Matches any name containing this text (accents ignored).'}
+        </p>
       </div>
-      <div className="grid gap-1.5">
+      <div className="grid content-start gap-1.5">
         <Label htmlFor="runner-yob">Birth year</Label>
         <Input
           id="runner-yob"
@@ -341,13 +417,25 @@ function SearchForm(props: { initialName: string; initialYob: number | null; bus
           onChange={(e) => setYob(e.target.value.replace(/\D/g, '').slice(0, 4))}
         />
       </div>
-      <div className="flex items-end">
+      <div className="flex items-start sm:pt-[1.375rem]">
+        {/* Distinct keys: otherwise React reuses the same <button> and flips it to
+            type="submit" while the Stop click is still being handled, which
+            submits the form and restarts the search. */}
         {props.busy ? (
-          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={cancelRunner}>
+          <Button
+            key="stop"
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={(e) => {
+              e.preventDefault()
+              cancelRunner()
+            }}
+          >
             <Square /> Stop
           </Button>
         ) : (
-          <Button type="submit" className="w-full sm:w-auto" disabled={!name.trim()}>
+          <Button key="submit" type="submit" className="w-full sm:w-auto" disabled={tooShort}>
             <Search /> Find results
           </Button>
         )}
@@ -376,7 +464,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-function RaceButton({ name, onClick }: { name: string; onClick: () => void }) {
+function LinkButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -384,8 +472,39 @@ function RaceButton({ name, onClick }: { name: string; onClick: () => void }) {
       title="Open race results"
       className="cursor-pointer underline-offset-4 hover:underline"
     >
-      {name}
+      {children}
     </button>
+  )
+}
+
+/** A table value that filters the results to rows with the same value. */
+function FilterButton(props: { children: React.ReactNode; onClick: () => void; active: boolean; title: string }) {
+  return (
+    <button
+      type="button"
+      onClick={props.onClick}
+      title={props.title}
+      aria-pressed={props.active}
+      className="hover:bg-accent aria-pressed:bg-secondary -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted underline-offset-4"
+    >
+      {props.children}
+    </button>
+  )
+}
+
+function FilterChip({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
+  return (
+    <Badge variant="secondary" className="gap-1 pr-1">
+      {children}
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label="Remove filter"
+        className="hover:bg-background/60 rounded-sm p-0.5"
+      >
+        <X className="size-3" />
+      </button>
+    </Badge>
   )
 }
 

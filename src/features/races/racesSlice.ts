@@ -1,8 +1,9 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { getRaceList } from '@/api/futanet'
+import { getRaceCatalogue } from '@/api/runner'
 import type { RaceListItem } from '@/api/types'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
+import { groupRaces, type RaceEvent } from '@/lib/events'
 
 type Status = 'idle' | 'loading' | 'succeeded' | 'failed'
 
@@ -26,7 +27,7 @@ export const fetchRaces = createAppAsyncThunk(
   'races/fetch',
   async (_: void, { signal, rejectWithValue }) => {
     try {
-      return await getRaceList({ signal })
+      return await getRaceCatalogue({ signal })
     } catch (e) {
       return rejectWithValue(errorMessage(e))
     }
@@ -81,6 +82,36 @@ export const selectFilteredRaces = createSelector(
         (year === 'all' || r.date.startsWith(year)) &&
         (!q || fold(r.name).includes(q) || r.id.toLowerCase().includes(q)),
     )
+  },
+)
+
+const selectAllEvents = createSelector([selectItems], (items) => groupRaces(items))
+
+export interface VisibleEvent extends RaceEvent {
+  /** true when only some of the event's lists match the search */
+  partial: boolean
+}
+
+/**
+ * Events after the year + search filters. A label match keeps the whole event;
+ * otherwise only the matching lists are shown inside it.
+ */
+export const selectVisibleEvents = createSelector(
+  [selectAllEvents, selectQuery, selectYear],
+  (events, query, year): VisibleEvent[] => {
+    const q = fold(query)
+    const out: VisibleEvent[] = []
+    for (const ev of events) {
+      const races = ev.races.filter((r) => year === 'all' || r.date.startsWith(year))
+      if (!races.length) continue
+      if (!q || fold(ev.label).includes(q)) {
+        out.push({ ...ev, races, partial: false })
+        continue
+      }
+      const hits = races.filter((r) => fold(r.name).includes(q) || r.id.toLowerCase().includes(q))
+      if (hits.length) out.push({ ...ev, races: hits, partial: true })
+    }
+    return out
   },
 )
 
