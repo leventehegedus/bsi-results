@@ -338,6 +338,14 @@ export function RunnerProfile() {
                 <Button variant="outline" size="sm" onClick={exportCsv} disabled={!results.length}>
                   <Download /> Download CSV
                 </Button>
+                {r.query.town && (
+                  <FilterChip
+                    onClear={() => r.query && searchRunner(dispatch, { ...r.query, town: null })}
+                    clearLabel="Search again without the town filter"
+                  >
+                    <MapPin /> Town: {r.query.town}
+                  </FilterChip>
+                )}
                 {r.filterYob !== null && (
                   <FilterChip onClear={() => dispatch(setFilterYob(null))}>
                     Born {r.filterYob === 'unknown' ? 'unknown' : r.filterYob}
@@ -611,14 +619,23 @@ function QuickFilters(props: {
   )
 }
 
-function FilterChip({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
+function FilterChip({
+  children,
+  onClear,
+  clearLabel = 'Remove filter',
+}: {
+  children: React.ReactNode
+  onClear: () => void
+  clearLabel?: string
+}) {
   return (
     <Badge variant="secondary" className="gap-1 pr-1">
       {children}
       <button
         type="button"
         onClick={onClear}
-        aria-label="Remove filter"
+        aria-label={clearLabel}
+        title={clearLabel}
         className="hover:bg-background/60 rounded-sm p-0.5"
       >
         <X className="size-3" />
