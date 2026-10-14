@@ -38,7 +38,8 @@ export function seriesKey(id: string): string {
   return `${year}|${series}`
 }
 
-const MAX_GAP_DAYS = 3
+/** Side lists can be dated up to ~10 days off the main race (e.g. 2022_bpfm_am_e). */
+const MAX_GAP_DAYS = 14
 
 function daysBetween(a: string, b: string) {
   return Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000
@@ -70,6 +71,13 @@ const SERIES_LABEL: Record<string, string> = {
   marfured: 'MaratonFüred',
   felm: 'Olimpiai Félmaraton',
   fbt: 'Budapest Félmaraton Trió',
+  led: "LED's Run",
+  mikulas: 'Mikulásfutás',
+  vbalaton: 'Virtuális Balaton Hatodmaraton',
+  vegso: 'Végső visszaszámlálás!',
+  mindig: 'Még mindig nem késő!',
+  nak: 'Nemzeti Atlétikai Központ nyitófutás',
+  sbuek: 'Sportolásban gazdag új évet!',
 }
 
 /** Strip a trailing distance ("… 10 km") or toilet/wheelchair suffix from a race name. */
@@ -102,8 +110,8 @@ function eventLabel(key: string, races: RaceListItem[]): string {
 }
 
 /**
- * Group race lists into events: same year + series code, and dates within a few
- * days of each other (Helló Futás has four seasons a year with the same code).
+ * Group race lists into events: same year + series code, and dates within two
+ * weeks of each other (Helló Futás has four seasons a year with the same code).
  */
 export function groupRaces(races: RaceListItem[]): RaceEvent[] {
   const bySeries = new Map<string, RaceListItem[]>()

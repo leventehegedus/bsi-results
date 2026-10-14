@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +25,9 @@ import {
   setYear,
   type VisibleEvent,
 } from './racesSlice'
-import type { RaceListItem } from '@/api/types'
+import { getRaceCached } from '@/api/runner'
+import type { RaceListItem, RaceMeta } from '@/api/types'
+import { runPool } from '@/lib/pool'
 
 const MAX_VISIBLE = 150
 const CODE_RE = /^\d{4}[a-z0-9_]+$/i
@@ -145,6 +147,7 @@ function EventGroup(props: {
   onSelect: (id: string) => void
 }) {
   const { event: ev } = props
+  const metas = useDuplicateMetas(ev.races, props.open)
   const dates = ev.from === ev.to ? ev.from : `${ev.from} – ${ev.to.slice(5)}`
   return (
     <li>
@@ -168,7 +171,12 @@ function EventGroup(props: {
           <ul className="border-border ml-4 border-l pl-2">
             {ev.races.map((r) => (
               <li key={r.id}>
-                <RaceItem race={r} selected={props.selectedId === r.id} onSelect={props.onSelect} />
+                <RaceItem
+                  race={r}
+                  meta={metas[r.id]}
+                  selected={props.selectedId === r.id}
+                  onSelect={props.onSelect}
+                />
               </li>
             ))}
           </ul>
@@ -178,8 +186,44 @@ function EventGroup(props: {
   )
 }
 
-function RaceItem(props: { race: RaceListItem; selected: boolean; onSelect: (id: string) => void }) {
+/**
+ * Several lists of an event often share a short name ("5 km", "Fut a cég"); their full
+ * names ("LED's Run - 5 km - 20:00") only come with the race metadata. Loads it for
+ * those lists once the event is opened.
+ */
+function useDuplicateMetas(races: RaceListItem[], open: boolean) {
+  const [metas, setMetas] = useState<Record<string, RaceMeta>>({})
+  const ids = useMemo(() => {
+    const count = new Map<string, number>()
+    for (const r of races) count.set(r.name, (count.get(r.name) ?? 0) + 1)
+    return races.filter((r) => count.get(r.name)! > 1).map((r) => r.id)
+  }, [races])
+
+  useEffect(() => {
+    if (!open || !ids.length) return
+    let live = true
+    // no abort signal: getRaceCached would cache the aborted request as "not found"
+    void runPool(ids, 6, async (id) => {
+      const meta = await getRaceCached(id)
+      if (live && meta) setMetas((m) => ({ ...m, [id]: meta }))
+    })
+    return () => {
+      live = false
+    }
+  }, [open, ids])
+
+  return metas
+}
+
+function RaceItem(props: {
+  race: RaceListItem
+  /** set when the short name isn't unique within the event */
+  meta?: RaceMeta
+  selected: boolean
+  onSelect: (id: string) => void
+}) {
   const r = props.race
+  const name = props.meta?.nev || r.name
   return (
     <button
       type="button"
@@ -189,9 +233,10 @@ function RaceItem(props: { race: RaceListItem; selected: boolean; onSelect: (id:
         props.selected && 'bg-accent',
       )}
     >
-      <div className="truncate text-sm font-medium">{r.name}</div>
+      <div className="text-sm font-medium break-words">{name}</div>
       <div className="text-muted-foreground font-mono text-xs">
-        {r.date} · {r.id}
+        {r.date}
+        {props.meta?.meret === 0 && ' · no results'}
       </div>
     </button>
   )
