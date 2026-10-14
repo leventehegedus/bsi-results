@@ -34,6 +34,7 @@ export const hu: Messages = {
     place: 'Helyezés',
     catPlace: 'Kat. hely',
     netTime: 'Nettó idő',
+    pace: 'Tempó (perc/km)',
     gunTime: 'Bruttó idő',
     bestTime: 'Legjobb idő',
     finishes: 'Befutás',
