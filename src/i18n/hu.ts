@@ -132,6 +132,8 @@ export const hu: Messages = {
     group: 'Csoport',
     groupLabel: (percent: number) => `Leggyorsabb ${percent}%`,
     medianFinish: 'Medián befutó',
+    medianSplitAt: (point: string) => `Medián részidő: ${point}`,
+    medianSplitsNote: 'A befutó előtti oszlopok: a csoport medián ideje az egyes mérőpontoknál.',
     runners: (n: number) => `${n} futó`,
     runnersCol: 'Futók',
     negativeOfGroup: (percent: string) => `${percent} futott negatív splitet`,

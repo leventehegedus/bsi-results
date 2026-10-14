@@ -72,11 +72,18 @@ export function RaceSplits({ raceId }: { raceId: string }) {
         />
       </section>
 
+      {s.splitPoints.length > 0 && <p className="text-muted-foreground -mb-4 text-xs">{t.splits.medianSplitsNote}</p>}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t.splits.group}</TableHead>
+              {/* median time at each timing point, then at the finish */}
+              {s.splitPoints.map((p) => (
+                <TableHead key={p.metres} title={t.splits.medianSplitAt(p.label)}>
+                  {p.label}
+                </TableHead>
+              ))}
               <TableHead>{t.splits.medianFinish}</TableHead>
               <TableHead className="text-right">{t.splits.fade}</TableHead>
               <TableHead className="text-right">{t.splits.negativeSplits}</TableHead>
@@ -87,7 +94,12 @@ export function RaceSplits({ raceId }: { raceId: string }) {
             {s.groups.map((g) => (
               <TableRow key={g.percent}>
                 <TableCell>{t.splits.groupLabel(g.percent)}</TableCell>
-                <TableCell className="tabular-nums">{formatSeconds(g.medianFinish)}</TableCell>
+                {g.medianSplits.map((sec, i) => (
+                  <TableCell key={s.splitPoints[i].metres} className="tabular-nums">
+                    {sec == null ? '–' : formatSeconds(sec)}
+                  </TableCell>
+                ))}
+                <TableCell className="font-medium tabular-nums">{formatSeconds(g.medianFinish)}</TableCell>
                 <TableCell
                   className="text-right font-medium tabular-nums"
                   style={{ color: g.medianFade >= 0 ? 'var(--chart-slower)' : 'var(--chart-faster)' }}

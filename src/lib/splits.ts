@@ -50,6 +50,11 @@ export interface Segment {
 /** One finisher's race, cut into segments by the timing points. */
 export interface RunnerSplits {
   segments: Segment[]
+  /**
+   * The usable intermediate times (cumulative, seconds) by the point's distance
+   * in metres; a missed or out-of-order mat is simply absent.
+   */
+  marks: { metres: number; seconds: number }[]
   /** overall pace, seconds per km */
   pace: number
   finish: number
@@ -99,6 +104,7 @@ export function runnerSplits(
   const last = segments[segments.length - 1]
   return {
     segments,
+    marks: clean,
     pace,
     finish,
     fade: segments.length > 1 && first.pace > 0 ? last.pace / first.pace - 1 : null,
@@ -121,6 +127,8 @@ export interface FadeGroup {
   count: number
   medianFade: number
   medianFinish: number
+  /** median time at each of SplitStats.splitPoints (same order); null when no one in the group has it */
+  medianSplits: (number | null)[]
   /** share of the group that ran the second half faster than the first */
   negativeShare: number
 }
@@ -133,6 +141,8 @@ export interface SplitStats {
   /** median pace of the first and the last segment, seconds per km */
   firstPace: number
   lastPace: number
+  /** the intermediate points the groups' median splits refer to, in race order */
+  splitPoints: { label: string; metres: number }[]
   groups: FadeGroup[]
 }
 
@@ -143,9 +153,24 @@ const GROUPS = 10
  * finishers ordered by finishing time — slower runners usually fade more, and
  * that only shows once the field is split up.
  */
-export function splitStats(runs: RunnerSplits[]): SplitStats | null {
+export function splitStats(
+  runs: RunnerSplits[],
+  points: SplitPoint[] = [],
+  raceMetres?: number | null,
+): SplitStats | null {
   const usable = runs.filter((r) => r.fade != null).sort((a, b) => a.finish - b.finish)
   if (usable.length < GROUPS) return null
+
+  // intermediate points only (not the start or the finish), once per distance
+  const seen = new Set<number>()
+  const splitPoints = points
+    .filter((p): p is SplitPoint & { metres: number } => p.metres != null && p.metres > 0 && (!raceMetres || p.metres < raceMetres))
+    .filter((p) => !seen.has(p.metres) && seen.add(p.metres))
+    .map((p) => ({ label: p.label, metres: p.metres }))
+  const medianAt = (rows: RunnerSplits[], metres: number) => {
+    const times = rows.flatMap((r) => r.marks.filter((m) => m.metres === metres).map((m) => m.seconds))
+    return times.length ? median(times) : null
+  }
 
   const stats = (rows: RunnerSplits[]) => ({
     count: rows.length,
@@ -168,10 +193,11 @@ export function splitStats(runs: RunnerSplits[]): SplitStats | null {
       count: s.count,
       medianFade: s.medianFade,
       medianFinish: median(rows.map((r) => r.finish)),
+      medianSplits: splitPoints.map((p) => medianAt(rows, p.metres)),
       negativeShare: s.negativeShare,
     })
   }
-  return { ...stats(usable), groups }
+  return { ...stats(usable), splitPoints, groups }
 }
 
 function median(xs: number[]): number {
