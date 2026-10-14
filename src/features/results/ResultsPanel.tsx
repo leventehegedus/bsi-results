@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/table'
 import { cleanTime } from '@/lib/results'
 import { formatPace, pacePerKm } from '@/lib/pace'
+import { formatFade, runnerSplits, splitPoints, type SplitPoint } from '@/lib/splits'
 import { downloadCsv, toCsv } from '@/lib/csv'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { setFilters, setPage } from './resultsSlice'
@@ -34,6 +35,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { useRaceDetailsQuery, useRaceQuery, useResultPageQuery } from '@/api/futanetApi'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import { RaceBreakdown } from './RaceBreakdown'
+import { RaceSplits } from './RaceSplits'
 import { RaceWeather } from '@/features/weather/RaceWeather'
 import { useLang, useT, type Messages } from '@/i18n'
 
@@ -68,7 +70,7 @@ export function ResultsPanel() {
   // the panel is keyed by race, so the form starts empty for every race
   const [form, setForm] = useState<ResultFilters>({})
   const [exporting, setExporting] = useState(false)
-  const [view, setView] = useState<'results' | 'breakdown' | 'weather'>('results')
+  const [view, setView] = useState<'results' | 'breakdown' | 'splits' | 'weather'>('results')
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -111,11 +113,20 @@ export function ResultsPanel() {
   const distance = r.meta?.tav ?? 0
   const netIndex = columns.findIndex((c) => c.key === 'netto')
   if (distance > 0 && netIndex >= 0) columns.splice(netIndex + 1, 0, { key: PACE_KEY, label: t.col.pace })
+  // Intermediate times let every row show how much it slowed down after the first segment.
+  const points = splitPoints(r.fields, distance)
+  const hasSplits = points.length > 0 && distance > 0
+  const fadeIndex = columns.findIndex((c) => c.key === PACE_KEY)
+  if (hasSplits && fadeIndex >= 0) columns.splice(fadeIndex + 1, 0, { key: FADE_KEY, label: t.splits.fade })
   // The API only has certificates for races with a template, and only per bib number.
   if (r.meta?.oklevel) columns.push({ key: CERT_KEY, label: t.col.certificate })
   /** A cell's text, for the table and the CSV. */
   const cellText = (row: ResultRow, key: string) =>
-    key === PACE_KEY ? formatPace(pacePerKm(row.netto, distance)) : display(row, key)
+    key === PACE_KEY
+      ? formatPace(pacePerKm(row.netto, distance))
+      : key === FADE_KEY
+        ? formatFade(runnerSplits(row, points, distance)?.fade ?? null)
+        : display(row, key)
 
   /** Update the filters (back to page 1), right away or after `delay` ms. */
   const apply = (next: ResultFilters, delay = 0) => {
@@ -250,6 +261,7 @@ export function ResultsPanel() {
           <TabsList>
             <TabsTrigger value="results">{t.breakdown.views.results}</TabsTrigger>
             <TabsTrigger value="breakdown">{t.breakdown.views.breakdown}</TabsTrigger>
+            {hasSplits && <TabsTrigger value="splits">{t.breakdown.views.splits}</TabsTrigger>}
             <TabsTrigger value="weather">{t.breakdown.views.weather}</TabsTrigger>
           </TabsList>
           {/* keyed by race so start-time / place corrections are re-read per race */}
@@ -258,6 +270,8 @@ export function ResultsPanel() {
           </TabsContent>
           {/* the breakdown loads every finisher, so it's only mounted (and fetched) when opened */}
           <TabsContent value="breakdown">{raceId && <RaceBreakdown raceId={raceId} />}</TabsContent>
+          {/* also loads every finisher, so it only mounts when opened */}
+          <TabsContent value="splits">{raceId && <RaceSplits raceId={raceId} />}</TabsContent>
           <TabsContent value="results" className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               {field('name', t.col.name)}
@@ -363,7 +377,9 @@ export function ResultsPanel() {
                                 isNumericCol(c.key) ? 'tabular-nums' : c.key === CERT_KEY ? 'text-center' : ''
                               }
                             >
-                              {c.key === CERT_KEY ? (
+                              {c.key === FADE_KEY ? (
+                                <FadeCell row={row} points={points} distance={distance} hint={t.splits.rowHint} />
+                              ) : c.key === CERT_KEY ? (
                                 <CertificateLink
                                   raceId={r.raceId!}
                                   bib={row.rajtszam ?? null}
@@ -420,7 +436,23 @@ function display(row: ResultRow, key: string) {
 
 /** Computed columns: not fields of the API's rows. */
 const PACE_KEY = '__pace'
+const FADE_KEY = '__fade'
 const CERT_KEY = '__certificate'
+
+/** How much this finisher slowed down after the first segment; blank without split times. */
+function FadeCell(props: { row: ResultRow; points: SplitPoint[]; distance: number; hint: string }) {
+  const fade = runnerSplits(props.row, props.points, props.distance)?.fade ?? null
+  if (fade === null) return <span className="text-muted-foreground">–</span>
+  return (
+    <span
+      title={props.hint}
+      className="font-medium"
+      style={{ color: fade >= 0 ? 'var(--chart-slower)' : 'var(--chart-faster)' }}
+    >
+      {formatFade(fade)}
+    </span>
+  )
+}
 
 /** Downloads the finisher's certificate; needs a bib number, which a few rows lack. */
 function CertificateLink(props: { raceId: string; bib: string | null; name: string; t: Messages }) {
@@ -442,5 +474,12 @@ function CertificateLink(props: { raceId: string; bib: string | null; name: stri
 }
 
 function isNumericCol(key: string) {
-  return key === 'hely' || key === 'netto' || key === 'brutto' || key === PACE_KEY || key.startsWith('reszido')
+  return (
+    key === 'hely' ||
+    key === 'netto' ||
+    key === 'brutto' ||
+    key === PACE_KEY ||
+    key === FADE_KEY ||
+    key.startsWith('reszido')
+  )
 }
