@@ -4,7 +4,8 @@ import { useRaceBreakdownQuery } from '@/api/futanetApi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
-import { categoryStats, formatSeconds, groupStats, PERCENTS, type GroupStats } from '@/lib/breakdown'
+import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, type GroupStats } from '@/lib/breakdown'
+import { DistributionChart } from './DistributionChart'
 import { PercentileChart, type PercentileSeries } from './PercentileChart'
 
 /** Time cut-offs (top 10 %, 20 % …) of a whole race: all finishers, men, women and age categories. */
@@ -19,6 +20,7 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
       men: groupStats(data.men),
       women: groupStats(data.women),
       categories: categoryStats(data.all),
+      bins: histogram(data.all, data.men, data.women),
     }
   }, [data])
 
@@ -37,6 +39,8 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
   if (!stats.all.count) return <p className="text-muted-foreground py-10 text-sm">{t.breakdown.empty}</p>
 
   const hasGender = stats.men.count + stats.women.count > 0
+  // stack men + women only when they add up to every finisher in each slot
+  const stacked = hasGender && stats.bins.every((b) => b.men + b.women === b.total)
   const groups: { key: string; label: string; color: string; stats: GroupStats }[] = [
     { key: 'all', label: t.breakdown.all, color: 'var(--chart-context)', stats: stats.all },
     ...(hasGender
@@ -81,7 +85,57 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
         />
       </section>
 
-      {/* the chart's values as a table */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-primary text-sm font-semibold">{t.breakdown.distTitle}</h3>
+          <p className="text-muted-foreground text-xs">{t.breakdown.distDescription}</p>
+        </div>
+        <DistributionChart
+          bins={stats.bins}
+          cutoffs={stats.all.cutoffs}
+          stacked={stacked}
+          labels={{
+            men: t.breakdown.men,
+            women: t.breakdown.women,
+            finishers: t.breakdown.finishers,
+            finishedBy: t.breakdown.finishedBy,
+            xAxis: t.breakdown.timeAxis,
+            ariaLabel: t.breakdown.distTitle,
+          }}
+        />
+        {/* the bar chart's values as a table */}
+        <details className="text-sm">
+          <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
+          <div className="mt-2 rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.breakdown.timeSlot}</TableHead>
+                  {stacked && <TableHead className="text-right">{t.breakdown.men}</TableHead>}
+                  {stacked && <TableHead className="text-right">{t.breakdown.women}</TableHead>}
+                  <TableHead className="text-right">{t.breakdown.total}</TableHead>
+                  <TableHead className="text-right">{t.breakdown.finishedByCol}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.bins.map((b) => (
+                  <TableRow key={b.from} className={b.total ? undefined : 'text-muted-foreground'}>
+                    <TableCell className="tabular-nums">
+                      {formatSeconds(b.from)} – {formatSeconds(b.to)}
+                    </TableCell>
+                    {stacked && <TableCell className="text-right tabular-nums">{b.men}</TableCell>}
+                    {stacked && <TableCell className="text-right tabular-nums">{b.women}</TableCell>}
+                    <TableCell className="text-right tabular-nums">{b.total}</TableCell>
+                    <TableCell className="text-right tabular-nums">{Math.round(b.cumulative)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </details>
+      </section>
+
+      {/* the line chart's values as a table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

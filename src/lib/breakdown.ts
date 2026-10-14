@@ -76,3 +76,52 @@ export function formatSeconds(total: number): string {
   const sec = String(s % 60).padStart(2, '0')
   return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`
 }
+
+export interface Bin {
+  /** start of the time slot, seconds (inclusive) */
+  from: number
+  /** end of the time slot, seconds (exclusive) */
+  to: number
+  men: number
+  women: number
+  /** finishers in this slot, including those without gender */
+  total: number
+  /** share of all finishers at or faster than the end of this slot, 0–100 */
+  cumulative: number
+}
+
+/** Slot widths in seconds, 30 s … 30 min. */
+const BIN_WIDTHS = [30, 60, 120, 180, 300, 600, 900, 1200, 1800]
+const MAX_BINS = 40
+
+/**
+ * Finishers per time slot (a histogram), with men and women counted separately.
+ * The slot width is the smallest round width that gives at most ~40 slots.
+ */
+export function histogram(all: BreakdownRow[], men: BreakdownRow[], women: BreakdownRow[]): Bin[] {
+  if (!all.length) return []
+  const times = all.map((r) => r.seconds)
+  const lo = Math.min(...times)
+  const hi = Math.max(...times)
+  const width = BIN_WIDTHS.find((w) => Math.floor(hi / w) - Math.floor(lo / w) + 1 <= MAX_BINS) ?? BIN_WIDTHS[BIN_WIDTHS.length - 1]
+  const start = Math.floor(lo / width) * width
+  const count = Math.floor((hi - start) / width) + 1
+  const bins: Bin[] = Array.from({ length: count }, (_, i) => ({
+    from: start + i * width,
+    to: start + (i + 1) * width,
+    men: 0,
+    women: 0,
+    total: 0,
+    cumulative: 0,
+  }))
+  const slot = (s: number) => bins[Math.floor((s - start) / width)]
+  for (const r of all) slot(r.seconds).total++
+  for (const r of men) slot(r.seconds).men++
+  for (const r of women) slot(r.seconds).women++
+  let running = 0
+  for (const b of bins) {
+    running += b.total
+    b.cumulative = (running / all.length) * 100
+  }
+  return bins
+}

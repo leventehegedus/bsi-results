@@ -111,6 +111,15 @@ export const hu: Messages = {
     countCol: 'Befutó',
     noGender: 'Ennél a versenynél nincs nemi adat, ezért csak az összes befutó látszik.',
     empty: 'Ennél a versenynél nincs célidő.',
+    distTitle: 'A célidők eloszlása',
+    distDescription:
+      'Befutók száma időszakaszonként. A vékony vonalak jelölik, mennyi idő kellett a legjobb 10, 20 … százalékhoz.',
+    timeAxis: 'Célidő',
+    finishedBy: (p) => `Ekkorra a befutók ${p}%-a beért`,
+    showTable: 'Táblázatként',
+    timeSlot: 'Időszakasz',
+    total: 'Összesen',
+    finishedByCol: 'Addig beért',
   },
   town: {
     title: 'Befutók keresése település szerint',
