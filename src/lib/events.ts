@@ -81,7 +81,8 @@ function stripDistance(name: string) {
 }
 
 function eventLabel(key: string, races: RaceListItem[]): string {
-  const [year, rawSeries] = key.split('|')
+  // Ids that don't match the "YYYY<series>" pattern come through as the bare id (no "|").
+  const [year, rawSeries = ''] = key.split('|')
   const virtual = rawSeries.startsWith('v-')
   const series = rawSeries.replace(/^v-/, '')
   const known = SERIES_LABEL[series]
