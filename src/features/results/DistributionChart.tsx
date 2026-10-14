@@ -8,7 +8,9 @@ const GAP = 2
 const RADIUS = 4
 /** cut-off labels closer than this would collide: the line stays, the label is dropped */
 const LABEL_SPACING = 30
-const TICK_STEPS = [60, 120, 300, 600, 900, 1200, 1800, 3600]
+const TICK_STEPS = [60, 120, 300, 600, 900, 1200, 1800, 3600, 5400, 7200]
+/** room a time label ("1:00:00", 11px) needs so neighbours don't run together */
+const MIN_X_LABEL_SPACING = 56
 
 export interface DistributionLabels {
   men: string
@@ -55,7 +57,8 @@ export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stack
   const yTicks = Array.from({ length: yMax / yStep + 1 }, (_, i) => i * yStep)
   const y = (n: number) => M.top + plotH - (n / yMax) * plotH
 
-  const xStep = TICK_STEPS.find((s) => (t1 - t0) / s <= 8) ?? 3600
+  // at most ~8 time labels, and never closer than a label is wide ("1:00:00")
+  const xStep = TICK_STEPS.find((s) => (t1 - t0) / s <= 8 && (s / (t1 - t0)) * plotW >= MIN_X_LABEL_SPACING) ?? 3600
   const xTicks: number[] = []
   for (let s = Math.ceil(t0 / xStep) * xStep; s <= t1; s += xStep) xTicks.push(s)
 

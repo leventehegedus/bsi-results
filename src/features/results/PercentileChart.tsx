@@ -16,6 +16,10 @@ const RIGHT_LABELS = 112
 const RIGHT_BARE = 16
 /** end labels are 11px text: closer than this they'd touch */
 const LABEL_GAP = 12
+/** below this width the end labels would take too much of the plot; the legend carries identity */
+const MIN_WIDTH_FOR_END_LABELS = 480
+/** room an x label ("90%") needs so neighbours don't run together */
+const MIN_X_LABEL_SPACING = 36
 /** Candidate tick steps in seconds: 30 s … 2 h. */
 const STEPS = [30, 60, 120, 300, 600, 900, 1200, 1800, 3600, 5400, 7200]
 
@@ -62,11 +66,14 @@ export function PercentileChart(props: {
   const ends = series
     .map((s) => ({ s, y: y(s.cutoffs[s.cutoffs.length - 1].seconds) }))
     .sort((a, b) => a.y - b.y)
-  const endLabels = ends.every((e, i) => i === 0 || e.y - ends[i - 1].y >= LABEL_GAP)
+  const endLabels =
+    width >= MIN_WIDTH_FOR_END_LABELS && ends.every((e, i) => i === 0 || e.y - ends[i - 1].y >= LABEL_GAP)
   const plotW = Math.max(0, width - M.left - (endLabels ? RIGHT_LABELS : RIGHT_BARE))
   const first = percents[0] ?? 0
   const last = percents[percents.length - 1] ?? 100
   const x = (percent: number) => M.left + ((percent - first) / (last - first || 1)) * plotW
+  // on narrow screens label every 2nd / 3rd percentile (always including the first)
+  const labelEvery = Math.max(1, Math.ceil(MIN_X_LABEL_SPACING / (plotW / Math.max(1, percents.length - 1))))
 
   const nearest = (clientX: number) => {
     const box = wrap.current?.getBoundingClientRect()
@@ -136,7 +143,7 @@ export function PercentileChart(props: {
               </g>
             ))}
             {/* x ticks */}
-            {percents.map((p) => (
+            {percents.filter((_, i) => i % labelEvery === 0).map((p) => (
               <text
                 key={p}
                 x={x(p)}
