@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Database, Download, Loader2, Play, Square, X } from 'lucide-react'
-import { cachedScanCount, clearScanCache } from '@/api/scanCache'
+import { useRef } from 'react'
+import { Download, Loader2, Play, Square, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,6 +22,7 @@ import { runnerKey, type RunnerBest, type ScanRow } from '@/lib/results'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { useT, type Messages } from '@/i18n'
 import { RunnerLink } from '@/features/runner/RunnerLink'
+import { CacheStatus } from '@/features/favourites/CacheStatus'
 import { FavouriteButton } from '@/features/favourites/FavouriteButton'
 import { sameTown, toggleTown } from '@/features/favourites/favouritesSlice'
 import { ShareLink } from '@/routing/ShareLink'
@@ -49,16 +49,6 @@ export function TownScan() {
   const towns = parseTowns(scan.townsInput)
   const saved = useAppSelector((s) => s.favourites.towns)
   const allSaved = towns.length > 0 && towns.every((t) => saved.some((s) => sameTown(s, t)))
-  // how much of the scan can be answered without the network
-  const [cached, setCached] = useState<number | null>(null)
-  useEffect(() => {
-    if (scan.status === 'running') return
-    let live = true
-    cachedScanCount().then((n) => live && setCached(n))
-    return () => {
-      live = false
-    }
-  }, [scan.status])
 
   const start = () => {
     promiseRef.current = dispatch(
@@ -198,22 +188,7 @@ export function TownScan() {
             />
           </div>
 
-          <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-            <Database className="size-3.5" />
-            <span>{cached ? t.favourites.cacheSize(cached.toLocaleString('hu-HU')) : t.favourites.cacheEmpty}</span>
-            {!!cached && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2"
-                disabled={running}
-                onClick={() => clearScanCache().then(() => setCached(0))}
-              >
-                {t.favourites.clearCache}
-              </Button>
-            )}
-          </div>
+          <CacheStatus watch={scan.status} disabled={running} />
 
           {(running || scan.status === 'done' || scan.status === 'cancelled') && (
             <div className="grid gap-2">

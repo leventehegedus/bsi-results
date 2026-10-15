@@ -109,7 +109,7 @@ export const en = {
     openRunner: (name: string) => `Open ${name}`,
     remove: 'Remove',
     cache: 'Local cache',
-    cacheSize: (n: string) => `${n} race + town answers stored`,
+    cacheSize: (n: string) => `${n} cached answers stored`,
     cacheEmpty: 'Nothing cached yet',
     clearCache: 'Clear cache',
     fromCache: (n: number) => `${n} from cache`,
