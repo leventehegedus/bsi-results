@@ -106,7 +106,7 @@ export const hu: Messages = {
     openRunner: (name: string) => `${name} megnyitása`,
     remove: 'Törlés',
     cache: 'Helyi gyorsítótár',
-    cacheSize: (n: string) => `${n} verseny–település válasz tárolva`,
+    cacheSize: (n: string) => `${n} tárolt válasz`,
     cacheEmpty: 'Még nincs tárolt adat',
     clearCache: 'Gyorsítótár ürítése',
     fromCache: (n: number) => `${n} a gyorsítótárból`,

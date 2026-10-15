@@ -24,6 +24,7 @@ import { useT, type Messages } from '@/i18n'
 import { selectRace } from '@/features/results/resultsSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import { cancelRunner, searchRunner } from './runnerActions'
+import { CacheStatus } from '@/features/favourites/CacheStatus'
 import { FavouriteButton } from '@/features/favourites/FavouriteButton'
 import { sameRunner, toggleRunner } from '@/features/favourites/favouritesSlice'
 import { ShareLink } from '@/routing/ShareLink'
@@ -248,6 +249,13 @@ export function RunnerProfile() {
                   </div>
                 </div>
               )}
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <CacheStatus watch={r.status} disabled={busy} />
+                {r.status === 'done' && r.fromCache > 0 && (
+                  <span className="text-muted-foreground text-xs">{t.favourites.fromCache(r.fromCache)}</span>
+                )}
+              </div>
 
               {r.status === 'failed' && (
                 <Alert variant="destructive">

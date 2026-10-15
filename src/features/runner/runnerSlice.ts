@@ -1,5 +1,6 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { getAllResults } from '@/api/futanet'
+import { getCachedRunnerRows, isFinal, putCachedRunnerRows } from '@/api/scanCache'
 import { fetchRaceCatalogue, fetchRaceMeta } from '@/api/futanetApi'
 import { annotateBirthYears, findBirthYear, rowKey } from '@/api/runner'
 import type { RaceListItem, ResultFilters } from '@/api/types'
@@ -39,6 +40,8 @@ interface RunnerState {
   total: number
   rows: RunnerResult[]
   similarNames: number
+  /** race lookups answered from the local cache instead of the network */
+  fromCache: number
   /** races whose results couldn't be fetched (server errors even after retries) */
   failedRaces: RaceListItem[]
   mergeSubLists: boolean
@@ -61,6 +64,7 @@ const initialState: RunnerState = {
   total: 0,
   rows: [],
   similarNames: 0,
+  fromCache: 0,
   failedRaces: [],
   mergeSubLists: true,
   includeVirtual: false,
@@ -118,6 +122,7 @@ export const scanRunner = createAppAsyncThunk(
       const key = runnerKey(query.name)
       let done = 0
       let similar = 0
+      let cacheHits = 0
       const failed: RaceListItem[] = []
       const tick = () => {
         done++
@@ -128,6 +133,20 @@ export const scanRunner = createAppAsyncThunk(
         races,
         CONCURRENCY,
         async (race) => {
+          // A finished race can no longer answer this question differently, so the
+          // whole per-race outcome — rows, birth years and all — is reused.
+          const final = isFinal(race.date)
+          if (final) {
+            const hit = await getCachedRunnerRows(race.id, query)
+            if (hit) {
+              similar += hit.similar
+              cacheHits++
+              if (hit.rows.length) dispatch(found({ requestId, rows: hit.rows }))
+              tick()
+              return
+            }
+          }
+
           let rows
           try {
             rows = await withRetry(() => getAllResults(race.id, filters, { signal }), { signal })
@@ -141,11 +160,14 @@ export const scanRunner = createAppAsyncThunk(
           // names containing every word of the query ("Kiss Zoltán" also finds "Kiss Zoltán Péter")
           const matching = rows.filter((r) => nameMatches(r.nev ?? '', query.name))
           let kept = matching
+          let dropped = 0
           if (query.exact) {
             // an exact profile keeps the same person only: "Nagy-György Péter dr." = "nagy györgy péter"
             kept = matching.filter((r) => runnerKey(r.nev ?? '') === key)
-            similar += matching.length - kept.length
+            dropped = matching.length - kept.length
+            similar += dropped
           }
+          let mapped: RunnerResult[] = []
           if (kept.length) {
             const years = new Map<string, number>()
             if (!query.yob && kept.length <= MAX_ROWS_TO_ANNOTATE) {
@@ -156,22 +178,19 @@ export const scanRunner = createAppAsyncThunk(
               }
             }
             const meta = await fetchRaceMeta(dispatch, race.id)
-            dispatch(
-              found({
-                requestId,
-                rows: kept.map((r) => ({
-                  ...toScanRow(r, race, ''),
-                  distance: meta?.tav || null,
-                  yob: query.yob ?? years.get(rowKey(r)) ?? null,
-                })),
-              }),
-            )
+            mapped = kept.map((r) => ({
+              ...toScanRow(r, race, ''),
+              distance: meta?.tav || null,
+              yob: query.yob ?? years.get(rowKey(r)) ?? null,
+            }))
+            dispatch(found({ requestId, rows: mapped }))
           }
+          if (final) void putCachedRunnerRows(race.id, query, { rows: mapped, similar: dropped })
           tick()
         },
         signal,
       )
-      return { similar, failed }
+      return { similar, failed, fromCache: cacheHits }
     } catch (e) {
       return rejectWithValue(errorMessage(e))
     }
@@ -222,6 +241,7 @@ const runnerSlice = createSlice({
       s.done = 0
       s.total = 0
       s.failedRaces = []
+      s.fromCache = 0
       s.error = null
       if (races) return // retrying failed races: keep what was found so far
       s.rows = []
@@ -233,6 +253,7 @@ const runnerSlice = createSlice({
         if (a.meta.requestId !== s.activeRequest) return
         s.status = 'done'
         s.similarNames += a.payload.similar
+        s.fromCache = a.payload.fromCache
         s.failedRaces = a.payload.failed
       })
       .addCase(scanRunner.rejected, (s, a) => {
