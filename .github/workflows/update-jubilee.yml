@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: write
+  # to kick off the deploy: a push made with GITHUB_TOKEN doesn't trigger workflows
+  actions: write
 
 concurrency:
   group: update-jubilee
@@ -46,3 +48,11 @@ jobs:
           git add public/jfk
           git commit -m 'Jubilee club: add the newest marathon from the results API'
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        id: commit
+
+      - name: Build and deploy the new data
+        if: ${{ !inputs.dry_run && steps.commit.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref main
