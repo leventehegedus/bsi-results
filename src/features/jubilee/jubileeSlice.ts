@@ -34,6 +34,8 @@ interface JubileeState {
   years: number[]
   source: string
   query: string
+  /** only runners born in this year, across every band; null = any */
+  yob: number | null
   /** page within the band (or within the search results), from 1 */
   page: number
   error: string | null
@@ -48,13 +50,14 @@ const initialState: JubileeState = {
   years: [],
   source: '',
   query: '',
+  yob: null,
   page: 1,
   error: null,
 }
 
-/** The band shown first: the smallest entry band, as the club's own lists are ordered. */
+/** The band shown first: the one with the most finishes (31+), the club's longest-standing members. */
 const defaultBand = (bands: BandInfo[]) =>
-  bands.filter((b) => b.id !== PENDING_BAND).sort((a, b) => a.from - b.from)[0]?.id ?? ''
+  bands.filter((b) => b.id !== PENDING_BAND).sort((a, b) => b.from - a.from)[0]?.id ?? ''
 
 /** Load the list of bands, then the one being shown. */
 export const loadClub = createAppAsyncThunk(
@@ -117,6 +120,10 @@ const jubileeSlice = createSlice({
       s.query = q.length >= MIN_QUERY_LENGTH ? q : ''
       s.page = 1
     },
+    setYob(s, a: PayloadAction<number | null>) {
+      s.yob = a.payload
+      s.page = 1
+    },
   },
   extraReducers: (b) => {
     b.addCase(loadClub.pending, (s) => {
@@ -139,7 +146,7 @@ const jubileeSlice = createSlice({
   },
 })
 
-export const { indexLoaded, bandLoading, setBand, setPage, setQuery } = jubileeSlice.actions
+export const { indexLoaded, bandLoading, setBand, setPage, setQuery, setYob } = jubileeSlice.actions
 export const jubileeReducer = jubileeSlice.reducer
 
 const selectJubilee = (s: RootState) => s.jubilee
@@ -175,13 +182,22 @@ export const selectLoadedMembers = createSelector([selectJubilee], (j): ClubMemb
 const inBand = (finishes: number, band: BandInfo | undefined) =>
   !!band && finishes >= band.from && (band.to === null || finishes <= band.to)
 
+/** Searching by name / town / club, or by birth year: either looks across every band. */
+export const isFiltering = (j: Pick<JubileeState, 'query' | 'yob'>) => j.query.trim() !== '' || j.yob !== null
+
 /**
  * What the page shows: the chosen band, or — while searching — every band that
- * has been downloaded, since a name is rarely in the band you happen to be on.
+ * has been downloaded, since a name (or a birth year) is rarely in the band you
+ * happen to be on. A name and a birth year narrow each other.
  */
 export const selectVisibleMembers = createSelector([selectJubilee, selectLoadedMembers], (j, members) => {
   const q = fold(j.query)
-  if (q) return members.filter((m) => fold(m.n).includes(q) || fold(m.t).includes(q) || fold(m.c).includes(q))
+  if (isFiltering(j))
+    return members.filter(
+      (m) =>
+        (!q || fold(m.n).includes(q) || fold(m.t).includes(q) || fold(m.c).includes(q)) &&
+        (j.yob === null || m.y === j.yob),
+    )
   const band = j.bands.find((b) => b.id === j.band)
   return members.filter((m) => inBand(m.finishes, band))
 })
