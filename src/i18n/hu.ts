@@ -6,7 +6,7 @@ export const hu: Messages = {
     title: 'BSI eredménykereső',
     intro:
       'Böngéssz a results.futanet.hu versenyeredményei között, keresd meg egy település összes befutóját, és kövess egy futót az összes versenyén.',
-    tabs: { races: 'Versenyek', town: 'Települési keresés', runner: 'Futó' },
+    tabs: { races: 'Versenyek', town: 'Települési keresés', runner: 'Futó', jubilee: 'Jubileumi klub' },
     language: 'Nyelv',
     copyLink: 'Link másolása',
     linkCopied: 'Link kimásolva',
@@ -147,6 +147,29 @@ export const hu: Messages = {
     xAxis: 'Befutócsoport (leggyorsabbtól)',
     yAxis: 'medián lassulás',
     rowHint: 'Utolsó szakasz az elsőhöz képest: a + lassulás',
+  },
+  jubilee: {
+    title: 'Jubileumi Futók Klubja',
+    description: (min: number) =>
+      `Mindenki, aki legalább ${min}-szor teljesítette a Budapest Maratont, évről évre az időeredményeivel.`,
+    search: 'Keresés névre, településre, egyesületre',
+    atLeast: 'Legalább',
+    finishCount: (n: number) => `${n} teljesítés`,
+    finishes: 'Teljesítés',
+    best: 'Legjobb idő',
+    bestShort: (time: string) => `legjobb ${time}`,
+    members: (n: number) => `${n} tag`,
+    matching: (n: number) => `${n} találat`,
+    addedYears: (years: string) => `${years} az eredmény-API-ból kiegészítve`,
+    reading: (years: string) => `A ${years}. évi maraton beolvasása…`,
+    fromApi: 'Az eredmény-API-ból, nem a klub listájából',
+    sourceNote: (source: string) =>
+      `Forrás: ${source} klublisták; az újabb maratonok a results.futanet.hu-ról, állandó rajtszám, majd név alapján párosítva.`,
+    failed: 'Nem sikerült betölteni a klub listáit',
+    topUpFailed: 'A legfrissebb maratont nem sikerült hozzáadni',
+    topUpFailedHint: 'A táblázat a klub saját listái szerint így is teljes.',
+    firstOnly: (n: number) => `Az első ${n} látszik. Szűkíts a kereséssel.`,
+    none: 'Nincs találat.',
   },
   breakdown: {
     views: { results: 'Eredmények', breakdown: 'Eloszlás', splits: 'Részidők', weather: 'Időjárás' },

@@ -60,6 +60,7 @@ export function formatRoute(r: Route): string {
     const towns = r.town.towns.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean)
     return `#/town/${towns.map(encodeURIComponent).join(',')}${query(p)}`
   }
+  if (r.tab === 'jubilee') return '#/jubilee'
   if (!r.runner?.name) return '#/runner'
   const p = new URLSearchParams()
   if (r.runner.yob) p.set('yob', String(r.runner.yob))
@@ -110,6 +111,7 @@ export function parseRoute(hash: string): Route {
       town: { towns: towns.join(', '), categories: dist.length ? dist : [...DISTANCE_CATEGORIES] },
     }
   }
+  if (section === 'jubilee') return { ...EMPTY_ROUTE, tab: 'jubilee' }
   if (section === 'runner') {
     const name = rest ? decodeURIComponent(rest).trim() : ''
     if (!name) return { ...EMPTY_ROUTE, tab: 'runner' }
@@ -126,6 +128,7 @@ export function parseRoute(hash: string): Route {
 export function routeIdentity(r: Route): string {
   if (r.tab === 'races') return `race:${r.race?.id ?? ''}`
   if (r.tab === 'town') return `town:${r.town?.towns ?? ''}`
+  if (r.tab === 'jubilee') return 'jubilee'
   return `runner:${r.runner?.name ?? ''}|${r.runner?.yob ?? ''}`
 }
 

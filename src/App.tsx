@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { ListOrdered, MapPin, Monitor, Moon, Sun, UserRound, type LucideIcon } from 'lucide-react'
+import { ListOrdered, MapPin, Medal, Monitor, Moon, Sun, UserRound, type LucideIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RaceBrowser } from '@/features/races/RaceBrowser'
+import { JubileeClub } from '@/features/jubilee/JubileeClub'
 import { RunnerProfile } from '@/features/runner/RunnerProfile'
 import { useUrlSync } from '@/routing/useUrlSync'
 import { TownScan } from '@/features/townScan/TownScan'
@@ -72,7 +73,8 @@ export default function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <Tabs value={tab} onValueChange={(v) => dispatch(setTab(v as AppTab))} className="gap-6">
-          <TabsList>
+          {/* four tabs don't fit a phone on one line */}
+          <TabsList className="h-auto max-w-full flex-wrap">
             <TabsTrigger value="races">
               <ListOrdered /> {t.app.tabs.races}
             </TabsTrigger>
@@ -81,6 +83,9 @@ export default function App() {
             </TabsTrigger>
             <TabsTrigger value="runner">
               <UserRound /> {t.app.tabs.runner}
+            </TabsTrigger>
+            <TabsTrigger value="jubilee">
+              <Medal /> {t.app.tabs.jubilee}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="races">
@@ -91,6 +96,10 @@ export default function App() {
           </TabsContent>
           <TabsContent value="runner">
             <RunnerProfile />
+          </TabsContent>
+          {/* the club's lists are a separate download, so the tab only loads them when opened */}
+          <TabsContent value="jubilee">
+            <JubileeClub />
           </TabsContent>
         </Tabs>
       </main>
