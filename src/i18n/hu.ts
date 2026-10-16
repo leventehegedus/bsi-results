@@ -153,6 +153,7 @@ export const hu: Messages = {
     description: (min: number) =>
       `Mindenki, aki legalább ${min}-szor teljesítette a Budapest Maratont, évről évre az időeredményeivel.`,
     search: 'Keresés névre, településre, egyesületre',
+    rangeOf: (from, to, total) => `${from}–${to} / ${total}`,
     searchButton: 'Keresés',
     clearSearch: 'Keresés törlése',
     minQuery: (n) => `A kereséshez legalább ${n} karakter kell.`,
@@ -176,7 +177,6 @@ export const hu: Messages = {
     failed: 'Nem sikerült betölteni a klub listáit',
     topUpFailed: 'A legfrissebb maratont nem sikerült hozzáadni',
     topUpFailedHint: 'A táblázat a klub saját listái szerint így is teljes.',
-    firstOnly: (n: number) => `Az első ${n} látszik. Szűkíts a kereséssel.`,
     none: 'Nincs találat.',
   },
   breakdown: {
