@@ -7,9 +7,14 @@ and one column per marathon year:
     Teljesítések | Név | Szül. év | Egyesület | Település | Állandó rajtszám | 1984 | 1985 | …
 
 Usage:
-    python3 scripts/jfk_from_xlsx.py --out public/jfk.json \
+    python3 scripts/jfk_from_xlsx.py --out public/jfk \
         --sheet 2025:Budapest_Maraton_JFK_2025_10-37x.xlsx \
         --sheet 2024:Budapest_Maraton_JFK_2024_5-9x.xlsx
+
+The output is one file per band of finishes (6-10, 11-15, …) plus an index, so
+the app only downloads the band being looked at. Runners below the entry bar go
+into their own file: a marathon the sheets don't cover yet can still lift them
+into the club.
 
 Each --sheet is `<complete through year>:<file>`: the year of the last marathon
 that sheet accounts for. The app fills in everything after that from the API,
@@ -17,6 +22,7 @@ so a sheet never has to be re-exported just because a new race was run.
 """
 import argparse
 import json
+import os
 import re
 import unicodedata
 from collections import OrderedDict
@@ -24,6 +30,31 @@ from collections import OrderedDict
 import openpyxl
 
 TIME = re.compile(r"^\d{1,2}:\d{2}:\d{2}$")
+
+#: Entry bar for the club; everyone below it waits in a file of their own.
+MIN_FINISHES = 6
+#: Bands of finishes, in display order.
+BANDS = ["31plus", "26-30", "21-25", "16-20", "11-15", "6-10", "pending"]
+BAND_RANGE = {
+    "31plus": (31, None),
+    "26-30": (26, 30),
+    "21-25": (21, 25),
+    "16-20": (16, 20),
+    "11-15": (11, 15),
+    "6-10": (6, 10),
+    "pending": (0, MIN_FINISHES - 1),
+}
+
+
+def band_of(finishes: int) -> str:
+    """Which band a runner's finish count puts them in."""
+    if finishes < MIN_FINISHES:
+        return "pending"
+    if finishes >= 31:
+        return "31plus"
+    start = (finishes - MIN_FINISHES) // 5 * 5 + MIN_FINISHES
+    return f"{start}-{start + 4}"
+
 
 
 def fold(name: str) -> str:
@@ -93,15 +124,35 @@ def main() -> None:
                 known[field] = known[field] or runner[field]
 
     runners = sorted(merged.values(), key=lambda r: (-len(r["r"]), fold(r["n"])))
-    data = {
+    os.makedirs(args.out, exist_ok=True)
+
+    bands = {}
+    for runner in runners:
+        bands.setdefault(band_of(len(runner["r"])), []).append(runner)
+
+    index = {
         "source": "BSI Jubileumi Futók Klubja",
         "race": "Budapest Maraton",
         "years": sorted(years),
-        "runners": runners,
+        "bands": [],
     }
-    with open(args.out, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"{len(runners)} runners, {sum(len(r['r']) for r in runners)} finishes → {args.out}")
+    for band in sorted(bands, key=lambda b: BANDS.index(b)):
+        path = os.path.join(args.out, f"{band}.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"band": band, "runners": bands[band]}, f, ensure_ascii=False, separators=(",", ":"))
+        index["bands"].append(
+            {
+                "id": band,
+                "from": BAND_RANGE[band][0],
+                "to": BAND_RANGE[band][1],
+                "runners": len(bands[band]),
+                "bytes": os.path.getsize(path),
+            }
+        )
+        print(f"  {band}: {len(bands[band])} runners, {os.path.getsize(path) // 1024} kB")
+    with open(os.path.join(args.out, "index.json"), "w", encoding="utf-8") as f:
+        json.dump(index, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"{len(runners)} runners, {sum(len(r['r']) for r in runners)} finishes → {args.out}/")
 
 
 if __name__ == "__main__":

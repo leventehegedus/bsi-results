@@ -6,6 +6,7 @@ import { clearRace, openRaceRoute } from '@/features/results/resultsSlice'
 import { setCategories, setTownsInput } from '@/features/townScan/townScanSlice'
 import { cancelRunner } from '@/features/runner/runnerActions'
 import { clearRunner, prefillQuery, type RunnerQuery } from '@/features/runner/runnerSlice'
+import { setBand } from '@/features/jubilee/jubileeSlice'
 import { setTab } from '@/features/ui/uiSlice'
 import type { RootState } from '@/store'
 import { EMPTY_ROUTE, formatRoute, parseRoute, routeIdentity, type Route } from './route'
@@ -24,9 +25,11 @@ const currentRoute = createSelector(
     (s: RootState) => s.townScan.townsInput,
     (s: RootState) => s.townScan.categories,
     (s: RootState) => s.runner.query,
+    (s: RootState) => s.jubilee.band,
   ],
-  (tab, raceId, filters, page, view, towns, categories, runner): Route => ({
+  (tab, raceId, filters, page, view, towns, categories, runner, band): Route => ({
     tab,
+    band: band || null,
     race: raceId ? { id: raceId, filters, page, view } : null,
     town: { towns, categories },
     runner,
@@ -64,6 +67,7 @@ export function useUrlSync() {
       if (r.race) dispatch(openRaceRoute({ raceId: r.race.id, filters: r.race.filters, page: r.race.page, view: r.race.view }))
       // back to the race list without a race: don't leave the previous one on screen
       else if (r.tab === 'races') dispatch(clearRace())
+      if (r.band) dispatch(setBand(r.band))
       if (r.town) {
         dispatch(setTownsInput(r.town.towns))
         dispatch(setCategories(r.town.categories))

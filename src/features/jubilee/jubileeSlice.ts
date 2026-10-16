@@ -1,10 +1,18 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { fetchRaceCatalogue } from '@/api/futanetApi'
-import { loadJubileeData, marathonEditions, readEditions, type JubileeRunner } from '@/api/jubilee'
+import {
+  loadJubileeBand,
+  loadJubileeIndex,
+  marathonEditions,
+  readEditions,
+  PENDING_BAND,
+  type BandInfo,
+  type JubileeRunner,
+} from '@/api/jubilee'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
 
-/** Everyone with more finishes than this is in the club. */
+/** Everyone with at least this many finishes is in the club. */
 export const MIN_FINISHES = 6
 
 export interface ClubMember extends JubileeRunner {
@@ -18,51 +26,91 @@ export interface ClubMember extends JubileeRunner {
 
 interface JubileeState {
   status: 'idle' | 'loading' | 'ready' | 'failed'
-  /** the spreadsheets, plus whatever the API added on top */
-  runners: JubileeRunner[]
+  bands: BandInfo[]
+  band: string
+  /** runners of the bands downloaded so far, keyed by band */
+  loaded: Record<string, JubileeRunner[]>
+  /** bands being downloaded right now, so two views don't fetch the same file twice */
+  loadingBands: string[]
   years: number[]
   source: string
-  /** editions read from the API, and the ones still to read */
+  /** editions read from the API, and the ones still being read */
   addedYears: number[]
   pendingYears: number[]
   topUp: 'idle' | 'running' | 'done' | 'failed'
   query: string
-  minFinishes: number
   error: string | null
 }
 
 const initialState: JubileeState = {
   status: 'idle',
-  runners: [],
+  bands: [],
+  band: '',
+  loaded: {},
+  loadingBands: [],
   years: [],
   source: '',
   addedYears: [],
   pendingYears: [],
   topUp: 'idle',
   query: '',
-  minFinishes: MIN_FINISHES,
   error: null,
 }
 
-/** Load the club's lists once, then add any marathon they don't yet cover. */
+/** The band shown first: the smallest entry band, as the club's own lists are ordered. */
+const defaultBand = (bands: BandInfo[]) =>
+  bands.filter((b) => b.id !== PENDING_BAND).sort((a, b) => a.from - b.from)[0]?.id ?? ''
+
+/** Load the list of bands, then the one being shown. */
 export const loadClub = createAppAsyncThunk(
   'jubilee/load',
   async (_: void, { dispatch, getState, signal, rejectWithValue }) => {
     try {
-      if ((getState() as RootState).jubilee.status === 'ready') return null
-      const data = await loadJubileeData(signal)
-      dispatch(loaded(data))
+      const state = () => (getState() as RootState).jubilee
+      if (state().status !== 'ready') {
+        const index = await loadJubileeIndex(signal)
+        dispatch(indexLoaded(index))
+      }
+      await dispatch(loadBand(state().band || defaultBand(state().bands)))
+      return null
+    } catch (e) {
+      return rejectWithValue(errorMessage(e))
+    }
+  },
+)
 
-      // Sheets cover different years (the 10+ list runs a year ahead of the 5–9 one),
-      // so every edition after the *earliest* of them has to be read, and each runner
-      // only takes the years their own sheet didn't account for.
-      const covered = Math.min(...data.runners.map((r) => r.u))
+/** Download one band's runners, unless they're already here. */
+export const loadBand = createAppAsyncThunk(
+  'jubilee/loadBand',
+  async (band: string, { dispatch, getState, signal }) => {
+    const { loaded, loadingBands } = (getState() as RootState).jubilee
+    if (!band || loaded[band] || loadingBands.includes(band)) return null
+    dispatch(bandLoading(band))
+    const runners = await loadJubileeBand(band, signal)
+    return { band, runners }
+  },
+)
+
+/**
+ * Add the marathons the spreadsheets don't cover. Every band is needed for this:
+ * a finish can lift someone into the club or into the next band, and the result
+ * would be wrong if it only counted the page on screen.
+ */
+export const topUpFromApi = createAppAsyncThunk(
+  'jubilee/topUp',
+  async (_: void, { dispatch, getState, signal, rejectWithValue }) => {
+    try {
+      const state = () => (getState() as RootState).jubilee
+      for (const band of state().bands) {
+        if (!state().loaded[band.id]) await dispatch(loadBand(band.id))
+      }
+      const runners = allRunners(state())
+      const covered = Math.min(...runners.map((r) => r.u))
       const races = await fetchRaceCatalogue(dispatch)
       const missing = marathonEditions(races).filter((e) => e.year > covered)
-      if (!missing.length) return null
+      if (!missing.length) return []
       dispatch(topUpStarted(missing.map((e) => e.year)))
-
-      const results = await readEditions(missing, data.runners, {
+      const results = await readEditions(missing, runners, {
         signal,
         onDone: (year) => dispatch(yearRead(year)),
       })
@@ -76,15 +124,27 @@ export const loadClub = createAppAsyncThunk(
   },
 )
 
+/** Every runner downloaded so far, in band order — the index the top-up matches against. */
+function allRunners(s: JubileeState): JubileeRunner[] {
+  return s.bands.flatMap((b) => s.loaded[b.id] ?? [])
+}
+
 const jubileeSlice = createSlice({
   name: 'jubilee',
   initialState,
   reducers: {
-    loaded(s, a: PayloadAction<{ runners: JubileeRunner[]; years: number[]; source: string }>) {
-      s.runners = a.payload.runners
+    indexLoaded(s, a: PayloadAction<{ bands: BandInfo[]; years: number[]; source: string }>) {
+      s.bands = a.payload.bands
       s.years = a.payload.years
       s.source = a.payload.source
+      s.band = s.band || defaultBand(a.payload.bands)
       s.status = 'ready'
+    },
+    bandLoading(s, a: PayloadAction<string>) {
+      if (!s.loadingBands.includes(a.payload)) s.loadingBands.push(a.payload)
+    },
+    setBand(s, a: PayloadAction<string>) {
+      s.band = a.payload
     },
     topUpStarted(s, a: PayloadAction<number[]>) {
       s.pendingYears = a.payload
@@ -96,21 +156,37 @@ const jubileeSlice = createSlice({
     setQuery(s, a: PayloadAction<string>) {
       s.query = a.payload
     },
-    setMinFinishes(s, a: PayloadAction<number>) {
-      s.minFinishes = Math.max(MIN_FINISHES, a.payload)
-    },
   },
   extraReducers: (b) => {
     b.addCase(loadClub.pending, (s) => {
       if (s.status !== 'ready') s.status = 'loading'
       s.error = null
     })
-      .addCase(loadClub.fulfilled, (s, a) => {
+      .addCase(loadClub.rejected, (s, a) => {
+        s.status = 'failed'
+        s.error = a.payload ?? a.error.message ?? null
+      })
+      .addCase(loadBand.fulfilled, (s, a) => {
+        if (!a.payload) return
+        s.loadingBands = s.loadingBands.filter((b) => b !== a.payload!.band)
+        s.loaded[a.payload.band] = a.payload.runners
+      })
+      .addCase(loadBand.rejected, (s, a) => {
+        s.loadingBands = s.loadingBands.filter((b) => b !== a.meta.arg)
+        s.error = a.error.message ?? null
+      })
+      .addCase(topUpFromApi.pending, (s) => {
+        s.topUp = 'running'
+        s.error = null
+      })
+      .addCase(topUpFromApi.fulfilled, (s, a) => {
         s.topUp = 'done'
         s.pendingYears = []
+        const runners = allRunners(s)
         for (const { year, times } of a.payload ?? []) {
           for (const [i, time] of times) {
-            const runner = s.runners[i]
+            const runner = runners[i]
+            // the spreadsheets always win: only years they didn't account for are filled in
             if (runner && year > runner.u && !runner.r[String(year)]) runner.r[String(year)] = time
           }
           if (!s.years.includes(year)) s.years.push(year)
@@ -118,29 +194,28 @@ const jubileeSlice = createSlice({
         }
         s.years.sort((x, y) => x - y)
       })
-      .addCase(loadClub.rejected, (s, a) => {
-        // the sheets alone are still worth showing
-        if (s.status === 'ready') s.topUp = 'failed'
-        else s.status = 'failed'
+      .addCase(topUpFromApi.rejected, (s, a) => {
+        s.topUp = 'failed'
         s.error = a.payload ?? a.error.message ?? null
       })
   },
 })
 
-export const { loaded, topUpStarted, yearRead, setQuery, setMinFinishes } = jubileeSlice.actions
+export const { indexLoaded, bandLoading, setBand, topUpStarted, yearRead, setQuery } = jubileeSlice.actions
 export const jubileeReducer = jubileeSlice.reducer
 
 const selectJubilee = (s: RootState) => s.jubilee
 
-/** Members above the threshold, most finishes first, with their summary figures. */
-export const selectMembers = createSelector([selectJubilee], (j): ClubMember[] => {
+/** Every member downloaded so far, with their summary figures, most finishes first. */
+export const selectLoadedMembers = createSelector([selectJubilee], (j): ClubMember[] => {
   const members: ClubMember[] = []
-  for (const r of j.runners) {
+  for (const r of allRunners(j)) {
     const years = Object.keys(r.r)
       .map(Number)
       .sort((a, b) => a - b)
-    if (years.length < j.minFinishes) continue
-    const times = Object.values(r.r).sort()
+    if (years.length < MIN_FINISHES) continue
+    // a few old finishes are recorded without a time; they count, but can't be a best
+    const times = Object.values(r.r).filter(hasTime).sort()
     members.push({
       ...r,
       finishes: years.length,
@@ -151,26 +226,43 @@ export const selectMembers = createSelector([selectJubilee], (j): ClubMember[] =
     })
   }
   return members.sort(
-    (a, b) => b.finishes - a.finishes || a.best.localeCompare(b.best) || a.n.localeCompare(b.n, 'hu'),
+    (a, b) =>
+      b.finishes - a.finishes ||
+      // runners with no recorded time go last within their band
+      (a.best ? 0 : 1) - (b.best ? 0 : 1) ||
+      a.best.localeCompare(b.best) ||
+      a.n.localeCompare(b.n, 'hu'),
   )
 })
 
-/** The search box matches name, town and club. */
-export const selectVisibleMembers = createSelector(
-  [selectMembers, (s: RootState) => s.jubilee.query],
-  (members, query) => {
-    const q = fold(query)
-    if (!q) return members
-    return members.filter((m) => fold(m.n).includes(q) || fold(m.t).includes(q) || fold(m.c).includes(q))
-  },
-)
+const inBand = (finishes: number, band: BandInfo | undefined) =>
+  !!band && finishes >= band.from && (band.to === null || finishes <= band.to)
 
-/** Only the years anyone visible actually ran, so the table has no empty columns. */
+/**
+ * What the page shows: the chosen band, or — while searching — every band that
+ * has been downloaded, since a name is rarely in the band you happen to be on.
+ */
+export const selectVisibleMembers = createSelector([selectJubilee, selectLoadedMembers], (j, members) => {
+  const q = fold(j.query)
+  if (q) return members.filter((m) => fold(m.n).includes(q) || fold(m.t).includes(q) || fold(m.c).includes(q))
+  const band = j.bands.find((b) => b.id === j.band)
+  return members.filter((m) => inBand(m.finishes, band))
+})
+
+/** Only the years anyone on the page actually ran, so the table has no empty columns. */
 export const selectVisibleYears = createSelector([selectJubilee, selectVisibleMembers], (j, members) => {
   const used = new Set<number>()
   for (const m of members) for (const y of Object.keys(m.r)) used.add(Number(y))
   return j.years.filter((y) => used.has(y))
 })
+
+/** Bands worth offering as pages: everything above the entry bar. */
+export const selectPageBands = createSelector([selectJubilee], (j) =>
+  j.bands.filter((b) => b.id !== PENDING_BAND).sort((a, b) => a.from - b.from),
+)
+
+/** "00:00:00" marks a finish the club's lists have no time for. */
+export const hasTime = (time: string | undefined): time is string => !!time && time !== '00:00:00'
 
 function fold(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
