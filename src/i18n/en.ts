@@ -95,7 +95,7 @@ export const en = {
     nextPage: 'Next page',
     pageNumber: 'Page number',
     jumpToPlace: 'Jump to place',
-    placePlaceholder: 'e.g. 2500',
+    placePlaceholder: '2500',
     go: 'Go',
     certificateFor: (name: string) => `Download ${name}'s certificate (PDF)`,
     placeShort: (n: string) => `${n}. place`,
