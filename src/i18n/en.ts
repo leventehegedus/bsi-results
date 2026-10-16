@@ -156,6 +156,9 @@ export const en = {
     description: (min: number) =>
       `Everyone who has finished the Budapest Marathon at least ${min} times, with every finishing time year by year.`,
     search: 'Search name, town or club',
+    searchButton: 'Search',
+    clearSearch: 'Clear the search',
+    minQuery: (n: number) => `Type at least ${n} characters to search.`,
     bandsLabel: 'Pages by finishes',
     noTimeNote: 'A ✓ marks a finish the lists record without a time.',
     addLatest: 'Add the latest marathons',

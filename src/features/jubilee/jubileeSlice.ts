@@ -14,6 +14,8 @@ import type { RootState } from '@/store'
 
 /** Everyone with at least this many finishes is in the club. */
 export const MIN_FINISHES = 6
+/** A search below this length would match half the club, and it downloads every band. */
+export const MIN_QUERY_LENGTH = 3
 
 export interface ClubMember extends JubileeRunner {
   finishes: number
@@ -154,7 +156,8 @@ const jubileeSlice = createSlice({
       s.pendingYears = s.pendingYears.filter((y) => y !== a.payload)
     },
     setQuery(s, a: PayloadAction<string>) {
-      s.query = a.payload
+      const q = a.payload.trim()
+      s.query = q.length >= MIN_QUERY_LENGTH ? q : ''
     },
   },
   extraReducers: (b) => {

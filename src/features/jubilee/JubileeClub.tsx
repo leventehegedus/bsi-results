@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, Loader2, Medal, RefreshCw, Search } from 'lucide-react'
+import { Download, Loader2, Medal, RefreshCw, Search, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ import {
   loadBand,
   loadClub,
   MIN_FINISHES,
+  MIN_QUERY_LENGTH,
   selectLoadedMembers,
   selectPageBands,
   selectVisibleMembers,
@@ -47,6 +48,9 @@ export function JubileeClub() {
   const years = useAppSelector(selectVisibleYears)
   const bands = useAppSelector(selectPageBands)
   const searching = j.query.trim() !== ''
+  // what's typed, which only becomes the search once it's submitted
+  const [draft, setDraft] = useState(j.query)
+  const canSearch = draft.trim().length >= MIN_QUERY_LENGTH && draft.trim() !== j.query
   // the name column is pinned where the index column ends, which depends on how many
   // members are listed ("1" vs "2219"), so it's measured rather than assumed
   const indexCell = useRef<HTMLTableCellElement>(null)
@@ -104,16 +108,43 @@ export function JubileeClub() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <div className="relative">
-              <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                className="pl-8"
-                aria-label={t.jubilee.search}
-                placeholder={t.jubilee.search}
-                value={j.query}
-                onChange={(e) => dispatch(setQuery(e.target.value))}
-              />
-            </div>
+            {/* searching pulls in every band, so it waits for a deliberate submit */}
+            <form
+              className="flex min-w-0 items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (canSearch) dispatch(setQuery(draft.trim()))
+              }}
+            >
+              <div className="relative min-w-0 flex-1">
+                <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+                <Input
+                  className="pl-8"
+                  aria-label={t.jubilee.search}
+                  placeholder={t.jubilee.search}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+                {searching && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground absolute top-1/2 right-1 size-7 -translate-y-1/2"
+                    aria-label={t.jubilee.clearSearch}
+                    onClick={() => {
+                      setDraft('')
+                      dispatch(setQuery(''))
+                    }}
+                  >
+                    <X />
+                  </Button>
+                )}
+              </div>
+              <Button type="submit" variant="brand" size="sm" disabled={!canSearch}>
+                <Search /> {t.jubilee.searchButton}
+              </Button>
+            </form>
             <Button
               variant="outline"
               size="sm"
@@ -124,6 +155,10 @@ export function JubileeClub() {
               {j.topUp === 'done' ? t.jubilee.upToDate : t.jubilee.addLatest}
             </Button>
           </div>
+
+          {draft.trim().length > 0 && draft.trim().length < MIN_QUERY_LENGTH && (
+            <p className="text-muted-foreground text-xs">{t.jubilee.minQuery(MIN_QUERY_LENGTH)}</p>
+          )}
 
           {/* one page per band of finishes: only that page's file is downloaded */}
           <div className="flex flex-col gap-1.5">
