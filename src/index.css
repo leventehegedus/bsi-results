@@ -31,6 +31,7 @@
   --color-header: var(--header);
   --color-header-foreground: var(--header-foreground);
   --color-table-head: var(--table-head);
+  --color-table-row-hover: var(--table-row-hover);
 }
 
 /*
@@ -65,6 +66,9 @@
   --header: #16336f; /* navy */
   --header-foreground: #f0eedf;
   --table-head: #d8deea; /* periwinkle washed into the card */
+  /* what `hover:bg-muted/50` looks like over the card, but opaque: sticky cells
+     can't be see-through or the columns scrolling underneath show through */
+  --table-row-hover: color-mix(in oklab, var(--muted) 50%, var(--card));
   /* chart series, validated (lightness band, chroma, CVD ΔE ≥ 8, 3:1) on the card */
   --chart-men: #3463c4; /* navy's hue, lifted into the band */
   --chart-women: #fe492a; /* orange */
@@ -101,6 +105,7 @@
   --header: #16336f;
   --header-foreground: #f0eedf;
   --table-head: #1b2f58; /* navy sunk into the card */
+  --table-row-hover: color-mix(in oklab, var(--muted) 50%, var(--card));
   --chart-men: #5b84d4;
   --chart-women: #fe492a;
   --chart-context: #8d8c84; /* 4.5:1 */

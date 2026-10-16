@@ -77,12 +77,24 @@ export function ResultsPanel() {
   // filters in the URL when a shared link brought us here, otherwise empty.
   const [form, setForm] = useState<ResultFilters>(filters)
   const [exporting, setExporting] = useState(false)
+  // the sticky name column starts where the rank column ends, which depends on the
+  // header's language and the widest place, so it's measured rather than assumed
+  const rankCell = useRef<HTMLTableCellElement>(null)
+  const [rankWidth, setRankWidth] = useState(RANK_WIDTH)
   const [filtersOpen, setFiltersOpen] = useState(false)
   // the place a jump asked for: its row is highlighted and scrolled to once the page is in
   const [targetPlace, setTargetPlace] = useState<number | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
+
+  useEffect(() => {
+    const el = rankCell.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRankWidth(e.contentRect.width + PADDING))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const r = {
     raceId,
@@ -418,7 +430,7 @@ export function ResultsPanel() {
               <div className="flex flex-wrap items-center gap-2">
                 {r.lastPage > 1 && (
                   <form
-                    className="flex items-center gap-1"
+                    className="flex shrink-0 items-center gap-1"
                     onSubmit={(e) => {
                       e.preventDefault()
                       const place = Number(new FormData(e.currentTarget).get('place'))
@@ -432,7 +444,7 @@ export function ResultsPanel() {
                       id="jump-place"
                       name="place"
                       inputMode="numeric"
-                      className="h-8 w-20"
+                      className="h-8 w-24"
                       placeholder={t.results.placePlaceholder}
                     />
                     <Button type="submit" variant="outline" size="icon" className="size-8" aria-label={t.results.go}>
@@ -444,30 +456,33 @@ export function ResultsPanel() {
                   {exporting ? <Loader2 className="animate-spin" /> : <Download />}
                   CSV
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t.results.prevPage}
-                  disabled={r.page <= 1 || r.status === 'loading'}
-                  onClick={() => dispatch(setPage(r.page - 1))}
-                >
-                  <ChevronLeft />
-                </Button>
-                <span className="flex items-center gap-1 tabular-nums">
-                  <PageInput page={r.page} lastPage={r.lastPage} label={t.results.pageNumber} onGo={goToPage} />
-                  <span className="text-muted-foreground">/ {r.lastPage}</span>
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t.results.nextPage}
-                  disabled={r.page >= r.lastPage || r.status === 'loading'}
-                  onClick={() => dispatch(setPage(r.page + 1))}
-                >
-                  <ChevronRight />
-                </Button>
+                {/* one group: the arrows must never end up on a line of their own */}
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    aria-label={t.results.prevPage}
+                    disabled={r.page <= 1 || r.status === 'loading'}
+                    onClick={() => dispatch(setPage(r.page - 1))}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <span className="flex items-center gap-1 whitespace-nowrap tabular-nums">
+                    <PageInput page={r.page} lastPage={r.lastPage} label={t.results.pageNumber} onGo={goToPage} />
+                    <span className="text-muted-foreground">/ {r.lastPage}</span>
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    aria-label={t.results.nextPage}
+                    disabled={r.page >= r.lastPage || r.status === 'loading'}
+                    onClick={() => dispatch(setPage(r.page + 1))}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -477,7 +492,12 @@ export function ResultsPanel() {
                 <TableHeader>
                   <TableRow>
                     {columns.map((c) => (
-                      <TableHead key={c.key} className={cn(headClass(c.key), stickyClass(c.key))}>
+                      <TableHead
+                        key={c.key}
+                        ref={c.key === 'hely' ? rankCell : undefined}
+                        className={cn(headClass(c.key), stickyClass(c.key))}
+                        style={stickyStyle(c.key, rankWidth)}
+                      >
                         {c.label}
                       </TableHead>
                     ))}
@@ -508,9 +528,10 @@ export function ResultsPanel() {
                               className={cn(
                                 isNumericCol(c.key) ? 'tabular-nums' : c.key === CERT_KEY ? 'text-center' : '',
                                 stickyClass(c.key),
-                                // the sticky cells need their own background, and the row's hover colour
-                                stickyClass(c.key) && 'bg-card group-hover/row:bg-muted/50',
+                                // sticky cells carry their own opaque background, hover included
+                                stickyClass(c.key) && 'bg-card group-hover/row:bg-table-row-hover',
                               )}
+                              style={stickyStyle(c.key, rankWidth)}
                             >
                               {cellContent(row, c.key)}
                             </TableCell>
@@ -594,11 +615,21 @@ function display(row: ResultRow, key: string) {
   return String(v)
 }
 
+/** Starting width of the rank column, until the real one is measured. */
+const RANK_WIDTH = 64
+/** TableCell's own horizontal padding (p-2 on each side). */
+const PADDING = 16
+
 /** Rank and name stay put while the rest of a wide table scrolls sideways. */
 function stickyClass(key: string) {
-  if (key === 'hely') return 'sticky left-0 z-20 w-16'
-  if (key === 'nev') return 'sticky left-16 z-20 shadow-[1px_0_0_var(--border)]'
+  if (key === 'hely') return 'sticky left-0 z-20'
+  if (key === 'nev') return 'sticky z-20 shadow-[1px_0_0_var(--border)]'
   return ''
+}
+
+/** The name column is pinned exactly where the rank column ends, so nothing slides into the gap. */
+function stickyStyle(key: string, rankWidth: number) {
+  return key === 'nev' ? { left: rankWidth } : undefined
 }
 
 function headClass(key: string) {

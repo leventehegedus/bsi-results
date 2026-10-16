@@ -92,7 +92,7 @@ export const hu: Messages = {
     nextPage: 'Következő oldal',
     pageNumber: 'Oldalszám',
     jumpToPlace: 'Ugrás helyezéshez',
-    placePlaceholder: 'pl. 2500',
+    placePlaceholder: '2500',
     go: 'Ugrás',
     certificateFor: (name) => `${name} oklevelének letöltése (PDF)`,
     placeShort: (n) => `${n}. hely`,
