@@ -22,18 +22,41 @@ export interface JubileeRunner {
   r: Record<string, string>
 }
 
-export interface JubileeData {
+/** One page of the club: everyone whose finish count falls in this band. */
+export interface BandInfo {
+  id: string
+  from: number
+  /** null on the open-ended top band */
+  to: number | null
+  runners: number
+  bytes: number
+}
+
+export interface JubileeIndex {
   source: string
   race: string
   years: number[]
-  runners: JubileeRunner[]
+  bands: BandInfo[]
 }
 
-/** The club's own lists, built from the spreadsheets by scripts/jfk_from_xlsx.py. */
-export async function loadJubileeData(signal?: AbortSignal): Promise<JubileeData> {
-  const res = await fetch(`${import.meta.env.BASE_URL}jfk.json`, { signal })
-  if (!res.ok) throw new Error(`jfk.json: ${res.status}`)
-  return (await res.json()) as JubileeData
+/** Runners below the entry bar: a marathon the sheets don't cover can still lift them in. */
+export const PENDING_BAND = 'pending'
+
+/**
+ * The club's lists, built from the spreadsheets by scripts/jfk_from_xlsx.py and
+ * split per band so a visitor only downloads the page they're looking at.
+ */
+export async function loadJubileeIndex(signal?: AbortSignal): Promise<JubileeIndex> {
+  const res = await fetch(`${import.meta.env.BASE_URL}jfk/index.json`, { signal })
+  if (!res.ok) throw new Error(`jfk/index.json: ${res.status}`)
+  return (await res.json()) as JubileeIndex
+}
+
+export async function loadJubileeBand(band: string, signal?: AbortSignal): Promise<JubileeRunner[]> {
+  const res = await fetch(`${import.meta.env.BASE_URL}jfk/${encodeURIComponent(band)}.json`, { signal })
+  if (!res.ok) throw new Error(`jfk/${band}.json: ${res.status}`)
+  const data = (await res.json()) as { runners: JubileeRunner[] }
+  return data.runners
 }
 
 /** Budapest Marathon editions, newest first; the main list of each year only. */

@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, Loader2, Medal, Search } from 'lucide-react'
+import { Download, Loader2, Medal, RefreshCw, Search } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { downloadCsv, toCsv } from '@/lib/csv'
@@ -17,28 +15,38 @@ import { ShareLink } from '@/routing/ShareLink'
 import { searchRunner } from '@/features/runner/runnerActions'
 import { setTab } from '@/features/ui/uiSlice'
 import {
+  loadBand,
   loadClub,
   MIN_FINISHES,
-  selectMembers,
+  selectLoadedMembers,
+  selectPageBands,
   selectVisibleMembers,
   selectVisibleYears,
-  setMinFinishes,
+  setBand,
   setQuery,
-  type ClubMember,
+  topUpFromApi,
 } from './jubileeSlice'
+import { hasTime } from './jubileeSlice'
+import type { ClubMember } from './jubileeSlice'
 
-const THRESHOLDS = [MIN_FINISHES, 10, 15, 20, 25, 30]
 /** TableCell's own horizontal padding (p-2 on each side). */
 const CELL_PADDING = 16
+
+/** "6-10" → "6–10", "31plus" → "31+". */
+function bandLabel(id: string) {
+  return id.replace('plus', '+').replace('-', '–')
+}
 
 /** Everyone who has finished the Budapest Marathon more than five times. */
 export function JubileeClub() {
   const dispatch = useAppDispatch()
   const t = useT()
   const j = useAppSelector((s) => s.jubilee)
-  const all = useAppSelector(selectMembers)
+  const loadedMembers = useAppSelector(selectLoadedMembers)
   const members = useAppSelector(selectVisibleMembers)
   const years = useAppSelector(selectVisibleYears)
+  const bands = useAppSelector(selectPageBands)
+  const searching = j.query.trim() !== ''
   // the name column is pinned where the index column ends, which depends on how many
   // members are listed ("1" vs "2219"), so it's measured rather than assumed
   const indexCell = useRef<HTMLTableCellElement>(null)
@@ -56,12 +64,24 @@ export function JubileeClub() {
     dispatch(loadClub())
   }, [dispatch])
 
+  // whatever selected the band — a click, a shared link, the back button — its
+  // runners are fetched here, once
+  useEffect(() => {
+    if (j.band && !j.loaded[j.band]) dispatch(loadBand(j.band))
+  }, [j.band, j.loaded, dispatch])
+
+  // a name is rarely in the band you happen to be on, so searching pulls in the rest
+  useEffect(() => {
+    if (!searching) return
+    for (const band of j.bands) if (!j.loaded[band.id]) dispatch(loadBand(band.id))
+  }, [searching, j.bands, j.loaded, dispatch])
+
   const exportCsv = () => {
     const csv = toCsv(
       [t.col.name, t.col.birthYear, t.col.club, t.col.town, t.jubilee.finishes, t.jubilee.best, ...years.map(String)],
       members.map((m) => [m.n, m.y ?? '', m.c, m.t, m.finishes, m.best, ...years.map((y) => m.r[String(y)] ?? '')]),
     )
-    downloadCsv(`jubileumi-futok-${j.minFinishes}plusz.csv`, csv)
+    downloadCsv(`jubileumi-futok-${searching ? 'kereses' : j.band}.csv`, csv)
   }
 
   /** Open this member's profile: the name and birth year are already known here. */
@@ -94,31 +114,48 @@ export function JubileeClub() {
                 onChange={(e) => dispatch(setQuery(e.target.value))}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="min-finishes" className="text-muted-foreground shrink-0 text-xs font-normal">
-                {t.jubilee.atLeast}
-              </Label>
-              <Select
-                value={String(j.minFinishes)}
-                onValueChange={(v) => dispatch(setMinFinishes(Number(v)))}
-              >
-                <SelectTrigger id="min-finishes" className="w-28">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {THRESHOLDS.map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {t.jubilee.finishCount(n)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={j.topUp === 'running' || j.topUp === 'done'}
+              onClick={() => dispatch(topUpFromApi())}
+            >
+              {j.topUp === 'running' ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              {j.topUp === 'done' ? t.jubilee.upToDate : t.jubilee.addLatest}
+            </Button>
+          </div>
+
+          {/* one page per band of finishes: only that page's file is downloaded */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted-foreground text-xs">{t.jubilee.bandsLabel}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {bands.map((band) => (
+                <button
+                  key={band.id}
+                  type="button"
+                  aria-pressed={!searching && band.id === j.band}
+                  disabled={searching}
+                  onClick={() => dispatch(setBand(band.id))}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm transition-colors disabled:opacity-50',
+                    !searching && band.id === j.band
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'hover:bg-accent',
+                  )}
+                >
+                  {bandLabel(band.id)}
+                  <span className={cn('text-xs', !searching && band.id === j.band ? 'opacity-80' : 'text-muted-foreground')}>
+                    {band.runners}
+                  </span>
+                  {j.loadingBands.includes(band.id) && <Loader2 className="size-3 animate-spin" />}
+                </button>
+              ))}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant="brand">{t.jubilee.members(all.length)}</Badge>
-            {j.query && <Badge>{t.jubilee.matching(members.length)}</Badge>}
+            <Badge variant="brand">{t.jubilee.shown(members.length)}</Badge>
+            {searching && <Badge>{t.jubilee.searchedBands(loadedMembers.length)}</Badge>}
             {j.addedYears.length > 0 && (
               <Badge variant="secondary">{t.jubilee.addedYears(j.addedYears.join(', '))}</Badge>
             )}
@@ -145,7 +182,9 @@ export function JubileeClub() {
               <AlertDescription>{t.jubilee.topUpFailedHint}</AlertDescription>
             </Alert>
           )}
-          <p className="text-muted-foreground text-xs">{t.jubilee.sourceNote(j.source || 'BSI')}</p>
+          <p className="text-muted-foreground text-xs">
+            {t.jubilee.sourceNote(j.source || 'BSI')} {t.jubilee.noTimeNote}
+          </p>
         </CardContent>
       </Card>
 
@@ -211,7 +250,7 @@ export function JubileeClub() {
                         </TableCell>
                         <TableCell className="tabular-nums">{m.y ?? ''}</TableCell>
                         <TableCell>{m.t}</TableCell>
-                        <TableCell className="tabular-nums">{m.best}</TableCell>
+                        <TableCell className="tabular-nums">{m.best || '–'}</TableCell>
                         {years.map((y) => {
                           const time = m.r[String(y)]
                           return (
@@ -224,7 +263,7 @@ export function JubileeClub() {
                               )}
                               title={time && m.live.includes(y) ? t.jubilee.fromApi : undefined}
                             >
-                              {time ? time.slice(0, 5) : '·'}
+                              {hasTime(time) ? time.slice(0, 5) : time ? '✓' : '·'}
                             </TableCell>
                           )
                         })}
@@ -252,9 +291,11 @@ export function JubileeClub() {
                       </div>
                       <div className="shrink-0 text-right">
                         <Badge variant="brand">{t.jubilee.finishCount(m.finishes)}</Badge>
-                        <div className="text-muted-foreground mt-1 text-xs tabular-nums">
-                          {t.jubilee.bestShort(m.best)}
-                        </div>
+                        {m.best && (
+                          <div className="text-muted-foreground mt-1 text-xs tabular-nums">
+                            {t.jubilee.bestShort(m.best)}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
@@ -268,7 +309,8 @@ export function JubileeClub() {
                               m.live.includes(Number(year)) && 'text-brand',
                             )}
                           >
-                            {year} <span className="text-muted-foreground">{time.slice(0, 5)}</span>
+                            {year}{' '}
+                            <span className="text-muted-foreground">{hasTime(time) ? time.slice(0, 5) : '✓'}</span>
                           </span>
                         ))}
                     </div>

@@ -15,12 +15,14 @@ import type { ResultView } from '@/features/results/resultsSlice'
  */
 export interface Route {
   tab: AppTab
+  /** which page of the jubilee club is open ("11-15") */
+  band: string | null
   race: { id: string; filters: ResultFilters; page: number; view: ResultView } | null
   town: { towns: string; categories: DistanceCategory[] } | null
   runner: RunnerQuery | null
 }
 
-export const EMPTY_ROUTE: Route = { tab: 'races', race: null, town: null, runner: null }
+export const EMPTY_ROUTE: Route = { tab: 'races', band: null, race: null, town: null, runner: null }
 
 const VIEWS: ResultView[] = ['results', 'breakdown', 'splits', 'weather']
 /** Filters that travel in the URL; the rest are rarely worth sharing. */
@@ -60,7 +62,7 @@ export function formatRoute(r: Route): string {
     const towns = r.town.towns.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean)
     return `#/town/${towns.map(encodeURIComponent).join(',')}${query(p)}`
   }
-  if (r.tab === 'jubilee') return '#/jubilee'
+  if (r.tab === 'jubilee') return r.band ? `#/jubilee/${encodeURIComponent(r.band)}` : '#/jubilee'
   if (!r.runner?.name) return '#/runner'
   const p = new URLSearchParams()
   if (r.runner.yob) p.set('yob', String(r.runner.yob))
@@ -111,7 +113,9 @@ export function parseRoute(hash: string): Route {
       town: { towns: towns.join(', '), categories: dist.length ? dist : [...DISTANCE_CATEGORIES] },
     }
   }
-  if (section === 'jubilee') return { ...EMPTY_ROUTE, tab: 'jubilee' }
+  if (section === 'jubilee') {
+    return { ...EMPTY_ROUTE, tab: 'jubilee', band: rest ? decodeURIComponent(rest) : null }
+  }
   if (section === 'runner') {
     const name = rest ? decodeURIComponent(rest).trim() : ''
     if (!name) return { ...EMPTY_ROUTE, tab: 'runner' }
@@ -128,7 +132,7 @@ export function parseRoute(hash: string): Route {
 export function routeIdentity(r: Route): string {
   if (r.tab === 'races') return `race:${r.race?.id ?? ''}`
   if (r.tab === 'town') return `town:${r.town?.towns ?? ''}`
-  if (r.tab === 'jubilee') return 'jubilee'
+  if (r.tab === 'jubilee') return `jubilee:${r.band ?? ''}`
   return `runner:${r.runner?.name ?? ''}|${r.runner?.yob ?? ''}`
 }
 
