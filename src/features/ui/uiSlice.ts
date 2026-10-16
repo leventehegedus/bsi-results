@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { initialLang, type Lang } from '@/i18n'
 import { initialTheme, type ThemeMode } from '@/theme'
 
-export type AppTab = 'races' | 'town' | 'runner'
+export type AppTab = 'races' | 'town' | 'runner' | 'jubilee'
 
 const uiSlice = createSlice({
   name: 'ui',

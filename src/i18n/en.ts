@@ -7,7 +7,7 @@ export const en = {
     title: 'BSI Results Explorer',
     intro:
       'Browse race results from results.futanet.hu, find every finisher from a given town, and follow a runner across all races.',
-    tabs: { races: 'Race browser', town: 'Town search', runner: 'Runner' },
+    tabs: { races: 'Race browser', town: 'Town search', runner: 'Runner', jubilee: 'Jubilee club' },
     language: 'Language',
     copyLink: 'Copy link',
     linkCopied: 'Link copied',
@@ -150,6 +150,29 @@ export const en = {
     xAxis: 'Finishing group (fastest first)',
     yAxis: 'median slowdown',
     rowHint: 'Last segment against the first: + is a slowdown',
+  },
+  jubilee: {
+    title: 'Jubilee Runners’ Club',
+    description: (min: number) =>
+      `Everyone who has finished the Budapest Marathon at least ${min} times, with every finishing time year by year.`,
+    search: 'Search name, town or club',
+    atLeast: 'At least',
+    finishCount: (n: number) => `${n} finishes`,
+    finishes: 'Finishes',
+    best: 'Best time',
+    bestShort: (time: string) => `best ${time}`,
+    members: (n: number) => `${n} members`,
+    matching: (n: number) => `${n} match the search`,
+    addedYears: (years: string) => `${years} added from the results API`,
+    reading: (years: string) => `Reading the ${years} marathon…`,
+    fromApi: 'Read from the results API, not from the club’s list',
+    sourceNote: (source: string) =>
+      `Source: ${source} club lists; newer marathons are read from results.futanet.hu and matched by permanent bib, then by name.`,
+    failed: 'Couldn’t load the club’s lists',
+    topUpFailed: 'The latest marathon couldn’t be added',
+    topUpFailedHint: 'The table below is still complete up to the club’s own lists.',
+    firstOnly: (n: number) => `Showing the first ${n}. Search to narrow it down.`,
+    none: 'Nobody matches.',
   },
   breakdown: {
     views: { results: 'Results', breakdown: 'Breakdown', splits: 'Splits', weather: 'Weather' },
