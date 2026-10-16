@@ -1,0 +1,48 @@
+name: Update the jubilee club data
+
+# The club's spreadsheets are exported once a year, so a freshly run marathon is
+# missing from them until the next export. This reads those editions from the
+# results API — which the app itself no longer does — and commits the result.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only report what would change'
+        type: boolean
+        default: false
+  schedule:
+    # the Budapest Marathon is in October; look once a week that month
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-jubilee
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Read the newest marathons
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fold the newest editions into public/jfk
+        run: node scripts/update-jubilee.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Commit the data if it changed
+        if: ${{ !inputs.dry_run }}
+        run: |
+          if git diff --quiet -- public/jfk; then
+            echo "No change."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/jfk
+          git commit -m 'Jubilee club: add the newest marathon from the results API'
+          git push

@@ -157,10 +157,9 @@ export const hu: Messages = {
     searchButton: 'Keresés',
     clearSearch: 'Keresés törlése',
     minQuery: (n) => `A kereséshez legalább ${n} karakter kell.`,
+    through: (year) => `${year}-ig teljes`,
     bandsLabel: 'Oldalak teljesítés szerint',
     noTimeNote: 'A ✓ olyan teljesítés, amelyhez a listák nem őriztek meg időt.',
-    addLatest: 'Friss maratonok hozzáadása',
-    upToDate: 'Naprakész',
     shown: (n) => `${n} ezen az oldalon`,
     searchedBands: (n) => `keresés mind a ${n} tag között`,
     finishCount: (n: number) => `${n} teljesítés`,
@@ -169,14 +168,9 @@ export const hu: Messages = {
     bestShort: (time: string) => `legjobb ${time}`,
     members: (n: number) => `${n} tag`,
     matching: (n: number) => `${n} találat`,
-    addedYears: (years: string) => `${years} az eredmény-API-ból kiegészítve`,
-    reading: (years: string) => `A ${years}. évi maraton beolvasása…`,
-    fromApi: 'Az eredmény-API-ból, nem a klub listájából',
-    sourceNote: (source: string) =>
-      `Forrás: ${source} klublisták; az újabb maratonok a results.futanet.hu-ról, állandó rajtszám, majd név alapján párosítva.`,
+    sourceNote: (source) =>
+      `Forrás: ${source} klublisták, az újabb maratonokkal kiegészítve a results.futanet.hu-ról — állandó rajtszám, majd név alapján párosítva.`,
     failed: 'Nem sikerült betölteni a klub listáit',
-    topUpFailed: 'A legfrissebb maratont nem sikerült hozzáadni',
-    topUpFailedHint: 'A táblázat a klub saját listái szerint így is teljes.',
     none: 'Nincs találat.',
   },
   breakdown: {
