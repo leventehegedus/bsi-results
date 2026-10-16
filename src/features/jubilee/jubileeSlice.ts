@@ -16,6 +16,8 @@ import type { RootState } from '@/store'
 export const MIN_FINISHES = 6
 /** A search below this length would match half the club, and it downloads every band. */
 export const MIN_QUERY_LENGTH = 3
+/** Rows per page: the 6-10 band alone is over 1 600 people. */
+export const PAGE_SIZE = 50
 
 export interface ClubMember extends JubileeRunner {
   finishes: number
@@ -41,6 +43,8 @@ interface JubileeState {
   pendingYears: number[]
   topUp: 'idle' | 'running' | 'done' | 'failed'
   query: string
+  /** page within the band (or within the search results), from 1 */
+  page: number
   error: string | null
 }
 
@@ -56,6 +60,7 @@ const initialState: JubileeState = {
   pendingYears: [],
   topUp: 'idle',
   query: '',
+  page: 1,
   error: null,
 }
 
@@ -146,7 +151,11 @@ const jubileeSlice = createSlice({
       if (!s.loadingBands.includes(a.payload)) s.loadingBands.push(a.payload)
     },
     setBand(s, a: PayloadAction<string>) {
+      if (s.band !== a.payload) s.page = 1
       s.band = a.payload
+    },
+    setPage(s, a: PayloadAction<number>) {
+      s.page = Math.max(1, a.payload)
     },
     topUpStarted(s, a: PayloadAction<number[]>) {
       s.pendingYears = a.payload
@@ -158,6 +167,7 @@ const jubileeSlice = createSlice({
     setQuery(s, a: PayloadAction<string>) {
       const q = a.payload.trim()
       s.query = q.length >= MIN_QUERY_LENGTH ? q : ''
+      s.page = 1
     },
   },
   extraReducers: (b) => {
@@ -204,7 +214,8 @@ const jubileeSlice = createSlice({
   },
 })
 
-export const { indexLoaded, bandLoading, setBand, topUpStarted, yearRead, setQuery } = jubileeSlice.actions
+export const { indexLoaded, bandLoading, setBand, setPage, topUpStarted, yearRead, setQuery } =
+  jubileeSlice.actions
 export const jubileeReducer = jubileeSlice.reducer
 
 const selectJubilee = (s: RootState) => s.jubilee
@@ -252,8 +263,22 @@ export const selectVisibleMembers = createSelector([selectJubilee, selectLoadedM
   return members.filter((m) => inBand(m.finishes, band))
 })
 
+/** How many pages the current band (or search) runs to. */
+export const selectPageCount = createSelector([selectVisibleMembers], (members) =>
+  Math.max(1, Math.ceil(members.length / PAGE_SIZE)),
+)
+
+/** The rows actually on screen. */
+export const selectPageMembers = createSelector(
+  [selectVisibleMembers, (s: RootState) => s.jubilee.page, selectPageCount],
+  (members, page, pages) => {
+    const current = Math.min(page, pages)
+    return members.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
+  },
+)
+
 /** Only the years anyone on the page actually ran, so the table has no empty columns. */
-export const selectVisibleYears = createSelector([selectJubilee, selectVisibleMembers], (j, members) => {
+export const selectVisibleYears = createSelector([selectJubilee, selectPageMembers], (j, members) => {
   const used = new Set<number>()
   for (const m of members) for (const y of Object.keys(m.r)) used.add(Number(y))
   return j.years.filter((y) => used.has(y))

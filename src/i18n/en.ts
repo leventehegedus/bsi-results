@@ -156,6 +156,7 @@ export const en = {
     description: (min: number) =>
       `Everyone who has finished the Budapest Marathon at least ${min} times, with every finishing time year by year.`,
     search: 'Search name, town or club',
+    rangeOf: (from: number, to: number, total: number) => `${from}–${to} of ${total}`,
     searchButton: 'Search',
     clearSearch: 'Clear the search',
     minQuery: (n: number) => `Type at least ${n} characters to search.`,
@@ -179,7 +180,6 @@ export const en = {
     failed: 'Couldn’t load the club’s lists',
     topUpFailed: 'The latest marathon couldn’t be added',
     topUpFailedHint: 'The table below is still complete up to the club’s own lists.',
-    firstOnly: (n: number) => `Showing the first ${n}. Search to narrow it down.`,
     none: 'Nobody matches.',
   },
   breakdown: {

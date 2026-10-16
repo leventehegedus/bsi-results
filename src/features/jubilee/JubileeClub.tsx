@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, Loader2, Medal, RefreshCw, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Loader2, Medal, RefreshCw, Search, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,8 +21,12 @@ import {
   MIN_QUERY_LENGTH,
   selectLoadedMembers,
   selectPageBands,
+  selectPageCount,
+  selectPageMembers,
   selectVisibleMembers,
   selectVisibleYears,
+  setPage,
+  PAGE_SIZE,
   setBand,
   setQuery,
   topUpFromApi,
@@ -44,7 +48,10 @@ export function JubileeClub() {
   const t = useT()
   const j = useAppSelector((s) => s.jubilee)
   const loadedMembers = useAppSelector(selectLoadedMembers)
-  const members = useAppSelector(selectVisibleMembers)
+  const allOnPage = useAppSelector(selectVisibleMembers)
+  const members = useAppSelector(selectPageMembers)
+  const pageCount = useAppSelector(selectPageCount)
+  const page = Math.min(j.page, pageCount)
   const years = useAppSelector(selectVisibleYears)
   const bands = useAppSelector(selectPageBands)
   const searching = j.query.trim() !== ''
@@ -83,7 +90,8 @@ export function JubileeClub() {
   const exportCsv = () => {
     const csv = toCsv(
       [t.col.name, t.col.birthYear, t.col.club, t.col.town, t.jubilee.finishes, t.jubilee.best, ...years.map(String)],
-      members.map((m) => [m.n, m.y ?? '', m.c, m.t, m.finishes, m.best, ...years.map((y) => m.r[String(y)] ?? '')]),
+      // the file covers the whole band or search, not just the page on screen
+      allOnPage.map((m) => [m.n, m.y ?? '', m.c, m.t, m.finishes, m.best, ...years.map((y) => m.r[String(y)] ?? '')]),
     )
     downloadCsv(`jubileumi-futok-${searching ? 'kereses' : j.band}.csv`, csv)
   }
@@ -189,7 +197,7 @@ export function JubileeClub() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant="brand">{t.jubilee.shown(members.length)}</Badge>
+            <Badge variant="brand">{t.jubilee.shown(allOnPage.length)}</Badge>
             {searching && <Badge>{t.jubilee.searchedBands(loadedMembers.length)}</Badge>}
             {j.addedYears.length > 0 && (
               <Badge variant="secondary">{t.jubilee.addedYears(j.addedYears.join(', '))}</Badge>
@@ -264,7 +272,7 @@ export function JubileeClub() {
                     {members.map((m, i) => (
                       <TableRow key={`${m.n}-${m.y ?? ''}-${i}`} className="group/row">
                         <TableCell className="text-muted-foreground bg-card group-hover/row:bg-table-row-hover sticky left-0 z-20 tabular-nums">
-                          {i + 1}
+                          {(page - 1) * PAGE_SIZE + i + 1}
                         </TableCell>
                         <TableCell
                           className="bg-card group-hover/row:bg-table-row-hover sticky z-20 shadow-[1px_0_0_var(--border)]"
@@ -309,7 +317,7 @@ export function JubileeClub() {
               </div>
 
               <ul className="flex flex-col gap-2 sm:hidden">
-                {members.slice(0, 200).map((m, i) => (
+                {members.map((m, i) => (
                   <li key={`${m.n}-${m.y ?? ''}-${i}`} className="rounded-md border p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -351,10 +359,45 @@ export function JubileeClub() {
                     </div>
                   </li>
                 ))}
-                {members.length > 200 && (
-                  <li className="text-muted-foreground px-1 py-2 text-xs">{t.jubilee.firstOnly(200)}</li>
-                )}
               </ul>
+
+
+          {pageCount > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 text-sm">
+              <span className="text-muted-foreground">
+                {t.jubilee.rangeOf(
+                  (page - 1) * PAGE_SIZE + 1,
+                  Math.min(page * PAGE_SIZE, allOnPage.length),
+                  allOnPage.length,
+                )}
+              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t.results.prevPage}
+                  disabled={page <= 1}
+                  onClick={() => dispatch(setPage(page - 1))}
+                >
+                  <ChevronLeft />
+                </Button>
+                <span className="whitespace-nowrap tabular-nums">
+                  {page} / {pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t.results.nextPage}
+                  disabled={page >= pageCount}
+                  onClick={() => dispatch(setPage(page + 1))}
+                >
+                  <ChevronRight />
+                </Button>
+              </div>
+            </div>
+          )}
 
               {!members.length && (
                 <p className="text-muted-foreground py-10 text-center text-sm">{t.jubilee.none}</p>
