@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, FileDown, Loader2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CornerDownLeft, Download, FileDown, Loader2, X } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { certificateUrl, getAllResults } from '@/api/futanet'
 import type { ResultFilters, ResultRow } from '@/api/types'
@@ -78,6 +78,8 @@ export function ResultsPanel() {
   const [form, setForm] = useState<ResultFilters>(filters)
   const [exporting, setExporting] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  // the place a jump asked for: its row is highlighted and scrolled to once the page is in
+  const [targetPlace, setTargetPlace] = useState<number | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -95,6 +97,7 @@ export function ResultsPanel() {
     rows: pageQuery.data?.data ?? [],
     total: pageQuery.data?.meta.total ?? 0,
     lastPage: pageQuery.data?.meta.last_page ?? 1,
+    perPage: pageQuery.data?.meta.per_page || 40,
     view,
     status: pageQuery.isError ? 'failed' : pageQuery.isFetching ? 'loading' : pageQuery.isSuccess ? 'succeeded' : 'idle',
     error: pageQuery.error && 'message' in pageQuery.error ? pageQuery.error.message : null,
@@ -169,9 +172,25 @@ export function ResultsPanel() {
     return cellText(row, key)
   }
 
+  /** Jump straight to a page, clamped to the ones that exist. */
+  const goToPage = (page: number) => {
+    setTargetPlace(null)
+    dispatch(setPage(Math.min(r.lastPage, Math.max(1, page))))
+  }
+
+  /**
+   * Jump to the page a finishing place sits on. Only exact while the list is in
+   * place order, which is how the API returns it; the row is then highlighted.
+   */
+  const goToPlace = (place: number) => {
+    setTargetPlace(place)
+    dispatch(setPage(Math.min(r.lastPage, Math.max(1, Math.ceil(place / r.perPage)))))
+  }
+
   /** Update the filters (back to page 1), right away or after `delay` ms. */
   const apply = (next: ResultFilters, delay = 0) => {
     setForm(next)
+    setTargetPlace(null)
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => dispatch(setFilters(next)), delay)
   }
@@ -396,7 +415,31 @@ export function ResultsPanel() {
               <span className="text-muted-foreground">
                 {r.status === 'loading' ? t.results.loading : t.results.count(r.total.toLocaleString('hu-HU'))}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {r.lastPage > 1 && (
+                  <form
+                    className="flex items-center gap-1"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const place = Number(new FormData(e.currentTarget).get('place'))
+                      if (Number.isInteger(place) && place > 0) goToPlace(place)
+                    }}
+                  >
+                    <Label htmlFor="jump-place" className="text-muted-foreground text-xs font-normal">
+                      {t.results.jumpToPlace}
+                    </Label>
+                    <Input
+                      id="jump-place"
+                      name="place"
+                      inputMode="numeric"
+                      className="h-8 w-20"
+                      placeholder={t.results.placePlaceholder}
+                    />
+                    <Button type="submit" variant="outline" size="icon" className="size-8" aria-label={t.results.go}>
+                      <CornerDownLeft />
+                    </Button>
+                  </form>
+                )}
                 <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting || !r.total}>
                   {exporting ? <Loader2 className="animate-spin" /> : <Download />}
                   CSV
@@ -411,8 +454,9 @@ export function ResultsPanel() {
                 >
                   <ChevronLeft />
                 </Button>
-                <span className="tabular-nums">
-                  {r.page} / {r.lastPage}
+                <span className="flex items-center gap-1 tabular-nums">
+                  <PageInput page={r.page} lastPage={r.lastPage} label={t.results.pageNumber} onGo={goToPage} />
+                  <span className="text-muted-foreground">/ {r.lastPage}</span>
                 </span>
                 <Button
                   variant="outline"
@@ -451,7 +495,12 @@ export function ResultsPanel() {
                     : r.rows.map((row, i) => (
                         <TableRow
                           key={`${row.rajtszam ?? ''}-${i}`}
-                          className={cn('group/row', r.status === 'loading' && 'opacity-50')}
+                          ref={row.hely === targetPlace ? scrollIntoView : undefined}
+                          className={cn(
+                            'group/row',
+                            r.status === 'loading' && 'opacity-50',
+                            row.hely === targetPlace && 'outline-brand bg-brand/10 outline-2 -outline-offset-2',
+                          )}
                         >
                           {columns.map((c) => (
                             <TableCell
@@ -554,6 +603,44 @@ function stickyClass(key: string) {
 
 function headClass(key: string) {
   return cn(key === CERT_KEY && 'text-center', stickyClass(key) && 'bg-table-head')
+}
+
+/** Brings the row a jump asked for into view. */
+function scrollIntoView(el: HTMLTableRowElement | null) {
+  el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
+/** The page number, typed straight in. Commits on Enter or when it loses focus. */
+function PageInput(props: { page: number; lastPage: number; label: string; onGo: (page: number) => void }) {
+  const [draft, setDraft] = useState(String(props.page))
+  const [shownFor, setShownFor] = useState(props.page)
+  // follow the page when something else changes it (the arrows, a new filter)
+  if (shownFor !== props.page) {
+    setShownFor(props.page)
+    setDraft(String(props.page))
+  }
+  const commit = () => {
+    const n = Number(draft)
+    if (Number.isInteger(n) && n > 0) props.onGo(n)
+    else setDraft(String(props.page))
+  }
+  return (
+    <input
+      aria-label={props.label}
+      inputMode="numeric"
+      value={draft}
+      size={Math.max(2, String(props.lastPage).length)}
+      onChange={(e) => setDraft(e.target.value.replace(/\D/g, ''))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          e.currentTarget.blur()
+        }
+      }}
+      className="border-input focus-visible:ring-ring h-8 rounded-md border bg-transparent px-2 text-center tabular-nums focus-visible:ring-2 focus-visible:outline-none"
+    />
+  )
 }
 
 /** Computed columns: not fields of the API's rows. */
