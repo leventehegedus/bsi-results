@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download, FileDown, Loader2, X } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { certificateUrl, getAllResults } from '@/api/futanet'
 import type { ResultFilters, ResultRow } from '@/api/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -26,6 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cleanTime } from '@/lib/results'
+import { cn } from '@/lib/utils'
 import { formatPace, pacePerKm } from '@/lib/pace'
 import { formatFade, runnerSplits, splitPoints, type SplitPoint } from '@/lib/splits'
 import { downloadCsv, toCsv } from '@/lib/csv'
@@ -75,6 +77,7 @@ export function ResultsPanel() {
   // filters in the URL when a shared link brought us here, otherwise empty.
   const [form, setForm] = useState<ResultFilters>(filters)
   const [exporting, setExporting] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const timer = useRef<number | undefined>(undefined)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -133,6 +136,39 @@ export function ResultsPanel() {
         ? formatFade(runnerSplits(row, points, distance)?.fade ?? null)
         : display(row, key)
 
+  // the card headline already carries these
+  const CARD_HEADLINE = new Set(['hely', 'nev', 'netto', 'brutto', 'kategoria', 'rajtszam'])
+  const cardFields = columns.filter((c) => !CARD_HEADLINE.has(c.key))
+
+  /** A cell's contents: plain text, or the links and buttons some columns carry. */
+  const cellContent = (row: ResultRow, key: string) => {
+    if (key === FADE_KEY) return <FadeCell row={row} points={points} distance={distance} hint={t.splits.rowHint} />
+    if (key === CERT_KEY)
+      return <CertificateLink raceId={r.raceId!} bib={row.rajtszam ?? null} name={display(row, 'nev')} t={t} />
+    if (key === 'varos' && row.varos)
+      return (
+        <button
+          type="button"
+          title={t.common.showOnlyTown}
+          className="hover:bg-accent decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
+          onClick={() => filterTown(String(row.varos))}
+        >
+          {display(row, 'varos')}
+        </button>
+      )
+    if (key === 'nev')
+      return (
+        <RunnerLink
+          name={display(row, 'nev')}
+          raceId={r.raceId!}
+          raceName={r.meta?.nev}
+          place={typeof row.hely === 'number' ? row.hely : null}
+          bib={row.rajtszam ?? null}
+        />
+      )
+    return cellText(row, key)
+  }
+
   /** Update the filters (back to page 1), right away or after `delay` ms. */
   const apply = (next: ResultFilters, delay = 0) => {
     setForm(next)
@@ -143,6 +179,10 @@ export function ResultsPanel() {
     apply({ ...form, [key]: value || undefined }, delay)
   const filterTown = (town: string) => setFilter('town', town)
   const hasFilters = Object.values(form).some((v) => v != null && v.trim() !== '')
+  // what the collapsed panel hides, for the count on its button
+  const activeExtraFilters = Object.entries(form).filter(
+    ([k, v]) => k !== 'name' && v != null && v.trim() !== '',
+  ).length
 
   const exportCsv = async () => {
     if (!r.raceId) return
@@ -298,7 +338,21 @@ export function ResultsPanel() {
           <TabsContent value="results" className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               {field('name', t.col.name)}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {/* On a phone the other nine fields push the results off the screen, so they fold away. */}
+              <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="hover:bg-accent group -mx-2 flex w-[calc(100%+1rem)] items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors sm:hidden"
+                  >
+                    <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-90" />
+                    <span className="font-medium">{t.results.moreFilters}</span>
+                    {activeExtraFilters > 0 && <Badge variant="brand">{activeExtraFilters}</Badge>}
+                  </button>
+                </CollapsibleTrigger>
+                {/* from sm up the fields are always shown; only the phone layout collapses */}
+                <CollapsibleContent className="data-[state=closed]:hidden sm:!block" forceMount>
+                  <div className="grid gap-3 pt-3 sm:grid-cols-2 sm:pt-0 lg:grid-cols-3">
                 {field('town', t.col.town, t.results.townHint)}
                 {field('club', t.col.club)}
                 {field('bib', t.col.bib)}
@@ -320,7 +374,9 @@ export function ResultsPanel() {
                 {range(t.results.netTimeRange, ['minNetTime', 'maxNetTime'], [t.common.from, t.common.to], false)}
                 {range(t.col.birthYear, ['minYob', 'maxYob'], [t.common.from, t.common.to])}
                 {range(t.col.place, ['minPlace', 'maxPlace'], [t.common.from, t.common.to])}
-              </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
               <div className="flex justify-end">
                 <Button type="button" variant="outline" size="sm" disabled={!hasFilters} onClick={() => apply({})}>
                   <X />
@@ -371,12 +427,13 @@ export function ResultsPanel() {
               </div>
             </div>
 
-            <div className="rounded-md border">
+            {/* phones get the cards below instead: 10+ columns can't be read sideways */}
+            <div className="hidden rounded-md border sm:block">
               <Table>
                 <TableHeader>
                   <TableRow>
                     {columns.map((c) => (
-                      <TableHead key={c.key} className={c.key === CERT_KEY ? 'text-center' : undefined}>
+                      <TableHead key={c.key} className={cn(headClass(c.key), stickyClass(c.key))}>
                         {c.label}
                       </TableHead>
                     ))}
@@ -392,43 +449,21 @@ export function ResultsPanel() {
                         </TableRow>
                       ))
                     : r.rows.map((row, i) => (
-                        <TableRow key={`${row.rajtszam ?? ''}-${i}`} className={r.status === 'loading' ? 'opacity-50' : ''}>
+                        <TableRow
+                          key={`${row.rajtszam ?? ''}-${i}`}
+                          className={cn('group/row', r.status === 'loading' && 'opacity-50')}
+                        >
                           {columns.map((c) => (
                             <TableCell
                               key={c.key}
-                              className={
-                                isNumericCol(c.key) ? 'tabular-nums' : c.key === CERT_KEY ? 'text-center' : ''
-                              }
-                            >
-                              {c.key === FADE_KEY ? (
-                                <FadeCell row={row} points={points} distance={distance} hint={t.splits.rowHint} />
-                              ) : c.key === CERT_KEY ? (
-                                <CertificateLink
-                                  raceId={r.raceId!}
-                                  bib={row.rajtszam ?? null}
-                                  name={display(row, 'nev')}
-                                  t={t}
-                                />
-                              ) : c.key === 'varos' && row.varos ? (
-                                <button
-                                  type="button"
-                                  title={t.common.showOnlyTown}
-                                  className="hover:bg-accent decoration-brand -mx-1.5 cursor-pointer rounded px-1.5 py-0.5 underline decoration-dotted decoration-2 underline-offset-4"
-                                  onClick={() => filterTown(String(row.varos))}
-                                >
-                                  {display(row, 'varos')}
-                                </button>
-                              ) : c.key === 'nev' ? (
-                                <RunnerLink
-                                  name={display(row, 'nev')}
-                                  raceId={r.raceId!}
-                                  raceName={r.meta?.nev}
-                                  place={typeof row.hely === 'number' ? row.hely : null}
-                                  bib={row.rajtszam ?? null}
-                                />
-                              ) : (
-                                cellText(row, c.key)
+                              className={cn(
+                                isNumericCol(c.key) ? 'tabular-nums' : c.key === CERT_KEY ? 'text-center' : '',
+                                stickyClass(c.key),
+                                // the sticky cells need their own background, and the row's hover colour
+                                stickyClass(c.key) && 'bg-card group-hover/row:bg-muted/50',
                               )}
+                            >
+                              {cellContent(row, c.key)}
                             </TableCell>
                           ))}
                         </TableRow>
@@ -443,6 +478,59 @@ export function ResultsPanel() {
                 </TableBody>
               </Table>
             </div>
+
+            <ul className="flex flex-col gap-2 sm:hidden">
+              {r.status === 'loading' && r.rows.length === 0
+                ? Array.from({ length: 6 }, (_, i) => (
+                    <li key={i} className="rounded-md border p-3">
+                      <Skeleton className="h-12 w-full" />
+                    </li>
+                  ))
+                : r.rows.map((row, i) => (
+                    <li
+                      key={`${row.rajtszam ?? ''}-${i}`}
+                      className={cn('rounded-md border p-3', r.status === 'loading' && 'opacity-50')}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-medium break-words">{cellContent(row, 'nev')}</div>
+                          <div className="text-muted-foreground mt-0.5 text-xs">
+                            {[display(row, 'kategoria'), row.rajtszam ? `#${row.rajtszam}` : '']
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-lg leading-none font-semibold tabular-nums">
+                            {cellText(row, 'netto') || cellText(row, 'brutto')}
+                          </div>
+                          {row.hely != null && (
+                            <div className="text-muted-foreground mt-1 text-xs tabular-nums">
+                              {t.results.placeShort(String(row.hely))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                        {cardFields.map((c) => {
+                          const value = cellContent(row, c.key)
+                          if (value === '' || value == null) return null
+                          return (
+                            <div key={c.key} className="flex min-w-0 items-baseline gap-1.5">
+                              <dt className="text-muted-foreground shrink-0">{c.label}</dt>
+                              <dd className={cn('min-w-0 truncate', isNumericCol(c.key) && 'tabular-nums')}>{value}</dd>
+                            </div>
+                          )
+                        })}
+                      </dl>
+                    </li>
+                  ))}
+              {r.status === 'succeeded' && r.rows.length === 0 && (
+                <li className="text-muted-foreground rounded-md border py-10 text-center text-sm">
+                  {t.results.none}
+                </li>
+              )}
+            </ul>
           </TabsContent>
         </Tabs>
       </CardContent>
@@ -455,6 +543,17 @@ function display(row: ResultRow, key: string) {
   if (v == null) return ''
   if (typeof v === 'string' && /^\d{2}:\d{2}:\d{2}\.\d+$/.test(v)) return cleanTime(v)
   return String(v)
+}
+
+/** Rank and name stay put while the rest of a wide table scrolls sideways. */
+function stickyClass(key: string) {
+  if (key === 'hely') return 'sticky left-0 z-20 w-16'
+  if (key === 'nev') return 'sticky left-16 z-20 shadow-[1px_0_0_var(--border)]'
+  return ''
+}
+
+function headClass(key: string) {
+  return cn(key === CERT_KEY && 'text-center', stickyClass(key) && 'bg-table-head')
 }
 
 /** Computed columns: not fields of the API's rows. */
