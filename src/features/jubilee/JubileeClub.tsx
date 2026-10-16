@@ -102,6 +102,40 @@ export function JubileeClub() {
     searchRunner(dispatch, { name: m.n, yob: m.y, exact: true })
   }
 
+  /** Shown above and below the table, so a long page doesn't have to be scrolled to turn. */
+  const pager = pageCount > 1 && (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span className="text-muted-foreground">
+        {t.jubilee.rangeOf((page - 1) * PAGE_SIZE + 1, Math.min(page * PAGE_SIZE, allOnPage.length), allOnPage.length)}
+      </span>
+      <div className="flex shrink-0 items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
+          aria-label={t.results.prevPage}
+          disabled={page <= 1}
+          onClick={() => dispatch(setPage(page - 1))}
+        >
+          <ChevronLeft />
+        </Button>
+        <span className="whitespace-nowrap tabular-nums">
+          {page} / {pageCount}
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8"
+          aria-label={t.results.nextPage}
+          disabled={page >= pageCount}
+          onClick={() => dispatch(setPage(page + 1))}
+        >
+          <ChevronRight />
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
@@ -219,7 +253,9 @@ export function JubileeClub() {
           )}
 
           {j.status === 'ready' && (
-            <>
+            <div className="flex flex-col gap-3">
+              {pager}
+
               {/* the wide year grid is unusable on a phone: cards there instead */}
               <div className="hidden rounded-md border sm:block">
                 <Table>
@@ -335,48 +371,12 @@ export function JubileeClub() {
                 ))}
               </ul>
 
-
-          {pageCount > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 text-sm">
-              <span className="text-muted-foreground">
-                {t.jubilee.rangeOf(
-                  (page - 1) * PAGE_SIZE + 1,
-                  Math.min(page * PAGE_SIZE, allOnPage.length),
-                  allOnPage.length,
-                )}
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t.results.prevPage}
-                  disabled={page <= 1}
-                  onClick={() => dispatch(setPage(page - 1))}
-                >
-                  <ChevronLeft />
-                </Button>
-                <span className="whitespace-nowrap tabular-nums">
-                  {page} / {pageCount}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t.results.nextPage}
-                  disabled={page >= pageCount}
-                  onClick={() => dispatch(setPage(page + 1))}
-                >
-                  <ChevronRight />
-                </Button>
-              </div>
-            </div>
-          )}
+              {pager}
 
               {!members.length && (
                 <p className="text-muted-foreground py-10 text-center text-sm">{t.jubilee.none}</p>
               )}
-            </>
+            </div>
           )}
         </CardContent>
       </Card>
