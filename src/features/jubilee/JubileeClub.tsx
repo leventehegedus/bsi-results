@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, Loader2, Medal, RefreshCw, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Loader2, Medal, Search, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,6 @@ import {
   PAGE_SIZE,
   setBand,
   setQuery,
-  topUpFromApi,
 } from './jubileeSlice'
 import { hasTime } from './jubileeSlice'
 import type { ClubMember } from './jubileeSlice'
@@ -55,6 +54,7 @@ export function JubileeClub() {
   const years = useAppSelector(selectVisibleYears)
   const bands = useAppSelector(selectPageBands)
   const searching = j.query.trim() !== ''
+  const lastYear = j.years[j.years.length - 1]
   // what's typed, which only becomes the search once it's submitted
   const [draft, setDraft] = useState(j.query)
   const canSearch = draft.trim().length >= MIN_QUERY_LENGTH && draft.trim() !== j.query
@@ -153,15 +153,6 @@ export function JubileeClub() {
                 <Search /> {t.jubilee.searchButton}
               </Button>
             </form>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={j.topUp === 'running' || j.topUp === 'done'}
-              onClick={() => dispatch(topUpFromApi())}
-            >
-              {j.topUp === 'running' ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-              {j.topUp === 'done' ? t.jubilee.upToDate : t.jubilee.addLatest}
-            </Button>
           </div>
 
           {draft.trim().length > 0 && draft.trim().length < MIN_QUERY_LENGTH && (
@@ -199,15 +190,7 @@ export function JubileeClub() {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <Badge variant="brand">{t.jubilee.shown(allOnPage.length)}</Badge>
             {searching && <Badge>{t.jubilee.searchedBands(loadedMembers.length)}</Badge>}
-            {j.addedYears.length > 0 && (
-              <Badge variant="secondary">{t.jubilee.addedYears(j.addedYears.join(', '))}</Badge>
-            )}
-            {j.topUp === 'running' && (
-              <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                <Loader2 className="size-3.5 animate-spin" />
-                {t.jubilee.reading(j.pendingYears.join(', '))}
-              </span>
-            )}
+            {lastYear && <Badge variant="secondary">{t.jubilee.through(lastYear)}</Badge>}
             <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv} disabled={!members.length}>
               <Download /> {t.common.downloadCsv}
             </Button>
@@ -217,12 +200,6 @@ export function JubileeClub() {
             <Alert variant="destructive">
               <AlertTitle>{t.jubilee.failed}</AlertTitle>
               <AlertDescription>{j.error}</AlertDescription>
-            </Alert>
-          )}
-          {j.topUp === 'failed' && j.status === 'ready' && (
-            <Alert>
-              <AlertTitle>{t.jubilee.topUpFailed}</AlertTitle>
-              <AlertDescription>{t.jubilee.topUpFailedHint}</AlertDescription>
             </Alert>
           )}
           <p className="text-muted-foreground text-xs">
@@ -302,9 +279,7 @@ export function JubileeClub() {
                               className={cn(
                                 'text-center text-xs tabular-nums',
                                 !time && 'text-muted-foreground/40',
-                                time && m.live.includes(y) && 'text-brand font-medium',
                               )}
-                              title={time && m.live.includes(y) ? t.jubilee.fromApi : undefined}
                             >
                               {hasTime(time) ? time.slice(0, 5) : time ? '✓' : '·'}
                             </TableCell>
@@ -349,7 +324,6 @@ export function JubileeClub() {
                             key={year}
                             className={cn(
                               'bg-muted/60 rounded px-1.5 py-0.5 text-xs tabular-nums',
-                              m.live.includes(Number(year)) && 'text-brand',
                             )}
                           >
                             {year}{' '}

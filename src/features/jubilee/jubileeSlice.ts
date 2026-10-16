@@ -1,10 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { fetchRaceCatalogue } from '@/api/futanetApi'
 import {
   loadJubileeBand,
   loadJubileeIndex,
-  marathonEditions,
-  readEditions,
   PENDING_BAND,
   type BandInfo,
   type JubileeRunner,
@@ -24,8 +21,6 @@ export interface ClubMember extends JubileeRunner {
   best: string
   first: number
   last: number
-  /** years added from the API rather than the club's own lists */
-  live: number[]
 }
 
 interface JubileeState {
@@ -38,10 +33,6 @@ interface JubileeState {
   loadingBands: string[]
   years: number[]
   source: string
-  /** editions read from the API, and the ones still being read */
-  addedYears: number[]
-  pendingYears: number[]
-  topUp: 'idle' | 'running' | 'done' | 'failed'
   query: string
   /** page within the band (or within the search results), from 1 */
   page: number
@@ -56,9 +47,6 @@ const initialState: JubileeState = {
   loadingBands: [],
   years: [],
   source: '',
-  addedYears: [],
-  pendingYears: [],
-  topUp: 'idle',
   query: '',
   page: 1,
   error: null,
@@ -98,40 +86,7 @@ export const loadBand = createAppAsyncThunk(
   },
 )
 
-/**
- * Add the marathons the spreadsheets don't cover. Every band is needed for this:
- * a finish can lift someone into the club or into the next band, and the result
- * would be wrong if it only counted the page on screen.
- */
-export const topUpFromApi = createAppAsyncThunk(
-  'jubilee/topUp',
-  async (_: void, { dispatch, getState, signal, rejectWithValue }) => {
-    try {
-      const state = () => (getState() as RootState).jubilee
-      for (const band of state().bands) {
-        if (!state().loaded[band.id]) await dispatch(loadBand(band.id))
-      }
-      const runners = allRunners(state())
-      const covered = Math.min(...runners.map((r) => r.u))
-      const races = await fetchRaceCatalogue(dispatch)
-      const missing = marathonEditions(races).filter((e) => e.year > covered)
-      if (!missing.length) return []
-      dispatch(topUpStarted(missing.map((e) => e.year)))
-      const results = await readEditions(missing, runners, {
-        signal,
-        onDone: (year) => dispatch(yearRead(year)),
-      })
-      return results.map((r) => ({
-        year: r.year,
-        times: [...r.times].map(([i, time]) => [i, time] as [number, string]),
-      }))
-    } catch (e) {
-      return rejectWithValue(errorMessage(e))
-    }
-  },
-)
-
-/** Every runner downloaded so far, in band order — the index the top-up matches against. */
+/** Every runner downloaded so far, in band order. */
 function allRunners(s: JubileeState): JubileeRunner[] {
   return s.bands.flatMap((b) => s.loaded[b.id] ?? [])
 }
@@ -157,13 +112,6 @@ const jubileeSlice = createSlice({
     setPage(s, a: PayloadAction<number>) {
       s.page = Math.max(1, a.payload)
     },
-    topUpStarted(s, a: PayloadAction<number[]>) {
-      s.pendingYears = a.payload
-      s.topUp = 'running'
-    },
-    yearRead(s, a: PayloadAction<number>) {
-      s.pendingYears = s.pendingYears.filter((y) => y !== a.payload)
-    },
     setQuery(s, a: PayloadAction<string>) {
       const q = a.payload.trim()
       s.query = q.length >= MIN_QUERY_LENGTH ? q : ''
@@ -188,34 +136,10 @@ const jubileeSlice = createSlice({
         s.loadingBands = s.loadingBands.filter((b) => b !== a.meta.arg)
         s.error = a.error.message ?? null
       })
-      .addCase(topUpFromApi.pending, (s) => {
-        s.topUp = 'running'
-        s.error = null
-      })
-      .addCase(topUpFromApi.fulfilled, (s, a) => {
-        s.topUp = 'done'
-        s.pendingYears = []
-        const runners = allRunners(s)
-        for (const { year, times } of a.payload ?? []) {
-          for (const [i, time] of times) {
-            const runner = runners[i]
-            // the spreadsheets always win: only years they didn't account for are filled in
-            if (runner && year > runner.u && !runner.r[String(year)]) runner.r[String(year)] = time
-          }
-          if (!s.years.includes(year)) s.years.push(year)
-          if (!s.addedYears.includes(year)) s.addedYears.push(year)
-        }
-        s.years.sort((x, y) => x - y)
-      })
-      .addCase(topUpFromApi.rejected, (s, a) => {
-        s.topUp = 'failed'
-        s.error = a.payload ?? a.error.message ?? null
-      })
   },
 })
 
-export const { indexLoaded, bandLoading, setBand, setPage, topUpStarted, yearRead, setQuery } =
-  jubileeSlice.actions
+export const { indexLoaded, bandLoading, setBand, setPage, setQuery } = jubileeSlice.actions
 export const jubileeReducer = jubileeSlice.reducer
 
 const selectJubilee = (s: RootState) => s.jubilee
@@ -236,7 +160,6 @@ export const selectLoadedMembers = createSelector([selectJubilee], (j): ClubMemb
       best: times[0] ?? '',
       first: years[0],
       last: years[years.length - 1],
-      live: years.filter((y) => y > r.u),
     })
   }
   return members.sort(
