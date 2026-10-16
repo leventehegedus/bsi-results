@@ -86,6 +86,7 @@ export const en = {
     clearFilter: (label: string) => `Clear ${label.toLowerCase()} filter`,
     rangeFrom: (label: string) => `${label} from`,
     rangeTo: (label: string) => `${label} to`,
+    moreFilters: 'More filters',
     clearAll: 'Clear all filters',
     loadFailed: "Couldn't load results",
     loading: 'Loading…',
@@ -93,6 +94,7 @@ export const en = {
     prevPage: 'Previous page',
     nextPage: 'Next page',
     certificateFor: (name: string) => `Download ${name}'s certificate (PDF)`,
+    placeShort: (n: string) => `${n}. place`,
     none: 'No results.',
   },
   favourites: {

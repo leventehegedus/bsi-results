@@ -83,6 +83,7 @@ export const hu: Messages = {
     clearFilter: (label) => `${label} szűrő törlése`,
     rangeFrom: (label) => `${label}: ettől`,
     rangeTo: (label) => `${label}: eddig`,
+    moreFilters: 'További szűrők',
     clearAll: 'Minden szűrő törlése',
     loadFailed: 'Nem sikerült betölteni az eredményeket',
     loading: 'Betöltés…',
@@ -90,6 +91,7 @@ export const hu: Messages = {
     prevPage: 'Előző oldal',
     nextPage: 'Következő oldal',
     certificateFor: (name) => `${name} oklevelének letöltése (PDF)`,
+    placeShort: (n) => `${n}. hely`,
     none: 'Nincs eredmény.',
   },
   favourites: {
