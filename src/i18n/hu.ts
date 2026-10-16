@@ -153,6 +153,9 @@ export const hu: Messages = {
     description: (min: number) =>
       `Mindenki, aki legalább ${min}-szor teljesítette a Budapest Maratont, évről évre az időeredményeivel.`,
     search: 'Keresés névre, településre, egyesületre',
+    searchButton: 'Keresés',
+    clearSearch: 'Keresés törlése',
+    minQuery: (n) => `A kereséshez legalább ${n} karakter kell.`,
     bandsLabel: 'Oldalak teljesítés szerint',
     noTimeNote: 'A ✓ olyan teljesítés, amelyhez a listák nem őriztek meg időt.',
     addLatest: 'Friss maratonok hozzáadása',
