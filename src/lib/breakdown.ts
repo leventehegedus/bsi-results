@@ -3,6 +3,7 @@ import type { ResultRow } from '@/api/types'
 
 /** One finisher, reduced to what the breakdown needs. */
 export interface BreakdownRow {
+  name: string
   /** net time (gun time if there's no net time), in seconds */
   seconds: number
   category: string
@@ -32,7 +33,12 @@ export interface GroupStats {
 export function toBreakdownRow(r: ResultRow, sex: 'F' | 'N' | null): BreakdownRow | null {
   const seconds = timeToSeconds(cleanTime(r.netto) || cleanTime(r.brutto))
   if (!Number.isFinite(seconds) || seconds <= 0) return null // no time (DNF, DSQ…)
-  return { seconds, category: (r.kategoria ?? '').trim(), sex }
+  return { name: (r.nev ?? '').trim(), seconds, category: (r.kategoria ?? '').trim(), sex }
+}
+
+/** The ten fastest of a group, fastest first. */
+export function topFinishers(rows: BreakdownRow[]): BreakdownRow[] {
+  return [...rows].sort((a, b) => a.seconds - b.seconds).slice(0, 10)
 }
 
 /**

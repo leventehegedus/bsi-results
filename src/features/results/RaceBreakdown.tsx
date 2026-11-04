@@ -4,9 +4,10 @@ import { useRaceBreakdownQuery } from '@/api/futanetApi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
-import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, type Bin, type GroupStats } from '@/lib/breakdown'
+import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, type Bin, type GroupStats } from '@/lib/breakdown'
 import { DistributionChart } from './DistributionChart'
 import { PercentileChart, type PercentileSeries } from './PercentileChart'
+import { TopFinishersChart, type TopFinishersRow } from './TopFinishersChart'
 
 /** Time cut-offs (top 10 %, 20 % …) of a whole race: all finishers, men, women and age categories. */
 export function RaceBreakdown({ raceId }: { raceId: string }) {
@@ -22,6 +23,7 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
       categories: categoryStats(data.all),
       bins: histogram(data.all, data.men, data.women),
       minuteBins: histogram(data.all, data.men, data.women, 60),
+      top: { all: topFinishers(data.all), men: topFinishers(data.men), women: topFinishers(data.women) },
     }
   }, [data])
 
@@ -60,6 +62,14 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
     cutoffs: g.stats.cutoffs.filter((c) => c.percent < 100),
   }))
 
+  // men and women each get a row; "all" only when there's no gender to split by
+  const topRows: TopFinishersRow[] = hasGender
+    ? [
+        { key: 'men', label: t.breakdown.men, color: 'var(--chart-men)', runners: stats.top.men },
+        { key: 'women', label: t.breakdown.women, color: 'var(--chart-women)', runners: stats.top.women },
+      ].filter((r) => r.runners.length > 0)
+    : [{ key: 'all', label: t.breakdown.all, color: 'var(--chart-context)', runners: stats.top.all }]
+
   const distLabels = {
     men: t.breakdown.men,
     women: t.breakdown.women,
@@ -78,6 +88,46 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
         <Figure label={t.breakdown.median} value={formatSeconds(stats.all.median)} />
         <Figure label={t.breakdown.slowest} value={formatSeconds(stats.all.slowest)} />
       </dl>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-primary text-sm font-semibold">{t.breakdown.topTitle}</h3>
+          <p className="text-muted-foreground text-xs">{t.breakdown.topDescription}</p>
+        </div>
+        <TopFinishersChart rows={topRows} xAxis={t.breakdown.timeAxis} ariaLabel={t.breakdown.topTitle} />
+        {/* the dot chart's values as a table */}
+        <details className="text-sm">
+          <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
+          <div className="mt-2 rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  {topRows.map((r) => (
+                    <TableHead key={r.key}>{r.label}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: Math.max(...topRows.map((r) => r.runners.length)) }, (_, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="tabular-nums">{i + 1}</TableCell>
+                    {topRows.map((r) => (
+                      <TableCell key={r.key}>
+                        {r.runners[i] && (
+                          <>
+                            {r.runners[i].name} <span className="font-semibold tabular-nums">{formatSeconds(r.runners[i].seconds)}</span>
+                          </>
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </details>
+      </section>
 
       <section className="flex flex-col gap-3">
         <div>
