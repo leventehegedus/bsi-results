@@ -74,6 +74,39 @@ export function categoryStats(rows: BreakdownRow[]): { category: string; stats: 
     .map(([category, list]) => ({ category, stats: groupStats(list) }))
 }
 
+export interface AgeBand {
+  /** the number in the category: M35 → 35 */
+  age: number
+  /** "35–39"; the oldest band is "75+" */
+  label: string
+  men: GroupStats
+  women: GroupStats
+}
+
+/** Men and women per age band, oldest first. Categories without a number are left out. */
+export function ageBands(men: BreakdownRow[], women: BreakdownRow[]): AgeBand[] {
+  const group = (rows: BreakdownRow[]) => {
+    const byAge = new Map<number, BreakdownRow[]>()
+    for (const r of rows) {
+      const age = /^\D*(\d+)/.exec(r.category)?.[1]
+      if (age) byAge.set(Number(age), [...(byAge.get(Number(age)) ?? []), r])
+    }
+    return byAge
+  }
+  const m = group(men)
+  const w = group(women)
+  const ages = [...new Set([...m.keys(), ...w.keys()])].sort((a, b) => a - b)
+  return ages
+    .map((age, i) => ({
+      age,
+      // bands are at most 5 years wide: a gap means an empty band, not a wider one (18–19, 20–24 …)
+      label: i === ages.length - 1 ? `${age}+` : `${age}–${Math.min(ages[i + 1], age + 5) - 1}`,
+      men: groupStats(m.get(age) ?? []),
+      women: groupStats(w.get(age) ?? []),
+    }))
+    .reverse()
+}
+
 /** 3725 → "1:02:05", 1263 → "21:03". */
 export function formatSeconds(total: number): string {
   const s = Math.round(total)
