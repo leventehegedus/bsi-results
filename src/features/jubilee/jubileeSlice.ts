@@ -6,6 +6,7 @@ import {
   type BandInfo,
   type JubileeRunner,
 } from '@/api/jubilee'
+import { timeToSeconds } from '@/lib/results'
 import { createAppAsyncThunk, errorMessage } from '@/store/createAppAsyncThunk'
 import type { RootState } from '@/store'
 
@@ -160,7 +161,9 @@ export const selectLoadedMembers = createSelector([selectJubilee], (j): ClubMemb
       .sort((a, b) => a - b)
     if (years.length < MIN_FINISHES) continue
     // a few old finishes are recorded without a time; they count, but can't be a best
-    const times = Object.values(r.r).filter(hasTime).sort()
+    const times = Object.values(r.r)
+      .filter(hasTime)
+      .sort((a, b) => timeToSeconds(a) - timeToSeconds(b))
     members.push({
       ...r,
       finishes: years.length,

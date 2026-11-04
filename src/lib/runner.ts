@@ -78,6 +78,13 @@ export interface Progression {
   best: RunnerResult & { seconds: number }
 }
 
+/** Mean of each value and the `size - 1` before it; null until there are enough of them. */
+export function movingAverage(values: number[], size: number): (number | null)[] {
+  return values.map((_, i) =>
+    i + 1 < size ? null : values.slice(i + 1 - size, i + 1).reduce((sum, v) => sum + v, 0) / size,
+  )
+}
+
 /**
  * A runner's results over time, one group per distance: real (non-virtual) races
  * with a known distance and a net time, at least `minResults` per distance.

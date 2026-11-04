@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatSeconds } from '@/lib/breakdown'
-import type { Progression } from '@/lib/runner'
 
 const HEIGHT = 220
 const M = { top: 24, right: 16, bottom: 28, left: 56 }
@@ -11,6 +10,15 @@ const DAY = 86_400_000
 const MIN_YEAR_SPACING = 40
 const MIN_MONTH_SPACING = 60
 
+export interface ProgressionPoint {
+  /** anything Date.parse reads: "2021-03-14", or just "2021" */
+  date: string
+  seconds: number
+  raceId: string
+  raceName: string
+  place?: number | null
+}
+
 export interface ProgressionLabels {
   /** "PB" */
   pb: string
@@ -18,6 +26,8 @@ export interface ProgressionLabels {
   faster: string
   place: (n: number) => string
   ariaLabel: string
+  /** the moving average, in the tooltip */
+  average?: string
 }
 
 /**
@@ -25,7 +35,13 @@ export interface ProgressionLabels {
  * axis is inverted), the personal best is highlighted and labelled; hover or
  * arrow keys show a race. The profile's results table carries the same values.
  */
-export function ProgressionChart({ progression, labels }: { progression: Progression; labels: ProgressionLabels }) {
+export function ProgressionChart(props: {
+  progression: { points: ProgressionPoint[]; best: ProgressionPoint }
+  labels: ProgressionLabels
+  /** seconds per point, null where there's no average yet */
+  average?: (number | null)[]
+}) {
+  const { progression, labels, average } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -138,6 +154,17 @@ export function ProgressionChart({ progression, labels }: { progression: Progres
             strokeLinejoin="round"
             strokeLinecap="round"
           />
+          {average && (
+            <polyline
+              points={points.flatMap((_, i) => (average[i] == null ? [] : [`${x(dates[i])},${y(average[i])}`])).join(' ')}
+              fill="none"
+              stroke="var(--chart-context)"
+              strokeWidth={2}
+              strokeDasharray="5 4"
+              strokeLinejoin="round"
+              className="pointer-events-none"
+            />
+          )}
           {points.map((p, i) => {
             const isBest = i === bestIndex
             return (
@@ -172,6 +199,11 @@ export function ProgressionChart({ progression, labels }: { progression: Progres
           </div>
           <div className="truncate">{a.raceName}</div>
           {a.place != null && <div className="text-muted-foreground">{labels.place(a.place)}</div>}
+          {average?.[active!] != null && (
+            <div className="text-muted-foreground tabular-nums">
+              {labels.average}: {formatSeconds(average[active!]!)}
+            </div>
+          )}
         </div>
       )}
     </div>

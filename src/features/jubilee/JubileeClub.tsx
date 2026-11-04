@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Download, Loader2, Medal, Search, X } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Loader2, Medal, Search, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,7 @@ import {
 } from './jubileeSlice'
 import { hasTime } from './jubileeSlice'
 import type { ClubMember } from './jubileeSlice'
+import { MemberChart } from './MemberChart'
 
 /** A 4-digit birth year between 1900 and this year, or null. */
 function parseYob(text: string): number | null {
@@ -43,6 +44,12 @@ function parseYob(text: string): number | null {
 
 /** TableCell's own horizontal padding (p-2 on each side). */
 const CELL_PADDING = 16
+/** The columns before the years: #, name, finishes, born, town, best. */
+const FIXED_COLUMNS = 6
+/** A member's best time among their years. White on the brand red is 4.5:1, bold so it isn't colour alone. */
+const BEST_TIME = 'bg-brand text-brand-foreground rounded font-semibold'
+
+const memberKey = (m: ClubMember) => `${m.n}-${m.y ?? ''}`
 
 /** "6-10" → "6–10", "31plus" → "31+". */
 function bandLabel(id: string) {
@@ -76,6 +83,8 @@ export function JubileeClub() {
   // members are listed ("1" vs "2219"), so it's measured rather than assumed
   const indexCell = useRef<HTMLTableCellElement>(null)
   const [indexWidth, setIndexWidth] = useState(48)
+  /** the member whose chart is open: one at a time, like an accordion */
+  const [openMember, setOpenMember] = useState<string | null>(null)
 
   useEffect(() => {
     const el = indexCell.current
@@ -115,6 +124,8 @@ export function JubileeClub() {
     dispatch(setTab('runner'))
     searchRunner(dispatch, { name: m.n, yob: m.y, exact: true })
   }
+
+  const toggleMember = (m: ClubMember) => setOpenMember((open) => (open === memberKey(m) ? null : memberKey(m)))
 
   /** Shown above and below the table, so a long page doesn't have to be scrolled to turn. */
   const pager = pageCount > 1 && (
@@ -266,7 +277,7 @@ export function JubileeClub() {
             </Alert>
           )}
           <p className="text-muted-foreground text-xs">
-            {t.jubilee.sourceNote(j.source || 'BSI')} {t.jubilee.noTimeNote}
+            {t.jubilee.sourceNote(j.source || 'BSI')} {t.jubilee.noTimeNote} {t.jubilee.bestNote}
           </p>
         </CardContent>
       </Card>
@@ -286,7 +297,8 @@ export function JubileeClub() {
               {pager}
 
               {/* the wide year grid is unusable on a phone: cards there instead */}
-              <div className="hidden rounded-md border sm:block">
+              {/* @container: an open chart is as wide as this box, however far the years scroll */}
+              <div className="@container hidden rounded-md border sm:block">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -312,7 +324,8 @@ export function JubileeClub() {
                   </TableHeader>
                   <TableBody>
                     {members.map((m, i) => (
-                      <TableRow key={`${m.n}-${m.y ?? ''}-${i}`} className="group/row">
+                      <Fragment key={`${memberKey(m)}-${i}`}>
+                      <TableRow className="group/row">
                         <TableCell className="text-muted-foreground bg-card group-hover/row:bg-table-row-hover sticky left-0 z-20 tabular-nums">
                           {(page - 1) * PAGE_SIZE + i + 1}
                         </TableCell>
@@ -320,15 +333,20 @@ export function JubileeClub() {
                           className="bg-card group-hover/row:bg-table-row-hover sticky z-20 shadow-[1px_0_0_var(--border)]"
                           style={{ left: indexWidth }}
                         >
-                          <button
-                            type="button"
-                            title={t.common.openRunner}
-                            onClick={() => openRunner(m)}
-                            className="text-primary decoration-brand cursor-pointer text-left font-medium decoration-2 underline-offset-4 hover:underline"
-                          >
-                            {m.n}
-                          </button>
-                          {m.c && <span className="text-muted-foreground block text-xs">{m.c}</span>}
+                          <div className="flex items-start gap-1">
+                            <ChartToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} />
+                            <div>
+                              <button
+                                type="button"
+                                title={t.common.openRunner}
+                                onClick={() => openRunner(m)}
+                                className="text-primary decoration-brand cursor-pointer text-left font-medium decoration-2 underline-offset-4 hover:underline"
+                              >
+                                {m.n}
+                              </button>
+                              {m.c && <span className="text-muted-foreground block text-xs">{m.c}</span>}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="brand">{m.finishes}</Badge>
@@ -346,11 +364,30 @@ export function JubileeClub() {
                                 !time && 'text-muted-foreground/40',
                               )}
                             >
-                              {hasTime(time) ? time.slice(0, 5) : time ? '✓' : '·'}
+                              {hasTime(time) ? (
+                                <span className={time === m.best ? `${BEST_TIME} px-1 py-0.5` : undefined} title={time === m.best ? t.jubilee.best : undefined}>
+                                  {time.slice(0, 5)}
+                                </span>
+                              ) : time ? (
+                                '✓'
+                              ) : (
+                                '·'
+                              )}
                             </TableCell>
                           )
                         })}
                       </TableRow>
+                      {openMember === memberKey(m) && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={FIXED_COLUMNS + years.length} className="whitespace-normal">
+                            {/* stays in view while the years scroll sideways */}
+                            <div className="sticky left-2 w-[calc(100cqw-1rem)]">
+                              <MemberChart member={m} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -388,14 +425,23 @@ export function JubileeClub() {
                           <span
                             key={year}
                             className={cn(
-                              'bg-muted/60 rounded px-1.5 py-0.5 text-xs tabular-nums',
+                              'rounded px-1.5 py-0.5 text-xs tabular-nums',
+                              time === m.best ? BEST_TIME : 'bg-muted/60',
                             )}
                           >
                             {year}{' '}
-                            <span className="text-muted-foreground">{hasTime(time) ? time.slice(0, 5) : '✓'}</span>
+                            <span className={time === m.best ? undefined : 'text-muted-foreground'}>{hasTime(time) ? time.slice(0, 5) : '✓'}</span>
                           </span>
                         ))}
                     </div>
+                    <div className="mt-2">
+                      <ChartToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} withLabel />
+                    </div>
+                    {openMember === memberKey(m) && (
+                      <div className="mt-2">
+                        <MemberChart member={m} />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -410,5 +456,23 @@ export function JubileeClub() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+/** Opens a member's chart; the name next to it opens their profile. */
+function ChartToggle({ open, onToggle, withLabel }: { open: boolean; onToggle: () => void; withLabel?: boolean }) {
+  const t = useT()
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-label={withLabel ? undefined : t.jubilee.showChart}
+      title={t.jubilee.showChart}
+      onClick={onToggle}
+      className="text-muted-foreground hover:bg-accent focus-visible:outline-ring flex shrink-0 cursor-pointer items-center gap-1 rounded p-1 text-xs focus-visible:outline-2"
+    >
+      <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+      {withLabel && t.jubilee.showChart}
+    </button>
   )
 }
