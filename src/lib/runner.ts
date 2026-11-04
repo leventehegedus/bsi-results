@@ -108,6 +108,48 @@ export function progressions(rows: RunnerResult[], minResults = 2): Progression[
     .sort((a, b) => b.distance - a.distance)
 }
 
+export interface CalendarMonth {
+  /** "2021-03" */
+  month: string
+  /** races of unknown distance add nothing here */
+  km: number
+  /** oldest first */
+  races: RunnerResult[]
+}
+
+export interface CalendarYear {
+  year: number
+  km: number
+  /** January to December, null for a month without a race */
+  months: (CalendarMonth | null)[]
+}
+
+/** Races and kilometres per month, newest year first, with the years between races kept as empty rows. */
+export function raceCalendar(rows: RunnerResult[]): CalendarYear[] {
+  const dated = rows
+    .filter((r) => /^\d{4}-\d{2}/.test(r.date))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (!dated.length) return []
+  const first = Number(dated[0].date.slice(0, 4))
+  const last = Number(dated[dated.length - 1].date.slice(0, 4))
+  const years: CalendarYear[] = Array.from({ length: last - first + 1 }, (_, i) => ({
+    year: last - i,
+    km: 0,
+    months: Array.from({ length: 12 }, () => null),
+  }))
+  for (const r of dated) {
+    const year = years[last - Number(r.date.slice(0, 4))]
+    const i = Number(r.date.slice(5, 7)) - 1
+    const km = (r.distance ?? 0) / 1000
+    const month = year.months[i] ?? { month: r.date.slice(0, 7), km: 0, races: [] }
+    month.km += km
+    month.races.push(r)
+    year.months[i] = month
+    year.km += km
+  }
+  return years
+}
+
 /** Most frequent non-empty values, e.g. towns or clubs a runner registered with. */
 export function topValues(values: string[], limit = 3): string[] {
   const counts = new Map<string, number>()

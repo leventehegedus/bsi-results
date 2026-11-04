@@ -30,12 +30,14 @@ import { sameRunner, toggleRunner } from '@/features/favourites/favouritesSlice'
 import { ShareLink } from '@/routing/ShareLink'
 import { RunnerLink } from './RunnerLink'
 import { ProgressionChart } from './ProgressionChart'
+import { RaceCalendar } from './RaceCalendar'
 import {
   MIN_QUERY_LENGTH,
   selectAllRunnerResults,
   selectPeople,
   selectPersonalBests,
   selectProgressions,
+  selectRaceCalendar,
   selectRunnerResults,
   setFilterTown,
   setFilterYob,
@@ -53,6 +55,7 @@ export function RunnerProfile() {
   const people = useAppSelector(selectPeople)
   const pbs = useAppSelector(selectPersonalBests)
   const progress = useAppSelector(selectProgressions)
+  const calendar = useAppSelector(selectRaceCalendar)
   const busy = r.status === 'resolving' || r.status === 'scanning'
   const savedRunners = useAppSelector((s) => s.favourites.runners)
   const current = r.query ? { name: r.query.name, yob: r.query.yob ?? singleYobOf(all) } : null
@@ -405,6 +408,18 @@ export function RunnerProfile() {
                     </section>
                   )
                 })}
+              </CardContent>
+            </Card>
+          )}
+
+          {calendar.length > 0 && (
+            <Card className="min-w-0">
+              <CardHeader>
+                <CardTitle>{t.runner.calendarTitle}</CardTitle>
+                <CardDescription>{t.runner.calendarDescription}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RaceCalendar years={calendar} onOpenRace={openRace} />
               </CardContent>
             </Card>
           )}

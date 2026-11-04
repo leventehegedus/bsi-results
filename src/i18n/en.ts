@@ -342,6 +342,10 @@ export const en = {
     mergeSubLists: 'Count a run once (merge sub-lists)',
     includeVirtual: 'Include virtual races',
     pbTitle: 'Personal bests',
+    calendarTitle: 'Race calendar',
+    calendarDescription:
+      'Kilometres raced per month, darker is more. Click a month to open its race, or choose if there were several. Races of unknown distance add no kilometres.',
+    calendarPick: 'Which race?',
     progressTitle: 'Progression',
     progressDescription:
       'Net times over the years, one chart per distance with at least two races (virtual races excluded). Faster is higher.',

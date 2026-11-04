@@ -340,6 +340,10 @@ export const hu: Messages = {
     mergeSubLists: 'Egy futás egyszer számít (allisták összevonása)',
     includeVirtual: 'Virtuális versenyekkel együtt',
     pbTitle: 'Egyéni csúcsok',
+    calendarTitle: 'Versenynaptár',
+    calendarDescription:
+      'Havonta a versenyeken futott kilométerek, minél sötétebb, annál több. Kattints egy hónapra, és megnyílik a verseny; ha több is volt, választhatsz. Az ismeretlen távú versenyek nem számítanak a kilométerekbe.',
+    calendarPick: 'Melyik verseny?',
     progressTitle: 'Fejlődés',
     progressDescription:
       'Nettó idők az évek során, távonként külön diagramon, ha legalább két verseny van rajta (virtuális versenyek nélkül). A gyorsabb van feljebb.',
