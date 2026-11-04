@@ -168,6 +168,43 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
           ariaLabel={t.breakdown.chartTitle}
           onSelect={(key, c) => showCutoff(key, c.seconds)}
         />
+        {/* the line chart's values as a table */}
+        <details className="text-sm">
+          <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
+          <div className="mt-2 rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.breakdown.topCol}</TableHead>
+                  {groups.map((g) => (
+                    <TableHead key={g.key}>
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden className="h-0.5 w-3 rounded-full" style={{ background: g.color }} />
+                        {g.label} <span className="text-muted-foreground font-normal">({g.stats.count})</span>
+                      </span>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {PERCENTS.map((p, i) => (
+                  <TableRow key={p}>
+                    <TableCell className="font-medium tabular-nums">{p}%</TableCell>
+                    {groups.map((g) => {
+                      const c = g.stats.cutoffs[i]
+                      return (
+                        <TableCell key={g.key} className="tabular-nums">
+                          <span className="font-semibold">{formatSeconds(c.seconds)}</span>{' '}
+                          <span className="text-muted-foreground text-xs">{t.breakdown.place(c.rank)}</span>
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </details>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -200,41 +237,6 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
         />
         <BinTable bins={stats.minuteBins} stacked={stacked} />
       </section>
-
-      {/* the line chart's values as a table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t.breakdown.topCol}</TableHead>
-              {groups.map((g) => (
-                <TableHead key={g.key}>
-                  <span className="flex items-center gap-1.5">
-                    <span aria-hidden className="h-0.5 w-3 rounded-full" style={{ background: g.color }} />
-                    {g.label} <span className="text-muted-foreground font-normal">({g.stats.count})</span>
-                  </span>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {PERCENTS.map((p, i) => (
-              <TableRow key={p}>
-                <TableCell className="font-medium tabular-nums">{p}%</TableCell>
-                {groups.map((g) => {
-                  const c = g.stats.cutoffs[i]
-                  return (
-                    <TableCell key={g.key} className="tabular-nums">
-                      <span className="font-semibold">{formatSeconds(c.seconds)}</span>{' '}
-                      <span className="text-muted-foreground text-xs">{t.breakdown.place(c.rank)}</span>
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
 
       {stats.ages.length > 1 && (
         <section className="flex flex-col gap-3">
