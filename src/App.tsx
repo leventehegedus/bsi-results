@@ -137,8 +137,8 @@ function SegmentButton(props: {
       className={cn(
         'flex h-6 min-w-7 items-center justify-center rounded px-2 transition-colors',
         props.active
-          ? 'bg-brand text-brand-foreground shadow-sm'
-          : 'text-header-foreground/80 hover:text-header-foreground hover:bg-header-foreground/10',
+          ? 'bg-header-foreground text-header shadow-sm'
+          : 'text-header-foreground/90 hover:text-header-foreground hover:bg-header-foreground/10',
       )}
     >
       {props.children}

@@ -35,7 +35,7 @@
 }
 
 /*
- * Palette: ink #1c1c1a · navy #16336f · cream #f0eedf · periwinkle #b1bfe2 · orange #fe492a.
+ * Palette: ink #1c1c1a · blue #234b94 · cream #f0eedf · periwinkle #b1bfe2 · red #e5262f.
  * Tints are mixes of these; every text/background pair meets WCAG AA (4.5:1),
  * focus rings 3:1.
  */
@@ -48,36 +48,36 @@
   --card-foreground: #1c1c1a;
   --popover: #f8f7f1;
   --popover-foreground: #1c1c1a;
-  --primary: #16336f; /* navy */
+  --primary: #234b94; /* blue */
   --primary-foreground: #f0eedf;
   --secondary: #b1bfe2; /* periwinkle */
-  --secondary-foreground: #16336f;
+  --secondary-foreground: #234b94;
   --muted: #e3e1d3;
   --muted-foreground: #605f59;
   --accent: #d4d9e0; /* periwinkle washed into cream: hover / selected rows */
-  --accent-foreground: #16336f;
-  --destructive: #ba3b25; /* orange darkened so error text reads on cream */
+  --accent-foreground: #234b94;
+  --destructive: #b71c26; /* red darkened so error text reads on cream */
   --border: #d2d1c3;
   --input: #b0afa4;
-  --ring: #e34428; /* orange, a touch darker for 3:1 on cream */
-  /* accents: orange fills (never as text on cream: 2.9:1), navy header band */
-  --brand: #fe492a; /* orange: call-to-action buttons, counts, progress, selection edge */
-  --brand-foreground: #1c1c1a; /* ink on orange: 5.0:1 */
-  --header: #16336f; /* navy */
+  --ring: #e5262f; /* red: 3.9:1 on cream */
+  /* accents: red fills (never as text on cream: 3.9:1), blue header band */
+  --brand: #e5262f; /* red: call-to-action buttons, counts, progress, selection edge */
+  --brand-foreground: #ffffff; /* white on red: 4.5:1 (ink is only 3.8:1) */
+  --header: #234b94; /* blue; red on it is only 1.9:1, so no state relies on a red fill here */
   --header-foreground: #f0eedf;
   --table-head: #d8deea; /* periwinkle washed into the card */
   /* what `hover:bg-muted/50` looks like over the card, but opaque: sticky cells
      can't be see-through or the columns scrolling underneath show through */
   --table-row-hover: color-mix(in oklab, var(--muted) 50%, var(--card));
   /* chart series, validated (lightness band, chroma, CVD ΔE ≥ 8, 3:1) on the card */
-  --chart-men: #3463c4; /* navy's hue, lifted into the band */
-  --chart-women: #fe492a; /* orange */
+  --chart-men: #3463c4; /* the blue's hue, lifted into the band */
+  --chart-women: #e5262f; /* red */
   --chart-context: #7d7c73; /* "all finishers": neutral context line, 3.9:1 */
   --chart-series: #3463c4; /* a single series (same validated step as --chart-men) */
-  --chart-highlight: #fe492a; /* the one point a chart is about, e.g. a PB */
+  --chart-highlight: #e5262f; /* the one point a chart is about, e.g. a PB */
   /* diverging pair for pacing: faster / slower than the start (same validated steps) */
   --chart-faster: #3463c4;
-  --chart-slower: #fe492a;
+  --chart-slower: #e5262f;
 }
 
 .dark {
@@ -89,30 +89,30 @@
   --popover: #2b2b28;
   --popover-foreground: #f0eedf;
   --primary: #b1bfe2; /* periwinkle */
-  --primary-foreground: #16336f;
-  --secondary: #16336f; /* navy */
+  --primary-foreground: #234b94;
+  --secondary: #234b94; /* blue */
   --secondary-foreground: #f0eedf;
   --muted: #31312e;
   --muted-foreground: #acaba0;
-  --accent: #182d5a; /* navy sunk into ink */
+  --accent: #1c366a; /* blue sunk into ink */
   --accent-foreground: #f0eedf;
-  --destructive: #fc5d40; /* orange, lifted slightly for 4.5:1 on cards */
+  --destructive: #f8606a; /* red, lifted for 4.5:1 on cards */
   --border: #3a3936;
   --input: #5c5b55;
-  --ring: #fe492a; /* orange */
-  --brand: #fe492a;
-  --brand-foreground: #1c1c1a;
-  --header: #16336f;
+  --ring: #e5262f; /* red */
+  --brand: #e5262f;
+  --brand-foreground: #ffffff;
+  --header: #234b94;
   --header-foreground: #f0eedf;
-  --table-head: #1b2f58; /* navy sunk into the card */
+  --table-head: #1f3a6c; /* blue sunk into the card */
   --table-row-hover: color-mix(in oklab, var(--muted) 50%, var(--card));
   --chart-men: #5b84d4;
-  --chart-women: #fe492a;
+  --chart-women: #e5262f;
   --chart-context: #8d8c84; /* 4.5:1 */
   --chart-series: #5b84d4;
-  --chart-highlight: #fe492a;
+  --chart-highlight: #e5262f;
   --chart-faster: #5b84d4;
-  --chart-slower: #fe492a;
+  --chart-slower: #e5262f;
 }
 
 @layer base {
