@@ -57,31 +57,37 @@ export interface PlaceCount {
   count: number
 }
 
+export interface PlaceStat extends PlaceCount {
+  /** the place's fastest finisher */
+  best: BreakdownRow
+}
+
 /**
- * The ten most common places, most common first. Spellings are typed by hand, so
+ * Every place with its finishers, most common first. Spellings are typed by hand, so
  * "BUDAPEST", "budapest" and "-Budapest" count as one, shown as the most common spelling.
  * shortcut: same-named towns in different countries merge, split by country if that ever shows.
  */
-export function topPlaces(values: string[]): PlaceCount[] {
-  const groups = new Map<string, Map<string, number>>()
-  for (const value of values) {
-    const clean = value.replace(/^[^\p{L}]+/u, '').trim()
+export function placeStats(rows: BreakdownRow[], place: (r: BreakdownRow) => string): PlaceStat[] {
+  const groups = new Map<string, { spellings: Map<string, number>; best: BreakdownRow }>()
+  for (const r of rows) {
+    const clean = place(r).replace(/^[^\p{L}]+/u, '').trim()
     if (!clean) continue
     const key = clean.toLocaleLowerCase('hu')
-    const spellings = groups.get(key) ?? new Map<string, number>()
-    spellings.set(clean, (spellings.get(clean) ?? 0) + 1)
-    groups.set(key, spellings)
+    const group = groups.get(key) ?? { spellings: new Map<string, number>(), best: r }
+    group.spellings.set(clean, (group.spellings.get(clean) ?? 0) + 1)
+    if (r.seconds < group.best.seconds) group.best = r
+    groups.set(key, group)
   }
   return [...groups.values()]
-    .map((spellings) => {
+    .map(({ spellings, best }) => {
       const counts = [...spellings]
       return {
-        name: counts.reduce((best, s) => (s[1] > best[1] ? s : best))[0],
+        name: counts.reduce((most, s) => (s[1] > most[1] ? s : most))[0],
         count: counts.reduce((sum, s) => sum + s[1], 0),
+        best,
       }
     })
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'hu'))
-    .slice(0, 10)
 }
 
 /** The ten fastest of a group, fastest first. */

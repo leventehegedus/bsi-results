@@ -201,6 +201,8 @@ export const en = {
     categories: 'Age categories',
     categoryCol: 'Category',
     countCol: 'Finishers',
+    countryCol: 'Country',
+    bestRunnerCol: 'Best runner',
     noGender: 'This race has no gender data, so only all finishers are shown.',
     empty: 'No finish times in this race.',
     distTitle: 'How finish times are spread',

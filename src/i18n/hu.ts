@@ -198,6 +198,8 @@ export const hu: Messages = {
     categories: 'Korosztályok',
     categoryCol: 'Kategória',
     countCol: 'Befutó',
+    countryCol: 'Ország',
+    bestRunnerCol: 'Legjobb futó',
     noGender: 'Ennél a versenynél nincs nemi adat, ezért csak az összes befutó látszik.',
     empty: 'Ennél a versenynél nincs célidő.',
     distTitle: 'A célidők eloszlása',

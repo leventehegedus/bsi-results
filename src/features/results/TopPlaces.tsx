@@ -1,14 +1,28 @@
-import type { PlaceCount } from '@/lib/breakdown'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { RunnerLink } from '@/features/runner/RunnerLink'
+import { useT } from '@/i18n'
+import { formatSeconds, type PlaceStat } from '@/lib/breakdown'
 
-/** A ranked list of places with a bar each; counts and shares are printed, so no hover layer or table is needed. */
-export function TopPlaces(props: { title: string; places: PlaceCount[]; total: number; onSelect: (index: number) => void }) {
-  const { title, places, total, onSelect } = props
+const TOP = 10
+
+/** The ten biggest places with a bar each; counts and shares are printed, so no hover layer is needed. The table lists every place with its fastest runner. */
+export function TopPlaces(props: {
+  title: string
+  placeCol: string
+  places: PlaceStat[]
+  total: number
+  raceId: string
+  raceName?: string
+  onSelect: (index: number) => void
+}) {
+  const { title, placeCol, places, total, raceId, raceName, onSelect } = props
+  const t = useT()
   const max = places[0]?.count ?? 0
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <h3 className="text-primary text-sm font-semibold">{title}</h3>
       <ol className="flex flex-col gap-1.5">
-        {places.map((p, i) => (
+        {places.slice(0, TOP).map((p, i) => (
           <li key={p.name}>
             <button
               type="button"
@@ -32,6 +46,32 @@ export function TopPlaces(props: { title: string; places: PlaceCount[]; total: n
           </li>
         ))}
       </ol>
+      <details className="text-sm">
+        <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
+        <div className="mt-2 rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{placeCol}</TableHead>
+                <TableHead className="text-right">{t.breakdown.countCol}</TableHead>
+                <TableHead>{t.breakdown.bestRunnerCol}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {places.map((p) => (
+                <TableRow key={p.name}>
+                  <TableCell>{p.name}</TableCell>
+                  <TableCell className="text-right tabular-nums">{p.count}</TableCell>
+                  <TableCell>
+                    <RunnerLink name={p.best.name} raceId={raceId} raceName={raceName} place={p.best.place} bib={p.best.bib} />{' '}
+                    <span className="font-semibold tabular-nums">{formatSeconds(p.best.seconds)}</span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </details>
     </section>
   )
 }
