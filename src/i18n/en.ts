@@ -206,6 +206,8 @@ export const en = {
     distTitle: 'How finish times are spread',
     distDescription:
       'Finishers per time slot. The thin lines mark the time needed for the top 10%, 20% … of all finishers.',
+    minuteTitle: 'Finishers per minute',
+    minuteDescription: 'Finishers in every minute of the race. The thin lines mark every half hour.',
     timeAxis: 'Finish time',
     finishedBy: (p: number) => `${p}% had finished by then`,
     showTable: 'Show as table',

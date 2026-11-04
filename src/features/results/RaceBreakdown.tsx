@@ -4,7 +4,7 @@ import { useRaceBreakdownQuery } from '@/api/futanetApi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
-import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, type GroupStats } from '@/lib/breakdown'
+import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, type Bin, type GroupStats } from '@/lib/breakdown'
 import { DistributionChart } from './DistributionChart'
 import { PercentileChart, type PercentileSeries } from './PercentileChart'
 
@@ -21,6 +21,7 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
       women: groupStats(data.women),
       categories: categoryStats(data.all),
       bins: histogram(data.all, data.men, data.women),
+      minuteBins: histogram(data.all, data.men, data.women, 60),
     }
   }, [data])
 
@@ -59,6 +60,14 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
     cutoffs: g.stats.cutoffs.filter((c) => c.percent < 100),
   }))
 
+  const distLabels = {
+    men: t.breakdown.men,
+    women: t.breakdown.women,
+    finishers: t.breakdown.finishers,
+    finishedBy: t.breakdown.finishedBy,
+    xAxis: t.breakdown.timeAxis,
+  }
+
   return (
     <div className={isFetching ? 'flex flex-col gap-6 opacity-60' : 'flex flex-col gap-6'}>
       <p className="text-muted-foreground text-xs">{t.breakdown.wholeRace}</p>
@@ -94,45 +103,24 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
           bins={stats.bins}
           cutoffs={stats.all.cutoffs}
           stacked={stacked}
-          labels={{
-            men: t.breakdown.men,
-            women: t.breakdown.women,
-            finishers: t.breakdown.finishers,
-            finishedBy: t.breakdown.finishedBy,
-            xAxis: t.breakdown.timeAxis,
-            ariaLabel: t.breakdown.distTitle,
-          }}
+          labels={{ ...distLabels, ariaLabel: t.breakdown.distTitle }}
         />
-        {/* the bar chart's values as a table */}
-        <details className="text-sm">
-          <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
-          <div className="mt-2 rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.breakdown.timeSlot}</TableHead>
-                  {stacked && <TableHead className="text-right">{t.breakdown.men}</TableHead>}
-                  {stacked && <TableHead className="text-right">{t.breakdown.women}</TableHead>}
-                  <TableHead className="text-right">{t.breakdown.total}</TableHead>
-                  <TableHead className="text-right">{t.breakdown.finishedByCol}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.bins.map((b) => (
-                  <TableRow key={b.from} className={b.total ? undefined : 'text-muted-foreground'}>
-                    <TableCell className="tabular-nums">
-                      {formatSeconds(b.from)} – {formatSeconds(b.to)}
-                    </TableCell>
-                    {stacked && <TableCell className="text-right tabular-nums">{b.men}</TableCell>}
-                    {stacked && <TableCell className="text-right tabular-nums">{b.women}</TableCell>}
-                    <TableCell className="text-right tabular-nums">{b.total}</TableCell>
-                    <TableCell className="text-right tabular-nums">{Math.round(b.cumulative)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </details>
+        <BinTable bins={stats.bins} stacked={stacked} />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-primary text-sm font-semibold">{t.breakdown.minuteTitle}</h3>
+          <p className="text-muted-foreground text-xs">{t.breakdown.minuteDescription}</p>
+        </div>
+        <DistributionChart
+          bins={stats.minuteBins}
+          cutoffs={[]}
+          stacked={stacked}
+          gridStep={HALF_HOUR}
+          labels={{ ...distLabels, ariaLabel: t.breakdown.minuteTitle }}
+        />
+        <BinTable bins={stats.minuteBins} stacked={stacked} />
       </section>
 
       {/* the line chart's values as a table */}
@@ -209,6 +197,43 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
 }
 
 const SMALL_GROUP = 10
+const HALF_HOUR = 1800
+
+/** A bar chart's values as a table. */
+function BinTable({ bins, stacked }: { bins: Bin[]; stacked: boolean }) {
+  const t = useT()
+  return (
+    <details className="text-sm">
+      <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
+      <div className="mt-2 rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t.breakdown.timeSlot}</TableHead>
+              {stacked && <TableHead className="text-right">{t.breakdown.men}</TableHead>}
+              {stacked && <TableHead className="text-right">{t.breakdown.women}</TableHead>}
+              <TableHead className="text-right">{t.breakdown.total}</TableHead>
+              <TableHead className="text-right">{t.breakdown.finishedByCol}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {bins.map((b) => (
+              <TableRow key={b.from} className={b.total ? undefined : 'text-muted-foreground'}>
+                <TableCell className="tabular-nums">
+                  {formatSeconds(b.from)} – {formatSeconds(b.to)}
+                </TableCell>
+                {stacked && <TableCell className="text-right tabular-nums">{b.men}</TableCell>}
+                {stacked && <TableCell className="text-right tabular-nums">{b.women}</TableCell>}
+                <TableCell className="text-right tabular-nums">{b.total}</TableCell>
+                <TableCell className="text-right tabular-nums">{Math.round(b.cumulative)}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </details>
+  )
+}
 
 function Figure({ label, value }: { label: string; value: string }) {
   return (
