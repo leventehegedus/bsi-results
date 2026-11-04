@@ -215,6 +215,7 @@ export const en = {
     heatPick: 'Which town?',
     heatPlaced: (placed: number, total: number) => `${placed.toLocaleString('hu-HU')} of ${total.toLocaleString('hu-HU')} finishers found on the map.`,
     heatSource: 'Towns: GeoNames (CC BY 4.0). Border: Natural Earth.',
+    clickHint: 'Click part of a chart to see those runners in the results; in the top 10, to open the runner.',
     pyramidTitle: 'Finishers by age',
     pyramidDescription: 'Bar length: finishers. Number: median finish time.',
     ageCol: 'Age',

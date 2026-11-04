@@ -21,10 +21,16 @@ export interface TopFinishersRow {
 
 /**
  * One row of dots per group on a shared time axis, one dot per runner. Hover or
- * arrow keys show the name and exact time; runners on the same time are listed together.
+ * arrow keys show the name and exact time, runners on the same time listed together;
+ * a click or Enter opens the runner.
  */
-export function TopFinishersChart(props: { rows: TopFinishersRow[]; xAxis: string; ariaLabel: string }) {
-  const { rows, xAxis, ariaLabel } = props
+export function TopFinishersChart(props: {
+  rows: TopFinishersRow[]
+  xAxis: string
+  ariaLabel: string
+  onSelect: (runner: BreakdownRow) => void
+}) {
+  const { rows, xAxis, ariaLabel, onSelect } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -84,6 +90,9 @@ export function TopFinishersChart(props: { rows: TopFinishersRow[]; xAxis: strin
       e.preventDefault()
       const d = e.key === 'ArrowRight' ? 1 : -1
       setActive((i) => Math.min(points.length - 1, Math.max(0, (i ?? (d > 0 ? -1 : points.length)) + d)))
+    } else if ((e.key === 'Enter' || e.key === ' ') && active !== null) {
+      e.preventDefault()
+      onSelect(points[active].runner)
     } else if (e.key === 'Escape') setActive(null)
   }
 
@@ -105,7 +114,11 @@ export function TopFinishersChart(props: { rows: TopFinishersRow[]; xAxis: strin
           onBlur={() => setActive(null)}
           onPointerMove={(e) => setActive(nearest(e.clientX, e.clientY))}
           onPointerLeave={() => setActive(null)}
-          className="focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2"
+          onClick={(e) => {
+            const i = nearest(e.clientX, e.clientY)
+            if (i !== null) onSelect(points[i].runner)
+          }}
+          className={`focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2 ${activePoint ? 'cursor-pointer' : ''}`}
         >
           {rows.map((row, i) => (
             <g key={row.key}>

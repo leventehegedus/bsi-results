@@ -120,7 +120,8 @@ export function HungaryHeatmap({ rows, onShowTown }: { rows: BreakdownRow[]; onS
               stroke={COUNTRY}
               strokeWidth={3}
               paintOrder="stroke"
-              className="pointer-events-none text-[11px] font-medium"
+              // map units, scaled with the map: on a phone it's about half size
+              className="pointer-events-none text-[22px] font-medium sm:text-[11px]"
             >
               {name}
             </text>

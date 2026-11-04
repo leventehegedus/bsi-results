@@ -11,17 +11,17 @@ const SMALL_GROUP = 10
  * Age pyramid: finishers per age band as bars, men growing left and women right
  * on one scale, with each side's median finish time beside its bar.
  */
-export function AgePyramid({ bands }: { bands: AgeBand[] }) {
+export function AgePyramid({ bands, onSelect }: { bands: AgeBand[]; onSelect: (category: string, sex: 'F' | 'N') => void }) {
   const t = useT()
   const max = Math.max(...bands.flatMap((b) => [b.men.count, b.women.count]))
 
-  const side = (band: AgeBand, stats: GroupStats, label: string, color: string, flip: boolean) =>
+  const side = (band: AgeBand, stats: GroupStats, label: string, color: string, flip: boolean, select: () => void) =>
     stats.count > 0 ? (
-      <div
-        role="img"
-        tabIndex={0}
+      <button
+        type="button"
+        onClick={select}
         aria-label={`${label}, ${band.label}: ${formatSeconds(stats.median)}, ${stats.count} ${t.breakdown.finishers}`}
-        className={`group focus-visible:outline-ring relative flex items-center gap-2 rounded-sm focus-visible:outline-2 ${flip ? 'flex-row-reverse' : ''}`}
+        className={`group focus-visible:outline-ring relative flex w-full cursor-pointer items-center gap-2 rounded-sm focus-visible:outline-2 ${flip ? 'flex-row-reverse' : ''}`}
       >
         <span
           aria-hidden
@@ -31,23 +31,23 @@ export function AgePyramid({ bands }: { bands: AgeBand[] }) {
         <span aria-hidden className={`text-xs font-medium tabular-nums ${stats.count < SMALL_GROUP ? 'text-muted-foreground' : ''}`}>
           {formatSeconds(stats.median)}
         </span>
-        <div
+        <span
           aria-hidden
           className={`bg-popover text-popover-foreground pointer-events-none absolute bottom-full z-10 mb-1 hidden w-max rounded-md border px-3 py-2 text-xs shadow-md group-hover:block group-focus:block ${flip ? 'right-0' : 'left-0'}`}
         >
-          <div className="text-muted-foreground mb-1">
+          <span className="text-muted-foreground mb-1 block">
             {label}, {band.label}
-          </div>
-          <div>
+          </span>
+          <span className="block">
             <span className="font-semibold tabular-nums">{stats.count.toLocaleString('hu-HU')}</span>{' '}
             <span className="text-muted-foreground">{t.breakdown.finishers}</span>
-          </div>
-          <div>
+          </span>
+          <span className="block">
             <span className="font-semibold tabular-nums">{formatSeconds(stats.median)}</span>{' '}
             <span className="text-muted-foreground">{t.breakdown.median}</span>
-          </div>
-        </div>
-      </div>
+          </span>
+        </span>
+      </button>
     ) : (
       <div />
     )
@@ -66,9 +66,9 @@ export function AgePyramid({ bands }: { bands: AgeBand[] }) {
         </span>
         {bands.map((b) => (
           <div key={b.age} className="contents">
-            {side(b, b.men, t.breakdown.men, 'var(--chart-men)', true)}
+            {side(b, b.men, t.breakdown.men, 'var(--chart-men)', true, () => onSelect(b.menCategory, 'F'))}
             <span className="text-center text-xs font-medium tabular-nums">{b.label}</span>
-            {side(b, b.women, t.breakdown.women, 'var(--chart-women)', false)}
+            {side(b, b.women, t.breakdown.women, 'var(--chart-women)', false, () => onSelect(b.womenCategory, 'N'))}
           </div>
         ))}
       </div>

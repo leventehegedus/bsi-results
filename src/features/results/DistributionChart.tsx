@@ -35,8 +35,10 @@ export function DistributionChart(props: {
   stacked: boolean
   labels: DistributionLabels
   gridStep?: number
+  /** a click or Enter on a slot with finishers */
+  onSelect?: (bin: Bin) => void
 }) {
-  const { bins, cutoffs, stacked, labels, gridStep } = props
+  const { bins, cutoffs, stacked, labels, gridStep, onSelect } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -91,7 +93,14 @@ export function DistributionChart(props: {
       e.preventDefault()
       const d = e.key === 'ArrowRight' ? 1 : -1
       setActive((i) => Math.min(bins.length - 1, Math.max(0, (i ?? (d > 0 ? -1 : bins.length)) + d)))
+    } else if ((e.key === 'Enter' || e.key === ' ') && active !== null) {
+      e.preventDefault()
+      select(active)
     } else if (e.key === 'Escape') setActive(null)
+  }
+
+  const select = (i: number | null) => {
+    if (i !== null && bins[i].total > 0) onSelect?.(bins[i])
   }
 
   const activeBin = active !== null ? bins[active] : null
@@ -120,7 +129,8 @@ export function DistributionChart(props: {
             onBlur={() => setActive(null)}
             onPointerMove={(e) => setActive(slotAt(e.clientX))}
             onPointerLeave={() => setActive(null)}
-            className="focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2"
+            onClick={(e) => select(slotAt(e.clientX))}
+            className={`focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2 ${onSelect && activeBin?.total ? 'cursor-pointer' : ''}`}
           >
             {yTicks.map((n) => (
               <g key={n}>

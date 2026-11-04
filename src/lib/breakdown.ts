@@ -4,6 +4,9 @@ import type { ResultRow } from '@/api/types'
 /** One finisher, reduced to what the breakdown needs. */
 export interface BreakdownRow {
   name: string
+  /** overall place and bib, to open the runner's profile from this row */
+  place: number | null
+  bib: string | null
   /** IOC-style code, e.g. "HUN"; empty when unknown */
   country: string
   /** as typed by the runner; empty when unknown */
@@ -39,6 +42,8 @@ export function toBreakdownRow(r: ResultRow, sex: 'F' | 'N' | null): BreakdownRo
   if (!Number.isFinite(seconds) || seconds <= 0) return null // no time (DNF, DSQ…)
   return {
     name: (r.nev ?? '').trim(),
+    place: typeof r.hely === 'number' ? r.hely : null,
+    bib: r.rajtszam ?? null,
     country: (r.orszag ?? '').trim(),
     city: (r.varos ?? '').trim(),
     seconds,
@@ -124,6 +129,9 @@ export interface AgeBand {
   label: string
   men: GroupStats
   women: GroupStats
+  /** the race's category names for this band, for the result filter: "M35", "W35" */
+  menCategory: string
+  womenCategory: string
 }
 
 /** Men and women per age band, oldest first. Categories without a number are left out. */
@@ -146,6 +154,8 @@ export function ageBands(men: BreakdownRow[], women: BreakdownRow[]): AgeBand[] 
       label: i === ages.length - 1 ? `${age}+` : `${age}–${Math.min(ages[i + 1], age + 5) - 1}`,
       men: groupStats(m.get(age) ?? []),
       women: groupStats(w.get(age) ?? []),
+      menCategory: m.get(age)?.[0].category ?? '',
+      womenCategory: w.get(age)?.[0].category ?? '',
     }))
     .reverse()
 }
