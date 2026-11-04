@@ -212,6 +212,7 @@ export const hu: Messages = {
     heatPick: 'Melyik település?',
     heatPlaced: (placed, total) => `${total.toLocaleString('hu-HU')} befutóból ${placed.toLocaleString('hu-HU')} szerepel a térképen.`,
     heatSource: 'Települések: GeoNames (CC BY 4.0). Határ: Natural Earth.',
+    clickHint: 'A diagramok egy részére kattintva az eredmények között látod az érintett futókat; a top 10-ben a futó adatlapja nyílik meg.',
     pyramidTitle: 'Befutók kor szerint',
     pyramidDescription: 'Az oszlop hossza a befutók száma, a szám a medián célidő.',
     ageCol: 'Kor',

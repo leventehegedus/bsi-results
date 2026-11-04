@@ -1,10 +1,14 @@
 import { useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useRaceBreakdownQuery, useRaceDetailsQuery } from '@/api/futanetApi'
+import { useRaceBreakdownQuery, useRaceDetailsQuery, useRaceQuery } from '@/api/futanetApi'
+import type { ResultFilters } from '@/api/types'
+import { openRunnerFromResult } from '@/features/runner/runnerActions'
+import { RunnerLink } from '@/features/runner/RunnerLink'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
-import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, topPlaces, type Bin, type GroupStats } from '@/lib/breakdown'
+import { useAppDispatch } from '@/store/hooks'
+import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, topPlaces, type Bin, type BreakdownRow, type GroupStats } from '@/lib/breakdown'
 import { AgePyramid } from './AgePyramid'
 import { DistributionChart } from './DistributionChart'
 import { HungaryHeatmap } from './HungaryHeatmap'
@@ -13,8 +17,10 @@ import { TopFinishersChart, type TopFinishersRow } from './TopFinishersChart'
 import { TopPlaces } from './TopPlaces'
 
 /** Time cut-offs (top 10 %, 20 % …) of a whole race: all finishers, men, women and age categories. */
-export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTown: (town: string) => void }) {
+export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onShowResults: (filters: ResultFilters) => void }) {
   const t = useT()
+  const dispatch = useAppDispatch()
+  const raceName = useRaceQuery(raceId).data?.nev
   const { data, isFetching, error } = useRaceBreakdownQuery(raceId)
   const raceCountries = useRaceDetailsQuery(raceId).data?.countries
 
@@ -80,6 +86,12 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
   // the API gives finishers' countries as codes; the names (Hungarian only) come from the filter list
   const countries = stats.countries.map((c) => ({ ...c, name: raceCountries?.find((rc) => rc.value === c.name)?.text ?? c.name }))
 
+  const openRunner = (r: BreakdownRow) => openRunnerFromResult(dispatch, { name: r.name, raceId, raceName, place: r.place, bib: r.bib })
+  // the API's time filter is inclusive at both ends, the slot's end isn't
+  const showSlot = (b: Bin) => onShowResults({ minNetTime: formatSeconds(b.from), maxNetTime: formatSeconds(b.to - 1) })
+  const showCutoff = (seriesKey: string, seconds: number) =>
+    onShowResults({ maxNetTime: formatSeconds(seconds), sex: seriesKey === 'men' ? 'F' : seriesKey === 'women' ? 'N' : undefined })
+
   const distLabels = {
     men: t.breakdown.men,
     women: t.breakdown.women,
@@ -90,7 +102,9 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
 
   return (
     <div className={isFetching ? 'flex flex-col gap-6 opacity-60' : 'flex flex-col gap-6'}>
-      <p className="text-muted-foreground text-xs">{t.breakdown.wholeRace}</p>
+      <p className="text-muted-foreground text-xs">
+        {t.breakdown.wholeRace} {t.breakdown.clickHint}
+      </p>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Figure label={t.breakdown.finishers} value={stats.all.count.toLocaleString('hu-HU')} />
@@ -104,7 +118,7 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
           <h3 className="text-primary text-sm font-semibold">{t.breakdown.topTitle}</h3>
           <p className="text-muted-foreground text-xs">{t.breakdown.topDescription}</p>
         </div>
-        <TopFinishersChart rows={topRows} xAxis={t.breakdown.timeAxis} ariaLabel={t.breakdown.topTitle} />
+        <TopFinishersChart rows={topRows} xAxis={t.breakdown.timeAxis} ariaLabel={t.breakdown.topTitle} onSelect={openRunner} />
         {/* the dot chart's values as a table */}
         <details className="text-sm">
           <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
@@ -126,7 +140,8 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
                       <TableCell key={r.key}>
                         {r.runners[i] && (
                           <>
-                            {r.runners[i].name} <span className="font-semibold tabular-nums">{formatSeconds(r.runners[i].seconds)}</span>
+                            <RunnerLink name={r.runners[i].name} raceId={raceId} raceName={raceName} place={r.runners[i].place} bib={r.runners[i].bib} />{' '}
+                            <span className="font-semibold tabular-nums">{formatSeconds(r.runners[i].seconds)}</span>
                           </>
                         )}
                       </TableCell>
@@ -151,6 +166,7 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
           placeLabel={t.breakdown.place}
           xAxisLabel={t.breakdown.xAxis}
           ariaLabel={t.breakdown.chartTitle}
+          onSelect={(key, c) => showCutoff(key, c.seconds)}
         />
       </section>
 
@@ -164,6 +180,7 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
           cutoffs={stats.all.cutoffs}
           stacked={stacked}
           labels={{ ...distLabels, ariaLabel: t.breakdown.distTitle }}
+          onSelect={showSlot}
         />
         <BinTable bins={stats.bins} stacked={stacked} />
       </section>
@@ -179,6 +196,7 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
           stacked={stacked}
           gridStep={HALF_HOUR}
           labels={{ ...distLabels, ariaLabel: t.breakdown.minuteTitle }}
+          onSelect={showSlot}
         />
         <BinTable bins={stats.minuteBins} stacked={stacked} />
       </section>
@@ -224,18 +242,32 @@ export function RaceBreakdown({ raceId, onShowTown }: { raceId: string; onShowTo
             <h3 className="text-primary text-sm font-semibold">{t.breakdown.pyramidTitle}</h3>
             <p className="text-muted-foreground text-xs">{t.breakdown.pyramidDescription}</p>
           </div>
-          <AgePyramid bands={stats.ages} />
+          <AgePyramid bands={stats.ages} onSelect={(category, sex) => onShowResults({ category, sex })} />
         </section>
       )}
 
       {(countries.length > 0 || stats.cities.length > 0) && (
         <div className="grid gap-6 sm:grid-cols-2">
-          {countries.length > 0 && <TopPlaces title={t.breakdown.topCountries} places={countries} total={stats.all.count} />}
-          {stats.cities.length > 0 && <TopPlaces title={t.breakdown.topCities} places={stats.cities} total={stats.all.count} />}
+          {countries.length > 0 && (
+            <TopPlaces
+              title={t.breakdown.topCountries}
+              places={countries}
+              total={stats.all.count}
+              onSelect={(i) => onShowResults({ country: stats.countries[i].name })}
+            />
+          )}
+          {stats.cities.length > 0 && (
+            <TopPlaces
+              title={t.breakdown.topCities}
+              places={stats.cities}
+              total={stats.all.count}
+              onSelect={(i) => onShowResults({ town: stats.cities[i].name })}
+            />
+          )}
         </div>
       )}
 
-      {data && <HungaryHeatmap rows={data.all} onShowTown={onShowTown} />}
+      {data && <HungaryHeatmap rows={data.all} onShowTown={(town) => onShowResults({ town, country: 'HUN' })} />}
 
       {stats.categories.length > 1 && (
         <section className="flex flex-col gap-3">

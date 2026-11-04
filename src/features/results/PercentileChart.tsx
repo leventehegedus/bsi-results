@@ -34,6 +34,8 @@ export function PercentileChart(props: {
   placeLabel: (rank: number) => string
   xAxisLabel: string
   ariaLabel: string
+  /** a click on a percentile picks the nearest line there; Enter the first */
+  onSelect?: (seriesKey: string, cutoff: Cutoff) => void
 }) {
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
@@ -92,7 +94,19 @@ export function PercentileChart(props: {
       e.preventDefault()
       const d = e.key === 'ArrowRight' ? 1 : -1
       setActive((i) => Math.min(percents.length - 1, Math.max(0, (i ?? (d > 0 ? -1 : percents.length)) + d)))
+    } else if ((e.key === 'Enter' || e.key === ' ') && active !== null) {
+      e.preventDefault()
+      props.onSelect?.(series[0].key, series[0].cutoffs[active])
     } else if (e.key === 'Escape') setActive(null)
+  }
+
+  const onClick = (e: React.MouseEvent) => {
+    const i = nearest(e.clientX)
+    const box = wrap.current?.getBoundingClientRect()
+    if (i === null || !box || !series.length) return
+    const distance = (s: PercentileSeries) => Math.abs(y(s.cutoffs[i].seconds) - (e.clientY - box.top))
+    const closest = series.reduce((best, s) => (distance(s) < distance(best) ? s : best))
+    props.onSelect?.(closest.key, closest.cutoffs[i])
   }
 
   const tipLeft = active !== null ? x(percents[active]) : 0
@@ -125,7 +139,8 @@ export function PercentileChart(props: {
             onBlur={() => setActive(null)}
             onPointerMove={(e) => setActive(nearest(e.clientX))}
             onPointerLeave={() => setActive(null)}
-            className="focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2"
+            onClick={onClick}
+            className={`focus-visible:outline-ring overflow-visible rounded-sm outline-offset-4 focus-visible:outline-2 ${props.onSelect ? 'cursor-pointer' : ''}`}
           >
             {/* gridlines + y ticks */}
             {ticks.map((t) => (
