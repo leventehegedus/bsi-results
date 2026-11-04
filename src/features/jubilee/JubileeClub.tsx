@@ -29,9 +29,17 @@ import {
   PAGE_SIZE,
   setBand,
   setQuery,
+  setYob,
+  isFiltering,
 } from './jubileeSlice'
 import { hasTime } from './jubileeSlice'
 import type { ClubMember } from './jubileeSlice'
+
+/** A 4-digit birth year between 1900 and this year, or null. */
+function parseYob(text: string): number | null {
+  const y = Number(text)
+  return /^\d{4}$/.test(text) && y >= 1900 && y <= new Date().getFullYear() ? y : null
+}
 
 /** TableCell's own horizontal padding (p-2 on each side). */
 const CELL_PADDING = 16
@@ -53,11 +61,17 @@ export function JubileeClub() {
   const page = Math.min(j.page, pageCount)
   const years = useAppSelector(selectVisibleYears)
   const bands = useAppSelector(selectPageBands)
-  const searching = j.query.trim() !== ''
+  // a name search and / or a birth year: both look across every band
+  const searching = isFiltering(j)
   const lastYear = j.years[j.years.length - 1]
   // what's typed, which only becomes the search once it's submitted
   const [draft, setDraft] = useState(j.query)
-  const canSearch = draft.trim().length >= MIN_QUERY_LENGTH && draft.trim() !== j.query
+  const [draftYob, setDraftYob] = useState(j.yob ? String(j.yob) : '')
+  const name = draft.trim()
+  const nameOk = name === '' || name.length >= MIN_QUERY_LENGTH
+  const yob = parseYob(draftYob)
+  const yobOk = draftYob === '' || yob !== null
+  const canSearch = nameOk && yobOk && (name !== '' || yob !== null) && (name !== j.query || yob !== j.yob)
   // the name column is pinned where the index column ends, which depends on how many
   // members are listed ("1" vs "2219"), so it's measured rather than assumed
   const indexCell = useRef<HTMLTableCellElement>(null)
@@ -155,7 +169,9 @@ export function JubileeClub() {
               className="flex min-w-0 items-center gap-2"
               onSubmit={(e) => {
                 e.preventDefault()
-                if (canSearch) dispatch(setQuery(draft.trim()))
+                if (!canSearch) return
+                dispatch(setQuery(name))
+                dispatch(setYob(yob))
               }}
             >
               <div className="relative min-w-0 flex-1">
@@ -176,19 +192,31 @@ export function JubileeClub() {
                     aria-label={t.jubilee.clearSearch}
                     onClick={() => {
                       setDraft('')
+                      setDraftYob('')
                       dispatch(setQuery(''))
+                      dispatch(setYob(null))
                     }}
                   >
                     <X />
                   </Button>
                 )}
               </div>
+              {/* everyone born in the same year, across every band */}
+              <Input
+                className="w-28 shrink-0"
+                inputMode="numeric"
+                aria-label={t.jubilee.birthYear}
+                placeholder={t.jubilee.birthYear}
+                value={draftYob}
+                onChange={(e) => setDraftYob(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
               <Button type="submit" variant="brand" size="sm" disabled={!canSearch}>
                 <Search /> {t.jubilee.searchButton}
               </Button>
             </form>
           </div>
 
+          {draftYob !== '' && !yobOk && <p className="text-muted-foreground text-xs">{t.jubilee.badYear}</p>}
           {draft.trim().length > 0 && draft.trim().length < MIN_QUERY_LENGTH && (
             <p className="text-muted-foreground text-xs">{t.jubilee.minQuery(MIN_QUERY_LENGTH)}</p>
           )}
@@ -224,6 +252,7 @@ export function JubileeClub() {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <Badge variant="brand">{t.jubilee.shown(allOnPage.length)}</Badge>
             {searching && <Badge>{t.jubilee.searchedBands(loadedMembers.length)}</Badge>}
+            {j.yob !== null && <Badge variant="secondary">{t.jubilee.bornIn(j.yob)}</Badge>}
             {lastYear && <Badge variant="secondary">{t.jubilee.through(lastYear)}</Badge>}
             <Button variant="outline" size="sm" className="ml-auto" onClick={exportCsv} disabled={!members.length}>
               <Download /> {t.common.downloadCsv}
