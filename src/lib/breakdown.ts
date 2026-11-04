@@ -60,31 +60,51 @@ export interface PlaceCount {
 export interface PlaceStat extends PlaceCount {
   /** the place's fastest finisher */
   best: BreakdownRow
+  bestMan?: BreakdownRow
+  bestWoman?: BreakdownRow
 }
+
+const cleanPlace = (value: string) => value.replace(/^[^\p{L}]+/u, '').trim()
+const placeKey = (clean: string) => clean.toLocaleLowerCase('hu')
 
 /**
  * Every place with its finishers, most common first. Spellings are typed by hand, so
  * "BUDAPEST", "budapest" and "-Budapest" count as one, shown as the most common spelling.
+ * Men and women come as separate lists: rows of `all` have no gender when some finishers lack one.
  * shortcut: same-named towns in different countries merge, split by country if that ever shows.
  */
-export function placeStats(rows: BreakdownRow[], place: (r: BreakdownRow) => string): PlaceStat[] {
-  const groups = new Map<string, { spellings: Map<string, number>; best: BreakdownRow }>()
-  for (const r of rows) {
-    const clean = place(r).replace(/^[^\p{L}]+/u, '').trim()
-    if (!clean) continue
-    const key = clean.toLocaleLowerCase('hu')
-    const group = groups.get(key) ?? { spellings: new Map<string, number>(), best: r }
-    group.spellings.set(clean, (group.spellings.get(clean) ?? 0) + 1)
-    if (r.seconds < group.best.seconds) group.best = r
-    groups.set(key, group)
+export function placeStats(all: BreakdownRow[], men: BreakdownRow[], women: BreakdownRow[], place: (r: BreakdownRow) => string): PlaceStat[] {
+  const fastest = (rows: BreakdownRow[]) => {
+    const byPlace = new Map<string, BreakdownRow>()
+    for (const r of rows) {
+      const key = placeKey(cleanPlace(place(r)))
+      const best = byPlace.get(key)
+      if (!best || r.seconds < best.seconds) byPlace.set(key, r)
+    }
+    return byPlace
   }
-  return [...groups.values()]
-    .map(({ spellings, best }) => {
+  const best = fastest(all)
+  const bestMan = fastest(men)
+  const bestWoman = fastest(women)
+
+  const groups = new Map<string, Map<string, number>>()
+  for (const r of all) {
+    const clean = cleanPlace(place(r))
+    if (!clean) continue
+    const key = placeKey(clean)
+    const spellings = groups.get(key) ?? new Map<string, number>()
+    spellings.set(clean, (spellings.get(clean) ?? 0) + 1)
+    groups.set(key, spellings)
+  }
+  return [...groups]
+    .map(([key, spellings]) => {
       const counts = [...spellings]
       return {
         name: counts.reduce((most, s) => (s[1] > most[1] ? s : most))[0],
         count: counts.reduce((sum, s) => sum + s[1], 0),
-        best,
+        best: best.get(key)!,
+        bestMan: bestMan.get(key),
+        bestWoman: bestWoman.get(key),
       }
     })
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'hu'))

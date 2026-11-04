@@ -22,8 +22,6 @@ export interface HeatCell {
 export interface HungaryHeat {
   /** most finishers first */
   cells: HeatCell[]
-  /** most finishers first */
-  towns: PlaceCount[]
   /** finishers from Hungary */
   total: number
   /** of those, finishers whose town was found on the map */
@@ -81,7 +79,6 @@ export function hungaryHeat(rows: BreakdownRow[], map: HungaryMap, cellSize: num
 
   return {
     cells: [...cells.values()].sort((a, b) => b.count - a.count),
-    towns: [...perTown].map(([[name], count]) => ({ name, count })).sort(byCount),
     total: home.length,
     placed,
   }

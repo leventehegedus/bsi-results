@@ -200,6 +200,8 @@ export const hu: Messages = {
     countCol: 'Befutó',
     countryCol: 'Ország',
     bestRunnerCol: 'Legjobb futó',
+    bestManCol: 'Legjobb férfi',
+    bestWomanCol: 'Legjobb nő',
     noGender: 'Ennél a versenynél nincs nemi adat, ezért csak az összes befutó látszik.',
     empty: 'Ennél a versenynél nincs célidő.',
     distTitle: 'A célidők eloszlása',

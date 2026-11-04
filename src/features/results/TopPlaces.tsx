@@ -1,11 +1,11 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RunnerLink } from '@/features/runner/RunnerLink'
 import { useT } from '@/i18n'
-import { formatSeconds, type PlaceStat } from '@/lib/breakdown'
+import { formatSeconds, type BreakdownRow, type PlaceStat } from '@/lib/breakdown'
 
 const TOP = 10
 
-/** The ten biggest places with a bar each; counts and shares are printed, so no hover layer is needed. The table lists every place with its fastest runner. */
+/** The ten biggest places with a bar each; counts and shares are printed, so no hover layer is needed. The table lists every place with its fastest man and woman. */
 export function TopPlaces(props: {
   title: string
   placeCol: string
@@ -18,6 +18,18 @@ export function TopPlaces(props: {
   const { title, placeCol, places, total, raceId, raceName, onSelect } = props
   const t = useT()
   const max = places[0]?.count ?? 0
+  const hasMen = places.some((p) => p.bestMan)
+  const hasWomen = places.some((p) => p.bestWoman)
+  const bestCell = (r?: BreakdownRow) => (
+    <TableCell>
+      {r && (
+        <>
+          <RunnerLink name={r.name} raceId={raceId} raceName={raceName} place={r.place} bib={r.bib} />{' '}
+          <span className="font-semibold tabular-nums">{formatSeconds(r.seconds)}</span>
+        </>
+      )}
+    </TableCell>
+  )
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <h3 className="text-primary text-sm font-semibold">{title}</h3>
@@ -54,7 +66,9 @@ export function TopPlaces(props: {
               <TableRow>
                 <TableHead>{placeCol}</TableHead>
                 <TableHead className="text-right">{t.breakdown.countCol}</TableHead>
-                <TableHead>{t.breakdown.bestRunnerCol}</TableHead>
+                {hasMen && <TableHead>{t.breakdown.bestManCol}</TableHead>}
+                {hasWomen && <TableHead>{t.breakdown.bestWomanCol}</TableHead>}
+                {!hasMen && !hasWomen && <TableHead>{t.breakdown.bestRunnerCol}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -62,10 +76,9 @@ export function TopPlaces(props: {
                 <TableRow key={p.name}>
                   <TableCell>{p.name}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.count}</TableCell>
-                  <TableCell>
-                    <RunnerLink name={p.best.name} raceId={raceId} raceName={raceName} place={p.best.place} bib={p.best.bib} />{' '}
-                    <span className="font-semibold tabular-nums">{formatSeconds(p.best.seconds)}</span>
-                  </TableCell>
+                  {hasMen && bestCell(p.bestMan)}
+                  {hasWomen && bestCell(p.bestWoman)}
+                  {!hasMen && !hasWomen && bestCell(p.best)}
                 </TableRow>
               ))}
             </TableBody>

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useHungaryMapQuery } from '@/api/futanetApi'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
 import type { BreakdownRow } from '@/lib/breakdown'
 import { hungaryHeat } from '@/lib/hungaryHeat'
@@ -184,29 +183,6 @@ export function HungaryHeatmap({ rows, onShowTown }: { rows: BreakdownRow[]; onS
       <p className="text-muted-foreground text-xs">
         {t.breakdown.heatPlaced(heat.placed, heat.total)} {t.breakdown.heatSource}
       </p>
-
-      {/* the map's values as a table */}
-      <details className="text-sm">
-        <summary className="text-primary w-fit cursor-pointer text-xs font-medium">{t.breakdown.showTable}</summary>
-        <div className="mt-2 rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.col.town}</TableHead>
-                <TableHead className="text-right">{t.breakdown.countCol}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {heat.towns.map((town) => (
-                <TableRow key={town.name}>
-                  <TableCell>{town.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">{town.count}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </details>
     </section>
   )
 }

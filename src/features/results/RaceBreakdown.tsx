@@ -35,8 +35,8 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
       minuteBins: histogram(data.all, data.men, data.women, 60),
       top: { all: topFinishers(data.all), men: topFinishers(data.men), women: topFinishers(data.women) },
       ages: ageBands(data.men, data.women),
-      countries: placeStats(data.all, (r) => r.country),
-      cities: placeStats(data.all, (r) => r.city),
+      countries: placeStats(data.all, data.men, data.women, (r) => r.country),
+      cities: placeStats(data.all, data.men, data.women, (r) => r.city),
     }
   }, [data])
 
@@ -248,31 +248,27 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
         </section>
       )}
 
-      {(countries.length > 0 || stats.cities.length > 0) && (
-        <div className="grid gap-6 sm:grid-cols-2">
-          {countries.length > 0 && (
-            <TopPlaces
-              title={t.breakdown.topCountries}
-              placeCol={t.breakdown.countryCol}
-              places={countries}
-              total={stats.all.count}
-              raceId={raceId}
-              raceName={raceName}
-              onSelect={(i) => onShowResults({ country: stats.countries[i].name })}
-            />
-          )}
-          {stats.cities.length > 0 && (
-            <TopPlaces
-              title={t.breakdown.topCities}
-              placeCol={t.col.town}
-              places={stats.cities}
-              total={stats.all.count}
-              raceId={raceId}
-              raceName={raceName}
-              onSelect={(i) => onShowResults({ town: stats.cities[i].name })}
-            />
-          )}
-        </div>
+      {countries.length > 0 && (
+        <TopPlaces
+          title={t.breakdown.topCountries}
+          placeCol={t.breakdown.countryCol}
+          places={countries}
+          total={stats.all.count}
+          raceId={raceId}
+          raceName={raceName}
+          onSelect={(i) => onShowResults({ country: stats.countries[i].name })}
+        />
+      )}
+      {stats.cities.length > 0 && (
+        <TopPlaces
+          title={t.breakdown.topCities}
+          placeCol={t.col.town}
+          places={stats.cities}
+          total={stats.all.count}
+          raceId={raceId}
+          raceName={raceName}
+          onSelect={(i) => onShowResults({ town: stats.cities[i].name })}
+        />
       )}
 
       {data && <HungaryHeatmap rows={data.all} onShowTown={(town) => onShowResults({ town, country: 'HUN' })} />}
