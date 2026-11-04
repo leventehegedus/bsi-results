@@ -203,6 +203,8 @@ export const hu: Messages = {
     distTitle: 'A célidők eloszlása',
     distDescription:
       'Befutók száma időszakaszonként. A vékony vonalak jelölik, mennyi idő kellett a legjobb 10, 20 … százalékhoz.',
+    minuteTitle: 'Befutók percenként',
+    minuteDescription: 'Befutók száma a verseny minden percében. A vékony vonalak minden fél órát jelölnek.',
     timeAxis: 'Célidő',
     finishedBy: (p) => `Ekkorra a befutók ${p}%-a beért`,
     showTable: 'Táblázatként',

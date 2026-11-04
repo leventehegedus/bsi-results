@@ -5,6 +5,7 @@ const HEIGHT = 260
 const M = { top: 22, right: 16, bottom: 36, left: 48 }
 const MAX_BAR = 24
 const GAP = 2
+const MIN_SLOT_FOR_GAP = 4
 const RADIUS = 4
 /** cut-off labels closer than this would collide: the line stays, the label is dropped */
 const LABEL_SPACING = 30
@@ -25,10 +26,17 @@ export interface DistributionLabels {
 /**
  * Finishers per time slot (a histogram: the bell curve of the race), men and
  * women stacked when the race has gender data. Thin lines mark the time needed
- * for the top 10 %, 20 % … of all finishers. Hover or arrow keys show one slot.
+ * for the top 10 %, 20 % … of all finishers. `gridStep` (seconds) adds a line at
+ * every multiple of it. Hover or arrow keys show one slot.
  */
-export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stacked: boolean; labels: DistributionLabels }) {
-  const { bins, cutoffs, stacked, labels } = props
+export function DistributionChart(props: {
+  bins: Bin[]
+  cutoffs: Cutoff[]
+  stacked: boolean
+  labels: DistributionLabels
+  gridStep?: number
+}) {
+  const { bins, cutoffs, stacked, labels, gridStep } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -49,7 +57,9 @@ export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stack
   const t1 = bins[bins.length - 1].to
   const x = (sec: number) => M.left + ((sec - t0) / (t1 - t0)) * plotW
   const slotW = plotW / bins.length
-  const barW = Math.max(1, Math.min(MAX_BAR, slotW - GAP))
+  // slots too narrow for a gap: it would eat the bar, and small stacked segments with it
+  const gap = slotW < MIN_SLOT_FOR_GAP ? 0 : GAP
+  const barW = Math.max(1, Math.min(MAX_BAR, slotW - gap))
 
   const maxCount = Math.max(...bins.map((b) => b.total))
   const yStep = niceStep(maxCount / 4)
@@ -57,10 +67,13 @@ export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stack
   const yTicks = Array.from({ length: yMax / yStep + 1 }, (_, i) => i * yStep)
   const y = (n: number) => M.top + plotH - (n / yMax) * plotH
 
-  // at most ~8 time labels, and never closer than a label is wide ("1:00:00")
-  const xStep = TICK_STEPS.find((s) => (t1 - t0) / s <= 8 && (s / (t1 - t0)) * plotW >= MIN_X_LABEL_SPACING) ?? 3600
+  // at most ~8 time labels (or labels on the grid lines), and never closer than a label is wide ("1:00:00")
+  const xStep =
+    TICK_STEPS.find((s) => (gridStep ? s % gridStep === 0 : (t1 - t0) / s <= 8) && (s / (t1 - t0)) * plotW >= MIN_X_LABEL_SPACING) ?? 3600
   const xTicks: number[] = []
   for (let s = Math.ceil(t0 / xStep) * xStep; s <= t1; s += xStep) xTicks.push(s)
+  const gridLines: number[] = []
+  if (gridStep) for (let s = Math.ceil(t0 / gridStep) * gridStep; s <= t1; s += gridStep) gridLines.push(s)
 
   // cut-off lines: every one drawn, labels only where they have room
   const marks = spaceLabels(cutoffs.filter((c) => c.percent < 100).map((c) => ({ ...c, cx: x(c.seconds) })))
@@ -161,7 +174,7 @@ export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stack
                   {segments.map((s, k) => {
                     const top = y(base + s.n)
                     // a 2px surface gap between stacked segments
-                    const bottom = y(base) - (k > 0 ? GAP : 0)
+                    const bottom = y(base) - (k > 0 ? gap : 0)
                     base += s.n
                     const h = Math.max(0, bottom - top)
                     const last = k === segments.length - 1
@@ -170,6 +183,10 @@ export function DistributionChart(props: { bins: Bin[]; cutoffs: Cutoff[]; stack
                 </g>
               )
             })}
+            {/* over the bars: dense slots would hide them otherwise */}
+            {gridLines.map((s) => (
+              <line key={s} x1={x(s)} x2={x(s)} y1={M.top} y2={M.top + plotH} stroke="var(--muted-foreground)" strokeWidth={1} opacity={0.45} />
+            ))}
             <line x1={M.left} x2={M.left + plotW} y1={y(0)} y2={y(0)} stroke="var(--muted-foreground)" strokeWidth={1} />
           </svg>
         )}

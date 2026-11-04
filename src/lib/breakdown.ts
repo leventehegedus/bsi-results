@@ -96,14 +96,15 @@ const MAX_BINS = 40
 
 /**
  * Finishers per time slot (a histogram), with men and women counted separately.
- * The slot width is the smallest round width that gives at most ~40 slots.
+ * The slot width is `slotWidth` if given, else the smallest round width that gives at most ~40 slots.
  */
-export function histogram(all: BreakdownRow[], men: BreakdownRow[], women: BreakdownRow[]): Bin[] {
+export function histogram(all: BreakdownRow[], men: BreakdownRow[], women: BreakdownRow[], slotWidth?: number): Bin[] {
   if (!all.length) return []
   const times = all.map((r) => r.seconds)
   const lo = Math.min(...times)
   const hi = Math.max(...times)
-  const width = BIN_WIDTHS.find((w) => Math.floor(hi / w) - Math.floor(lo / w) + 1 <= MAX_BINS) ?? BIN_WIDTHS[BIN_WIDTHS.length - 1]
+  const width =
+    slotWidth ?? BIN_WIDTHS.find((w) => Math.floor(hi / w) - Math.floor(lo / w) + 1 <= MAX_BINS) ?? BIN_WIDTHS[BIN_WIDTHS.length - 1]
   const start = Math.floor(lo / width) * width
   const count = Math.floor((hi - start) / width) + 1
   const bins: Bin[] = Array.from({ length: count }, (_, i) => ({
