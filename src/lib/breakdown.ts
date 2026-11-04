@@ -4,6 +4,10 @@ import type { ResultRow } from '@/api/types'
 /** One finisher, reduced to what the breakdown needs. */
 export interface BreakdownRow {
   name: string
+  /** IOC-style code, e.g. "HUN"; empty when unknown */
+  country: string
+  /** as typed by the runner; empty when unknown */
+  city: string
   /** net time (gun time if there's no net time), in seconds */
   seconds: number
   category: string
@@ -33,7 +37,46 @@ export interface GroupStats {
 export function toBreakdownRow(r: ResultRow, sex: 'F' | 'N' | null): BreakdownRow | null {
   const seconds = timeToSeconds(cleanTime(r.netto) || cleanTime(r.brutto))
   if (!Number.isFinite(seconds) || seconds <= 0) return null // no time (DNF, DSQ…)
-  return { name: (r.nev ?? '').trim(), seconds, category: (r.kategoria ?? '').trim(), sex }
+  return {
+    name: (r.nev ?? '').trim(),
+    country: (r.orszag ?? '').trim(),
+    city: (r.varos ?? '').trim(),
+    seconds,
+    category: (r.kategoria ?? '').trim(),
+    sex,
+  }
+}
+
+export interface PlaceCount {
+  name: string
+  count: number
+}
+
+/**
+ * The ten most common places, most common first. Spellings are typed by hand, so
+ * "BUDAPEST", "budapest" and "-Budapest" count as one, shown as the most common spelling.
+ * shortcut: same-named towns in different countries merge, split by country if that ever shows.
+ */
+export function topPlaces(values: string[]): PlaceCount[] {
+  const groups = new Map<string, Map<string, number>>()
+  for (const value of values) {
+    const clean = value.replace(/^[^\p{L}]+/u, '').trim()
+    if (!clean) continue
+    const key = clean.toLocaleLowerCase('hu')
+    const spellings = groups.get(key) ?? new Map<string, number>()
+    spellings.set(clean, (spellings.get(clean) ?? 0) + 1)
+    groups.set(key, spellings)
+  }
+  return [...groups.values()]
+    .map((spellings) => {
+      const counts = [...spellings]
+      return {
+        name: counts.reduce((best, s) => (s[1] > best[1] ? s : best))[0],
+        count: counts.reduce((sum, s) => sum + s[1], 0),
+      }
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'hu'))
+    .slice(0, 10)
 }
 
 /** The ten fastest of a group, fastest first. */

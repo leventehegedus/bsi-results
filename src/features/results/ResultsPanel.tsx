@@ -209,6 +209,12 @@ export function ResultsPanel() {
   const setFilter = (key: keyof ResultFilters, value: string | undefined, delay = 0) =>
     apply({ ...form, [key]: value || undefined }, delay)
   const filterTown = (town: string) => setFilter('town', town)
+  /** From the breakdown's map: its runners in the results, in place of any earlier filters. */
+  const showHungarianTown = (town: string) => {
+    apply({ town, country: 'HUN' })
+    setFiltersOpen(true)
+    dispatch(setView('results'))
+  }
   const hasFilters = Object.values(form).some((v) => v != null && v.trim() !== '')
   // what the collapsed panel hides, for the count on its button
   const activeExtraFilters = Object.entries(form).filter(
@@ -363,7 +369,7 @@ export function ResultsPanel() {
             {raceId && r.meta && <RaceWeather key={raceId} raceId={raceId} meta={r.meta} />}
           </TabsContent>
           {/* the breakdown loads every finisher, so it's only mounted (and fetched) when opened */}
-          <TabsContent value="breakdown">{raceId && <RaceBreakdown raceId={raceId} />}</TabsContent>
+          <TabsContent value="breakdown">{raceId && <RaceBreakdown raceId={raceId} onShowTown={showHungarianTown} />}</TabsContent>
           {/* also loads every finisher, so it only mounts when opened */}
           <TabsContent value="splits">{raceId && <RaceSplits raceId={raceId} />}</TabsContent>
           <TabsContent value="results" className="flex flex-col gap-5">

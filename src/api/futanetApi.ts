@@ -1,5 +1,6 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
 import { toBreakdownRow, type BreakdownRow } from '@/lib/breakdown'
+import type { HungaryMap } from '@/lib/hungaryHeat'
 import { runnerSplits, splitPoints, splitStats, type RunnerSplits, type SplitPoint, type SplitStats } from '@/lib/splits'
 import { runPool } from '@/lib/pool'
 import { withRetry } from '@/lib/retry'
@@ -84,6 +85,16 @@ export const futanetApi = createApi({
     /** Every known race: /raceList plus the older unlisted ones. */
     raceCatalogue: build.query<RaceListItem[], void>({
       queryFn: (_arg, { signal }) => run(() => loadRaceCatalogue({ signal }), signal),
+      keepUnusedDataFor: 24 * 60 * 60,
+    }),
+    /** Towns and border of Hungary for the finisher heatmap: a static file, only fetched when that view opens. */
+    hungaryMap: build.query<HungaryMap, void>({
+      queryFn: (_arg, { signal }) =>
+        run(async () => {
+          const res = await fetch(`${import.meta.env.BASE_URL}hu-map.json`, { signal })
+          if (!res.ok) throw new Error(`hu-map.json: ${res.status}`)
+          return (await res.json()) as HungaryMap
+        }, signal),
       keepUnusedDataFor: 24 * 60 * 60,
     }),
     /** Race metadata; null for codes the API doesn't know. */
@@ -175,6 +186,7 @@ export const {
   useResultPageQuery,
   useRaceBreakdownQuery,
   useRaceSplitsQuery,
+  useHungaryMapQuery,
 } = futanetApi
 
 /** Thunks and scans read through the same cache (no subscription is kept). */
