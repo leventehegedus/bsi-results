@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
 import { useAppDispatch } from '@/store/hooks'
-import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, topPlaces, type Bin, type BreakdownRow, type GroupStats } from '@/lib/breakdown'
+import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, placeStats, topFinishers, type Bin, type BreakdownRow, type GroupStats } from '@/lib/breakdown'
 import { AgePyramid } from './AgePyramid'
 import { DistributionChart } from './DistributionChart'
 import { HungaryHeatmap } from './HungaryHeatmap'
@@ -35,8 +35,8 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
       minuteBins: histogram(data.all, data.men, data.women, 60),
       top: { all: topFinishers(data.all), men: topFinishers(data.men), women: topFinishers(data.women) },
       ages: ageBands(data.men, data.women),
-      countries: topPlaces(data.all.map((r) => r.country)),
-      cities: topPlaces(data.all.map((r) => r.city)),
+      countries: placeStats(data.all, (r) => r.country),
+      cities: placeStats(data.all, (r) => r.city),
     }
   }, [data])
 
@@ -253,16 +253,22 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
           {countries.length > 0 && (
             <TopPlaces
               title={t.breakdown.topCountries}
+              placeCol={t.breakdown.countryCol}
               places={countries}
               total={stats.all.count}
+              raceId={raceId}
+              raceName={raceName}
               onSelect={(i) => onShowResults({ country: stats.countries[i].name })}
             />
           )}
           {stats.cities.length > 0 && (
             <TopPlaces
               title={t.breakdown.topCities}
+              placeCol={t.col.town}
               places={stats.cities}
               total={stats.all.count}
+              raceId={raceId}
+              raceName={raceName}
               onSelect={(i) => onShowResults({ town: stats.cities[i].name })}
             />
           )}
