@@ -4,7 +4,8 @@ import { useRaceBreakdownQuery } from '@/api/futanetApi'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
-import { categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, type Bin, type GroupStats } from '@/lib/breakdown'
+import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, topFinishers, type Bin, type GroupStats } from '@/lib/breakdown'
+import { AgePyramid } from './AgePyramid'
 import { DistributionChart } from './DistributionChart'
 import { PercentileChart, type PercentileSeries } from './PercentileChart'
 import { TopFinishersChart, type TopFinishersRow } from './TopFinishersChart'
@@ -24,6 +25,7 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
       bins: histogram(data.all, data.men, data.women),
       minuteBins: histogram(data.all, data.men, data.women, 60),
       top: { all: topFinishers(data.all), men: topFinishers(data.men), women: topFinishers(data.women) },
+      ages: ageBands(data.men, data.women),
     }
   }, [data])
 
@@ -207,6 +209,16 @@ export function RaceBreakdown({ raceId }: { raceId: string }) {
           </TableBody>
         </Table>
       </div>
+
+      {stats.ages.length > 1 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h3 className="text-primary text-sm font-semibold">{t.breakdown.pyramidTitle}</h3>
+            <p className="text-muted-foreground text-xs">{t.breakdown.pyramidDescription}</p>
+          </div>
+          <AgePyramid bands={stats.ages} />
+        </section>
+      )}
 
       {stats.categories.length > 1 && (
         <section className="flex flex-col gap-3">
