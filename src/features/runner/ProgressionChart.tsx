@@ -26,8 +26,15 @@ export interface ProgressionLabels {
   faster: string
   place: (n: number) => string
   ariaLabel: string
-  /** the moving average, in the tooltip */
-  average?: string
+}
+
+export interface ProgressionAverage {
+  label: string
+  /** seconds per point, null where there's no average yet */
+  seconds: (number | null)[]
+  color: string
+  /** stroke-dasharray, so the lines differ by more than colour */
+  dash: string
 }
 
 /**
@@ -38,10 +45,9 @@ export interface ProgressionLabels {
 export function ProgressionChart(props: {
   progression: { points: ProgressionPoint[]; best: ProgressionPoint }
   labels: ProgressionLabels
-  /** seconds per point, null where there's no average yet */
-  average?: (number | null)[]
+  averages?: ProgressionAverage[]
 }) {
-  const { progression, labels, average } = props
+  const { progression, labels, averages = [] } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -154,17 +160,18 @@ export function ProgressionChart(props: {
             strokeLinejoin="round"
             strokeLinecap="round"
           />
-          {average && (
+          {averages.map((avg) => (
             <polyline
-              points={points.flatMap((_, i) => (average[i] == null ? [] : [`${x(dates[i])},${y(average[i])}`])).join(' ')}
+              key={avg.label}
+              points={points.flatMap((_, i) => (avg.seconds[i] == null ? [] : [`${x(dates[i])},${y(avg.seconds[i])}`])).join(' ')}
               fill="none"
-              stroke="var(--chart-context)"
+              stroke={avg.color}
               strokeWidth={2}
-              strokeDasharray="5 4"
+              strokeDasharray={avg.dash}
               strokeLinejoin="round"
               className="pointer-events-none"
             />
-          )}
+          ))}
           {points.map((p, i) => {
             const isBest = i === bestIndex
             return (
@@ -199,11 +206,16 @@ export function ProgressionChart(props: {
           </div>
           <div className="truncate">{a.raceName}</div>
           {a.place != null && <div className="text-muted-foreground">{labels.place(a.place)}</div>}
-          {average?.[active!] != null && (
-            <div className="text-muted-foreground tabular-nums">
-              {labels.average}: {formatSeconds(average[active!]!)}
-            </div>
-          )}
+          {averages.map((avg) => {
+            const seconds = avg.seconds[active!]
+            return (
+              seconds != null && (
+                <div key={avg.label} className="text-muted-foreground tabular-nums">
+                  {avg.label}: {formatSeconds(seconds)}
+                </div>
+              )
+            )
+          })}
         </div>
       )}
     </div>
