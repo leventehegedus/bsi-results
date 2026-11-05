@@ -34,6 +34,8 @@ export function PercentileChart(props: {
   placeLabel: (rank: number) => string
   xAxisLabel: string
   ariaLabel: string
+  /** one finisher, highlighted; the axes widen to fit them */
+  marker?: { percent: number; seconds: number; label: string; detail?: string }
   /** a click on a percentile picks the nearest line there; Enter the first */
   onSelect?: (seriesKey: string, cutoff: Cutoff) => void
 }) {
@@ -53,7 +55,8 @@ export function PercentileChart(props: {
   const percents = series[0]?.cutoffs.map((c) => c.percent) ?? []
   const plotH = HEIGHT - M.top - M.bottom
 
-  const all = series.flatMap((s) => s.cutoffs.map((c) => c.seconds))
+  const { marker } = props
+  const all = [...series.flatMap((s) => s.cutoffs.map((c) => c.seconds)), ...(marker ? [marker.seconds] : [])]
   const lo = Math.min(...all)
   const hi = Math.max(...all)
   const step = STEPS.find((s) => (hi - lo) / s <= 5) ?? STEPS[STEPS.length - 1]
@@ -71,8 +74,8 @@ export function PercentileChart(props: {
   const endLabels =
     width >= MIN_WIDTH_FOR_END_LABELS && ends.every((e, i) => i === 0 || e.y - ends[i - 1].y >= LABEL_GAP)
   const plotW = Math.max(0, width - M.left - (endLabels ? RIGHT_LABELS : RIGHT_BARE))
-  const first = percents[0] ?? 0
-  const last = percents[percents.length - 1] ?? 100
+  const first = Math.min(percents[0] ?? 0, marker?.percent ?? Infinity)
+  const last = Math.max(percents[percents.length - 1] ?? 100, marker?.percent ?? -Infinity)
   const x = (percent: number) => M.left + ((percent - first) / (last - first || 1)) * plotW
   // on narrow screens label every 2nd / 3rd percentile (always including the first)
   const labelEvery = Math.max(1, Math.ceil(MIN_X_LABEL_SPACING / (plotW / Math.max(1, percents.length - 1))))
@@ -109,6 +112,8 @@ export function PercentileChart(props: {
     props.onSelect?.(closest.key, closest.cutoffs[i])
   }
 
+  // the marker's label sits above it, or below if it would run into what's above the chart
+  const markerBelow = marker ? y(marker.seconds) < M.top + 32 : false
   const tipLeft = active !== null ? x(percents[active]) : 0
   const tipOnLeft = tipLeft > width / 2
 
@@ -213,6 +218,28 @@ export function PercentileChart(props: {
                 ))}
               </g>
             ))}
+
+            {marker && (
+              <g className="pointer-events-none">
+                <circle cx={x(marker.percent)} cy={y(marker.seconds)} r={6} fill="var(--chart-highlight)" stroke="var(--card)" strokeWidth={2} />
+                <text
+                  x={x(marker.percent)}
+                  y={y(marker.seconds) + (markerBelow ? 18 : marker.detail ? -24 : -11)}
+                  textAnchor={x(marker.percent) > M.left + plotW / 2 ? 'end' : 'start'}
+                  stroke="var(--card)"
+                  strokeWidth={3}
+                  paintOrder="stroke"
+                  className="fill-foreground text-[11px] font-semibold tabular-nums"
+                >
+                  {marker.label}
+                  {marker.detail && (
+                    <tspan x={x(marker.percent)} dy={13}>
+                      {marker.detail}
+                    </tspan>
+                  )}
+                </text>
+              </g>
+            )}
 
             {endLabels &&
               ends.map(({ s, y: ey }) => (

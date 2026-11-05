@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useT } from '@/i18n'
 import { useAppDispatch } from '@/store/hooks'
-import { ageBands, categoryStats, formatSeconds, groupStats, histogram, PERCENTS, placeStats, topFinishers, type Bin, type BreakdownRow, type GroupStats } from '@/lib/breakdown'
+import { ageBands, categoryStats, formatSeconds, groupStats, HALF_HOUR, histogram, PERCENTS, placeStats, topFinishers, type Bin, type BreakdownRow, type GroupStats } from '@/lib/breakdown'
 import { AgePyramid } from './AgePyramid'
 import { DistributionChart } from './DistributionChart'
 import { HungaryHeatmap } from './HungaryHeatmap'
@@ -312,7 +312,6 @@ export function RaceBreakdown({ raceId, onShowResults }: { raceId: string; onSho
 }
 
 const SMALL_GROUP = 10
-const HALF_HOUR = 1800
 
 /** A bar chart's values as a table. */
 function BinTable({ bins, stacked }: { bins: Bin[]; stacked: boolean }) {
