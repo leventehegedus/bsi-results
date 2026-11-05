@@ -342,6 +342,12 @@ export const en = {
     mergeSubLists: 'Count a run once (merge sub-lists)',
     includeVirtual: 'Include virtual races',
     pbTitle: 'Personal bests',
+    showRaceCharts: 'Race charts',
+    categoryDeciles: (category: string) => `Deciles of category ${category}`,
+    categoryPosition: (name: string, percent: number) => `${name} is in the top ${percent}% of the category.`,
+    categoryPlace: (place: number) => `Place ${place} in category`,
+    categoryFirst: (name: string) => `1st: ${name}`,
+    categoryLast: 'Last place',
     calendarTitle: 'Race calendar',
     calendarDescription:
       'Kilometres raced per month, darker is more. Click a month to open its race, or choose if there were several. Races of unknown distance add no kilometres.',

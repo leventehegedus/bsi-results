@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { Fragment, useState, type FormEvent } from 'react'
 import { Download, Info, Loader2, MapPin, Search, Square, UserRound, Users, X } from 'lucide-react'
+import { RowToggle } from '@/components/RowToggle'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ import { ShareLink } from '@/routing/ShareLink'
 import { RunnerLink } from './RunnerLink'
 import { ProgressionChart } from './ProgressionChart'
 import { RaceCalendar } from './RaceCalendar'
+import { RaceResultCharts } from './RaceResultCharts'
 import {
   MIN_QUERY_LENGTH,
   selectAllRunnerResults,
@@ -71,6 +73,8 @@ export function RunnerProfile() {
     setDraft(draftFrom(r.query))
   }
   const draftQuery = queryFromDraft(draft, r.query)
+  /** the result whose charts are open: one at a time, like an accordion */
+  const [openResult, setOpenResult] = useState<string | null>(null)
   const runDraft = () => draftQuery && searchRunner(dispatch, draftQuery)
 
   const openRace = (raceId: string) => {
@@ -462,7 +466,8 @@ export function RunnerProfile() {
                   </span>
                 )}
               </div>
-              <div className="rounded-md border">
+              {/* @container: an open chart is as wide as this box, however far the columns scroll */}
+              <div className="@container rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -479,9 +484,18 @@ export function RunnerProfile() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((x, i) => (
-                      <TableRow key={`${x.raceId}-${i}`}>
-                        <TableCell className="tabular-nums">{x.date}</TableCell>
+                    {results.map((x, i) => {
+                      const key = resultKey(x)
+                      const open = openResult === key
+                      return (
+                      <Fragment key={`${x.raceId}-${i}`}>
+                      <TableRow>
+                        <TableCell className="tabular-nums">
+                          <div className="flex items-center gap-1">
+                            <RowToggle open={open} onToggle={() => setOpenResult(open ? null : key)} label={t.runner.showRaceCharts} />
+                            {x.date}
+                          </div>
+                        </TableCell>
                         <TableCell className="max-w-72 truncate" title={x.raceName}>
                           <LinkButton title={t.common.openRace} onClick={() => openRace(x.raceId)}>{x.raceName}</LinkButton>
                           {x.virtual && (
@@ -534,7 +548,19 @@ export function RunnerProfile() {
                           {x.club}
                         </TableCell>
                       </TableRow>
-                    ))}
+                      {open && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={8 + (showName ? 1 : 0) + (showYob ? 1 : 0)} className="whitespace-normal">
+                            {/* stays in view while the columns scroll sideways */}
+                            <div className="sticky left-2 w-[calc(100cqw-1rem)]">
+                              <RaceResultCharts result={x} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      </Fragment>
+                      )
+                    })}
                     {!results.length && (
                       <TableRow>
                         <TableCell colSpan={10} className="text-muted-foreground py-10 text-center">
@@ -552,6 +578,8 @@ export function RunnerProfile() {
     </div>
   )
 }
+
+const resultKey = (x: { raceId: string; name: string; bib: string }) => `${x.raceId}|${x.name}|${x.bib}`
 
 interface Draft {
   name: string

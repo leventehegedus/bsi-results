@@ -35,10 +35,12 @@ export function DistributionChart(props: {
   stacked: boolean
   labels: DistributionLabels
   gridStep?: number
+  /** one finisher, drawn as a line across the chart */
+  marker?: { seconds: number; label: string }
   /** a click or Enter on a slot with finishers */
   onSelect?: (bin: Bin) => void
 }) {
-  const { bins, cutoffs, stacked, labels, gridStep, onSelect } = props
+  const { bins, cutoffs, stacked, labels, gridStep, marker, onSelect } = props
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -198,6 +200,23 @@ export function DistributionChart(props: {
               <line key={s} x1={x(s)} x2={x(s)} y1={M.top} y2={M.top + plotH} stroke="var(--muted-foreground)" strokeWidth={1} opacity={0.45} />
             ))}
             <line x1={M.left} x2={M.left + plotW} y1={y(0)} y2={y(0)} stroke="var(--muted-foreground)" strokeWidth={1} />
+            {/* ink, not red: the women's bars are red already */}
+            {marker && marker.seconds >= t0 && marker.seconds <= t1 && (
+              <g className="pointer-events-none">
+                <line x1={x(marker.seconds)} x2={x(marker.seconds)} y1={M.top} y2={M.top + plotH} stroke="var(--foreground)" strokeWidth={2} />
+                <text
+                  x={x(marker.seconds) + (x(marker.seconds) > M.left + plotW / 2 ? -6 : 6)}
+                  y={M.top + 10}
+                  textAnchor={x(marker.seconds) > M.left + plotW / 2 ? 'end' : 'start'}
+                  stroke="var(--card)"
+                  strokeWidth={3}
+                  paintOrder="stroke"
+                  className="fill-foreground text-[11px] font-semibold tabular-nums"
+                >
+                  {marker.label}
+                </text>
+              </g>
+            )}
           </svg>
         )}
 

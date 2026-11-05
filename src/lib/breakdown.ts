@@ -136,6 +136,12 @@ export function groupStats(rows: BreakdownRow[]): GroupStats {
   }
 }
 
+/** Where a time falls in a group: 23 = in the top 23 %. Ties count as the better place. */
+export function percentileOf(rows: BreakdownRow[], seconds: number): number {
+  const faster = rows.filter((r) => r.seconds < seconds).length
+  return Math.min(100, ((faster + 1) / rows.length) * 100)
+}
+
 /** Age categories in a natural order ("M9" before "M10"), each with its stats. */
 export function categoryStats(rows: BreakdownRow[]): { category: string; stats: GroupStats }[] {
   const byCat = new Map<string, BreakdownRow[]>()
@@ -185,6 +191,9 @@ export function ageBands(men: BreakdownRow[], women: BreakdownRow[]): AgeBand[] 
     }))
     .reverse()
 }
+
+/** The grid of the minute-by-minute chart, in seconds. */
+export const HALF_HOUR = 1800
 
 /** 3725 → "1:02:05", 1263 → "21:03". */
 export function formatSeconds(total: number): string {

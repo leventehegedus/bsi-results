@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Loader2, Medal, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Loader2, Medal, Search, X } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { RowToggle } from '@/components/RowToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -334,7 +335,7 @@ export function JubileeClub() {
                           style={{ left: indexWidth }}
                         >
                           <div className="flex items-start gap-1">
-                            <ChartToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} />
+                            <RowToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} label={t.jubilee.showChart} />
                             <div>
                               <button
                                 type="button"
@@ -435,7 +436,7 @@ export function JubileeClub() {
                         ))}
                     </div>
                     <div className="mt-2">
-                      <ChartToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} withLabel />
+                      <RowToggle open={openMember === memberKey(m)} onToggle={() => toggleMember(m)} label={t.jubilee.showChart} withLabel />
                     </div>
                     {openMember === memberKey(m) && (
                       <div className="mt-2">
@@ -456,23 +457,5 @@ export function JubileeClub() {
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-/** Opens a member's chart; the name next to it opens their profile. */
-function ChartToggle({ open, onToggle, withLabel }: { open: boolean; onToggle: () => void; withLabel?: boolean }) {
-  const t = useT()
-  return (
-    <button
-      type="button"
-      aria-expanded={open}
-      aria-label={withLabel ? undefined : t.jubilee.showChart}
-      title={t.jubilee.showChart}
-      onClick={onToggle}
-      className="text-muted-foreground hover:bg-accent focus-visible:outline-ring flex shrink-0 cursor-pointer items-center gap-1 rounded p-1 text-xs focus-visible:outline-2"
-    >
-      <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
-      {withLabel && t.jubilee.showChart}
-    </button>
   )
 }

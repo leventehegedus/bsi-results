@@ -340,6 +340,12 @@ export const hu: Messages = {
     mergeSubLists: 'Egy futás egyszer számít (allisták összevonása)',
     includeVirtual: 'Virtuális versenyekkel együtt',
     pbTitle: 'Egyéni csúcsok',
+    showRaceCharts: 'A verseny diagramjai',
+    categoryDeciles: (category: string) => `A(z) ${category} kategória decilisei`,
+    categoryPosition: (name: string, percent: number) => `${name} a kategória legjobb ${percent}%-ában van.`,
+    categoryPlace: (place: number) => `${place}. hely a kategóriában`,
+    categoryFirst: (name: string) => `1. helyezett: ${name}`,
+    categoryLast: 'Utolsó helyezett',
     calendarTitle: 'Versenynaptár',
     calendarDescription:
       'Havonta a versenyeken futott kilométerek, minél sötétebb, annál több. Kattints egy hónapra, és megnyílik a verseny; ha több is volt, választhatsz. Az ismeretlen távú versenyek nem számítanak a kilométerekbe.',
