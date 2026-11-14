@@ -11,6 +11,8 @@ export interface SplitPoint {
   label: string
   /** distance from the start, in metres; null when the label doesn't say */
   metres: number | null
+  /** set for "1. kör" / "1st lap" columns: the value is that lap's own time, not a cumulative split */
+  lap?: number
 }
 
 /**
@@ -23,9 +25,18 @@ export function splitPoints(fields: FieldDef[], raceMetres: number | null | unde
   for (const f of fields) {
     if (!/^reszido_/.test(f.mezo) || f.hide) continue
     const label = (f.header_hu || f.header_en || f.mezo).trim()
-    points.push({ key: f.mezo, label, metres: splitMetres(label, raceMetres) })
+    const lap = lapNumber(label)
+    points.push({ key: f.mezo, label, metres: lap ? null : splitMetres(label, raceMetres), ...(lap && { lap }) })
   }
+  // lap columns ("1. kör-21 km", "2. kör-21 km") split the race into equal laps
+  const laps = Math.max(0, ...points.map((p) => p.lap ?? 0))
+  for (const p of points) if (p.lap && raceMetres && raceMetres > 0) p.metres = Math.round((raceMetres * p.lap) / laps)
   return points.sort((a, b) => (a.metres ?? Infinity) - (b.metres ?? Infinity))
+}
+
+function lapNumber(label: string): number | undefined {
+  const m = /^(\d+)\.\s*k[öo]r/i.exec(label) ?? /^(\d+)(?:st|nd|rd|th)\s+lap/i.exec(label)
+  return m ? Number(m[1]) : undefined
 }
 
 function splitMetres(label: string, raceMetres: number | null | undefined): number | null {
@@ -80,9 +91,12 @@ export function runnerSplits(
   if (!Number.isFinite(finish) || finish <= 0 || !raceMetres || raceMetres <= 0) return null
 
   const marks: { metres: number; seconds: number }[] = []
+  // lap times add up to the cumulative split; a missed lap spoils every later one
+  let lapSum = 0
   for (const p of points) {
+    let seconds = timeToSeconds(cleanTime(row[p.key] as string | null | undefined))
+    if (p.lap) seconds = lapSum = Number.isFinite(seconds) && seconds > 0 ? lapSum + seconds : NaN
     if (p.metres == null || p.metres <= 0 || p.metres >= raceMetres) continue
-    const seconds = timeToSeconds(cleanTime(row[p.key] as string | null | undefined))
     // a missed timing mat leaves a blank or a zero
     if (!Number.isFinite(seconds) || seconds <= 0 || seconds >= finish) continue
     marks.push({ metres: p.metres, seconds })
